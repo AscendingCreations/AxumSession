@@ -1,0 +1,52 @@
+[workspace]
+members = ["."]
+
+[package]
+name = "axum_database_sessions"
+version = "0.1.0"
+authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
+description = "Library to Provide a SQLx Database Session management layer. You must also include Tower_cookies in order to use this Library."
+edition = "2021"
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/axum_database_sessions"
+keywords = ["Axum", "Tower", "SQLx", "Session"]
+repository = "https://github.com/AscendingCreations/AxumSessions"
+
+[features]
+default = ["postgres"]
+sqlite = ["sqlx/sqlite", "axum_sqlite_sessions_pool"]
+postgres = ["sqlx/postgres", "axum_postgres_sessions_pool"]
+mysql = ["sqlx/mysql", "axum_mysql_sessions_pool"]
+
+[dependencies]
+axum_mysql_sessions_pool = { version = "0.1", path = "AxumMySqlSessionPool", optional = true }
+axum_postgres_sessions_pool = { version = "0.1", path = "AxumPostgresSessionPool", optional = true }
+axum_sqlite_sessions_pool = { version = "0.1", path = "AxumSqliteSessionPool", optional = true }
+axum = "0.4"
+serde = "1.0"
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["clock", "serde", "std"] }
+tokio = { version = "1.15.0", features = ["full"] }
+futures = "0.3"
+async-trait = "0.1.51"
+tracing = "0.1"
+thiserror = "1.0.29"
+http-body = "0.4"
+uuid = { version = "0.8", features = ["v4", "serde"] }
+rand = "0.8"
+futures-util = "0.3"
+http = "0.2"
+parking_lot = "0.11"
+pin-project-lite = "0.2"
+tower-http = { version = "0.2", features = ["full"] }
+tower-layer = "0.3"
+tower-service = "0.3"
+tower-cookies = "0.5"
+sqlx = { version = "0.5.10", features = [
+    "runtime-tokio-native-tls",
+    "chrono",
+    "json",
+    "all-types",
+] }
+anyhow = "1.0"
