@@ -42,9 +42,8 @@ impl AxumSessionStore {
     }
 
     pub async fn migrate(&self) -> Result<(), SessionError> {
-        let mut conn = self.client.inner().acquire().await?;
         sqlx::query(&*self.substitute_table_name(migrate_query()))
-            .execute(&mut conn)
+            .execute(self.client.inner())
             .await?;
 
         Ok(())
@@ -55,19 +54,17 @@ impl AxumSessionStore {
     }
 
     pub async fn cleanup(&self) -> Result<(), SessionError> {
-        let mut conn = self.client.inner().acquire().await?;
         sqlx::query(&self.substitute_table_name(cleanup_query()))
             .bind(Utc::now().timestamp())
-            .execute(&mut conn)
+            .execute(self.client.inner())
             .await?;
 
         Ok(())
     }
 
     pub async fn count(&self) -> Result<i64, SessionError> {
-        let mut conn = self.client.inner().acquire().await?;
         let (count,) = sqlx::query_as(&self.substitute_table_name(count_query()))
-            .fetch_one(&mut conn)
+            .fetch_one(self.client.inner())
             .await?;
 
         Ok(count)
@@ -77,12 +74,16 @@ impl AxumSessionStore {
         &self,
         cookie_value: String,
     ) -> Result<Option<AxumSessionData>, SessionError> {
-        let mut conn = self.client.inner().acquire().await?;
+        println!(
+            "Pool load idle connection #{} and Pool is closed = {}",
+            self.client.inner().num_idle(),
+            self.client.inner().is_closed()
+        );
 
         let result: Option<(String,)> = sqlx::query_as(&self.substitute_table_name(load_query()))
             .bind(&cookie_value)
             .bind(Utc::now().timestamp())
-            .fetch_optional(&mut conn)
+            .fetch_optional(self.client.inner())
             .await?;
 
         Ok(result
@@ -92,32 +93,34 @@ impl AxumSessionStore {
 
     pub async fn store_session(&self, session: AxumSessionData) -> Result<(), SessionError> {
         let string = serde_json::to_string(&session)?;
-        let mut conn = self.client.inner().acquire().await?;
+        println!(
+            "Pool store idle connection #{} and Pool is closed = {}",
+            self.client.inner().num_idle(),
+            self.client.inner().is_closed()
+        );
 
         sqlx::query(&self.substitute_table_name(store_query()))
             .bind(session.id.to_string())
             .bind(&string)
             .bind(&session.expires.timestamp())
-            .execute(&mut conn)
+            .execute(self.client.inner())
             .await?;
 
         Ok(())
     }
 
     pub async fn destroy_session(&self, id: &str) -> Result<(), SessionError> {
-        let mut conn = self.client.inner().acquire().await?;
         sqlx::query(&self.substitute_table_name(destroy_query()))
             .bind(&id)
-            .execute(&mut conn)
+            .execute(self.client.inner())
             .await?;
 
         Ok(())
     }
 
     pub async fn clear_store(&self) -> Result<(), SessionError> {
-        let mut conn = self.client.inner().acquire().await?;
         sqlx::query(&self.substitute_table_name(clear_query()))
-            .execute(&mut conn)
+            .execute(self.client.inner())
             .await?;
 
         Ok(())

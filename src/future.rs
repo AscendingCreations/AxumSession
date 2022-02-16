@@ -31,16 +31,27 @@ where
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let this = self.project();
-        let res = ready!(this.future.poll(cx)?);
+        let future = ready!(this.future.poll(cx))?;
 
-        //Check to get the Session itself so it can be Saved to the Database on Response
-        //TODO: Find a more Finite way to do this so server is less bogged down?
-        let store_ug = this.session.store.inner.upgradable_read();
-        if let Some(sess) = store_ug.get(&this.session.id.0.to_string()) {
-            let inner = sess.lock();
-            let _ = block_on(this.session.store.store_session(inner.clone()));
+        //Lets lock get a clone of the session and then unlock before attempting to store the session.
+        let (session, store_it) = {
+            let store_ug = this.session.store.inner.upgradable_read();
+            if let Some(sess) = store_ug.get(&this.session.id.0.to_string()) {
+                let session = {
+                    let inner = sess.lock();
+                    inner.clone()
+                };
+                (Some(session), true)
+            } else {
+                (None, false)
+            }
+        };
+
+        if store_it {
+            let _ = block_on(this.session.store.store_session(session.unwrap())).unwrap();
         }
 
-        Poll::Ready(Ok(res))
+        println!("Finished session store");
+        Poll::Ready(Ok(future))
     }
 }
