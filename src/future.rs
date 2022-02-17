@@ -8,7 +8,7 @@ use std::{
     pin::Pin,
     task::{Context, Poll},
 };
-
+/*
 // This is a Future which is Ran at the end of a Route to Process whats left over
 // or add cookies ETC to the Headers or Update HTML.
 pin_project! {
@@ -55,3 +55,4 @@ where
         Poll::Ready(Ok(future))
     }
 }
+*/

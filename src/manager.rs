@@ -3,9 +3,12 @@ use crate::{
 };
 use chrono::{Duration, Utc};
 use futures::executor::block_on;
+use futures::future::BoxFuture;
+use futures_util::Future;
 use http::{Request, Response};
 use parking_lot::{Mutex, RwLockUpgradableReadGuard};
 use std::collections::HashMap;
+use std::pin::Pin;
 use std::task::{Context, Poll};
 use tower_cookies::{Cookie, Cookies};
 use tower_service::Service;
@@ -29,11 +32,12 @@ impl<S> AxumDatabaseSessionManager<S> {
 
 impl<ReqBody, ResBody, S> Service<Request<ReqBody>> for AxumDatabaseSessionManager<S>
 where
+    S::Future: 'static,
     S: Service<Request<ReqBody>, Response = Response<ResBody>>,
 {
     type Response = S::Response;
     type Error = S::Error;
-    type Future = AxumDatabaseResponseFuture<S::Future>;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, S::Error>>>>; //BoxFuture<'static, Result<S::Response, S::Error>>;
 
     ///lets the system know it is ready for the next step
     #[inline]
@@ -169,9 +173,33 @@ where
         req.extensions_mut().insert(self.store.clone());
         req.extensions_mut().insert(session.clone());
 
-        AxumDatabaseResponseFuture {
+        let fut = self.inner.call(req);
+
+        let f = async move {
+            let session_data = {
+                let store_ug = session.store.inner.upgradable_read();
+                if let Some(sess) = store_ug.get(&session.id.0.to_string()) {
+                    Some({
+                        let inner = sess.lock();
+                        inner.clone()
+                    })
+                } else {
+                    None
+                }
+            };
+
+            if let Some(data) = session_data {
+                let _ = session.store.store_session(data).await.unwrap();
+            }
+
+            println!("Finished session store");
+            Ok(fut.await?)
+        };
+
+        Box::pin(f)
+        /*AxumDatabaseResponseFuture {
             future: self.inner.call(req),
             session,
-        }
+        }*/
     }
 }
