@@ -189,7 +189,7 @@ where
             };
 
             if let Some(data) = session_data {
-                let _ = session.store.store_session(data).await.unwrap();
+                session.store.store_session(data).await.unwrap();
             }
 
             println!("Finished session store");
