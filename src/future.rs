@@ -48,14 +48,13 @@ where
         //if this.store_future.is_none() {
         let sess = this.session.clone();
 
-        //*this.store_future = Some(Box::pin(async move {
-        if let Some(data) = session_data {
-            block_on(sess.store.store_session(data)).unwrap();
-        }
-        //}));
-        //}
+        let fut = Box::pin(async move {
+            if let Some(data) = session_data {
+                sess.store.store_session(data).await.unwrap();
+            }
+        });
 
-        //let _ = this.store_future.as_pin_mut().unwrap().poll(cx);
+        let _ = fut.as_mut().poll(cx);
 
         println!("Finished session store");
         Poll::Ready(Ok(future))
