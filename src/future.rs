@@ -19,7 +19,7 @@ pin_project! {
         pub(crate) session: AxumSession,
     }
 }
-
+/*
 /// This Portion runs when the Route has finished running.
 /// It can not See any Extensions for some reason...
 impl<F, ResBody, E> Future for AxumDatabaseResponseFuture<F>
@@ -59,4 +59,4 @@ where
         println!("Finished session store");
         Poll::Ready(Ok(future))
     }
-}
+}*/

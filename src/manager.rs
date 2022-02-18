@@ -31,7 +31,7 @@ impl<S> AxumDatabaseSessionManager<S> {
 impl<S> Service<Request<Body>> for AxumDatabaseSessionManager<S>
 where
     S: Service<Request<Body>, Response = Response> + Send + 'static,
-    S::Future: Send + Sync + 'static,
+    S::Future: Send + 'static,
     Body: Send + 'static,
     <S as tower_service::Service<http::Request<axum::body::Body>>>::Error: std::marker::Send,
 {
