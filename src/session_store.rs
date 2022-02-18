@@ -9,8 +9,8 @@ use axum_sqlite_sessions_pool::*;
 
 use crate::{AxumSessionConfig, AxumSessionData, AxumSessionTimers, SessionError};
 use chrono::{Duration, Utc};
-use parking_lot::{Mutex, RwLock};
 use std::{collections::HashMap, sync::Arc};
+use tokio::sync::{Mutex, RwLock};
 
 /// This stores the Postgresql Pool and the Main timers and a hash table that stores the SessionData.
 /// It is also used to Initiate a Database Migrate, Cleanup, etc when used directly.
