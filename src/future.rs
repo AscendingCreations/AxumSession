@@ -8,12 +8,11 @@ use std::{
     pin::Pin,
     task::{Context, Poll},
 };
-/*
+
 // This is a Future which is Ran at the end of a Route to Process whats left over
 // or add cookies ETC to the Headers or Update HTML.
 pin_project! {
     /// Response future for [`SessionManager`].
-    #[derive(Debug)]
     pub struct AxumDatabaseResponseFuture<F> {
         #[pin]
         pub(crate) future: F,
@@ -30,29 +29,35 @@ where
     type Output = F::Output;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let this = self.project();
+        let mut this = self.project();
         let future = ready!(this.future.poll(cx))?;
-
         //Lets lock get a clone of the session and then unlock before attempting to store the session.
-        let (session, store_it) = {
+        let session_data = {
             let store_ug = this.session.store.inner.upgradable_read();
             if let Some(sess) = store_ug.get(&this.session.id.0.to_string()) {
-                let session = {
+                Some({
                     let inner = sess.lock();
                     inner.clone()
-                };
-                (Some(session), true)
+                })
             } else {
-                (None, false)
+                None
             }
         };
 
-        if store_it {
-            let _ = block_on(this.session.store.store_session(session.unwrap())).unwrap();
+        //Any better way to do this as i could only figure this out? nvm this is broken too since it doesnt insert into the database.
+        //if this.store_future.is_none() {
+        let sess = this.session.clone();
+
+        //*this.store_future = Some(Box::pin(async move {
+        if let Some(data) = session_data {
+            block_on(sess.store.store_session(data)).unwrap();
         }
+        //}));
+        //}
+
+        //let _ = this.store_future.as_pin_mut().unwrap().poll(cx);
 
         println!("Finished session store");
         Poll::Ready(Ok(future))
     }
 }
-*/
