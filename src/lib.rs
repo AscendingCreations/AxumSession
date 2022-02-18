@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![allow(dead_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![feature(async_closure)]
 
 #[cfg(not(any(feature = "postgres", feature = "mysql", feature = "sqlite",)))]
 compile_error!("one of the features ['postgres', 'mysql', 'sqlite'] must be enabled");
