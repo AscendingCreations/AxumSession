@@ -1,13 +1,10 @@
-use crate::{
-    AxumDatabaseResponseFuture, AxumSession, AxumSessionData, AxumSessionID, AxumSessionStore,
-    SessionError,
-};
+use crate::{AxumSession, AxumSessionData, AxumSessionID, AxumSessionStore};
 use axum::{body::Body, http::Request, response::Response};
 use chrono::{Duration, Utc};
 use futures::{executor::block_on, future::BoxFuture};
-use parking_lot::{Mutex, RwLockUpgradableReadGuard};
 use std::collections::HashMap;
 use std::task::{Context, Poll};
+use tokio::sync::{Mutex, RwLock};
 use tower_cookies::{Cookie, Cookies};
 use tower_service::Service;
 use uuid::Uuid;
@@ -49,51 +46,64 @@ where
     //TODO: Make lifespan Adjustable to be Permenant, Per Session OR Based on a Set Duration from Config.
     fn call(&mut self, mut req: Request<Body>) -> Self::Future {
         let store = self.store.clone();
-
         // We Extract the Tower_Cookies Extensions Variable so we can add Cookies to it. Some reason can only be done here..?
-        let cookies = req
-            .extensions()
-            .get::<Cookies>()
-            .expect("`Tower_Cookie` extension missing");
 
-        Box::pin(async move {
+        Box::pin(async {
+            let cookies = req
+                .extensions()
+                .get::<Cookies>()
+                .expect("`Tower_Cookie` extension missing");
+
+            let mut grab_data = false;
+
             let session = AxumSession {
                 id: {
-                    let store_ug = store.inner.upgradable_read();
+                    //we will do read operations first.
+                    let id = {
+                        let store_ug = store.inner.read().await;
 
-                    let id = if let Some(cookie) = cookies.get(&store.config.cookie_name) {
-                        (
-                            AxumSessionID(
-                                Uuid::parse_str(cookie.value()).expect("`Could not parse Uuid"),
-                            ),
-                            false,
-                        )
-                    } else {
-                        let new_id = loop {
-                            let token = Uuid::new_v4();
+                        let id = if let Some(cookie) = cookies.get(&store.config.cookie_name) {
+                            (
+                                AxumSessionID(
+                                    Uuid::parse_str(cookie.value()).expect("`Could not parse Uuid"),
+                                ),
+                                false,
+                            )
+                        } else {
+                            let new_id = loop {
+                                let token = Uuid::new_v4();
 
-                            if !store_ug.contains_key(&token.to_string()) {
-                                break token;
-                            }
+                                if !store_ug.contains_key(&token.to_string()) {
+                                    break token;
+                                }
+                            };
+
+                            (AxumSessionID(new_id), true)
                         };
 
-                        (AxumSessionID(new_id), true)
+                        if !id.1 {
+                            if let Some(m) = store_ug.get(&id.0.to_string()) {
+                                let mut inner = m.lock().await;
+
+                                if inner.expires < Utc::now() || inner.destroy {
+                                    // Database Session expired, reuse the ID but drop data.
+                                    inner.data = HashMap::new();
+                                }
+
+                                // Session is extended by making a request with valid ID
+                                inner.expires = Utc::now() + store.config.lifespan;
+                                inner.autoremove = Utc::now() + store.config.memory_lifespan;
+                                grab_data = true;
+                            }
+                        }
+
+                        id
                     };
 
+                    //now we can do write operations id needed.
                     if !id.1 {
-                        if let Some(m) = store_ug.get(&id.0.to_string()) {
-                            let mut inner = m.lock();
-
-                            if inner.expires < Utc::now() || inner.destroy {
-                                // Database Session expired, reuse the ID but drop data.
-                                inner.data = HashMap::new();
-                            }
-
-                            // Session is extended by making a request with valid ID
-                            inner.expires = Utc::now() + store.config.lifespan;
-                            inner.autoremove = Utc::now() + store.config.memory_lifespan;
-                        } else {
-                            let mut store_wg = RwLockUpgradableReadGuard::upgrade(store_ug);
+                        if grab_data {
+                            let mut store_wg = store.inner.write().await;
 
                             let mut sess = store
                                 .load_session(id.0.to_string())
@@ -125,32 +135,29 @@ where
                     } else {
                         // --- New ID was generated Lets make a session for it ---
                         // Get exclusive write access to the map
-                        let mut store_wg = RwLockUpgradableReadGuard::upgrade(store_ug);
+                        let mut store_wg = store.inner.write().await;
 
                         // This branch runs less often, and we already have write access,
                         // let's check if any sessions expired. We don't want to hog memory
                         // forever by abandoned sessions (e.g. when a client lost their cookie)
-                        {
-                            let timers = store.timers.upgradable_read();
-                            // Throttle by memory lifespan - e.g. sweep every hour
-                            if timers.last_expiry_sweep <= Utc::now() {
-                                let mut timers = RwLockUpgradableReadGuard::upgrade(timers);
-                                store_wg.retain(|_k, v| v.lock().autoremove > Utc::now());
-                                timers.last_expiry_sweep =
-                                    Utc::now() + store.config.memory_lifespan;
-                            }
+                        let (last_expire, last_db_expire) = {
+                            let timers = store.timers.read().await;
+                            (timers.last_expiry_sweep, timers.last_database_expiry_sweep)
+                        };
+
+                        // Throttle by memory lifespan - e.g. sweep every hour
+                        if last_expire <= Utc::now() {
+                            let mut timers = store.timers.write().await;
+                            store_wg.retain(|_k, v| v.blocking_lock().autoremove > Utc::now());
+                            timers.last_expiry_sweep = Utc::now() + store.config.memory_lifespan;
                         }
 
-                        {
-                            let timers = store.timers.upgradable_read();
-                            // Throttle by database lifespan - e.g. sweep every 6 hours
-                            if timers.last_database_expiry_sweep <= Utc::now() {
-                                let mut timers = RwLockUpgradableReadGuard::upgrade(timers);
-                                store_wg.retain(|_k, v| v.lock().autoremove > Utc::now());
-                                store.cleanup().await.unwrap();
-                                timers.last_database_expiry_sweep =
-                                    Utc::now() + store.config.lifespan;
-                            }
+                        // Throttle by database lifespan - e.g. sweep every 6 hours
+                        if last_db_expire <= Utc::now() {
+                            let mut timers = store.timers.write().await;
+                            store_wg.retain(|_k, v| v.blocking_lock().autoremove > Utc::now());
+                            store.cleanup().await.unwrap();
+                            timers.last_database_expiry_sweep = Utc::now() + store.config.lifespan;
                         }
 
                         let mut cookie =
@@ -189,10 +196,10 @@ where
 
 async fn store_data(session: AxumSession) {
     let session_data = {
-        let store_ug = session.store.inner.upgradable_read();
+        let store_ug = session.store.inner.read().await;
         if let Some(sess) = store_ug.get(&session.id.0.to_string()) {
             Some({
-                let inner = sess.lock();
+                let inner = sess.lock().await;
                 inner.clone()
             })
         } else {

@@ -1,11 +1,4 @@
-#[cfg(feature = "mysql")]
-use axum_mysql_sessions_pool::*;
-
-#[cfg(feature = "postgres")]
 use axum_postgres_sessions_pool::*;
-
-#[cfg(feature = "sqlite")]
-use axum_sqlite_sessions_pool::*;
 
 use crate::{AxumDatabaseSessionManager, AxumSessionConfig, AxumSessionStore};
 use tower_layer::Layer;
