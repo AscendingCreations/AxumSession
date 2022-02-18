@@ -1,9 +1,7 @@
-use crate::{
-    AxumDatabaseResponseFuture, AxumSession, AxumSessionData, AxumSessionID, AxumSessionStore,
-};
+use crate::{AxumSession, AxumSessionData, AxumSessionID, AxumSessionStore};
+use axum::{body::Body, http::Request, response::Response};
 use chrono::{Duration, Utc};
-use futures::executor::block_on;
-use http::{Request, Response};
+use futures::{executor::block_on, future::BoxFuture};
 use parking_lot::{Mutex, RwLockUpgradableReadGuard};
 use std::collections::HashMap;
 use std::task::{Context, Poll};
@@ -27,16 +25,18 @@ impl<S> AxumDatabaseSessionManager<S> {
     }
 }
 
-impl<ReqBody, ResBody, S> Service<Request<ReqBody>> for AxumDatabaseSessionManager<S>
+impl<S> Service<Request<Body>> for AxumDatabaseSessionManager<S>
 where
-    S: Service<Request<ReqBody>, Response = Response<ResBody>>,
+    S: Service<Request<Body>, Response = Response> + Send + 'static,
+    S::Future: Send + 'static,
+    Body: Send + 'static,
+    <S as tower_service::Service<http::Request<axum::body::Body>>>::Error: std::marker::Send,
 {
     type Response = S::Response;
     type Error = S::Error;
-    type Future = AxumDatabaseResponseFuture<S::Future>;
+    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
     ///lets the system know it is ready for the next step
-    #[inline]
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
     }
@@ -44,8 +44,9 @@ where
     /// Is called on Request to generate any needed data and sets a future to be used on the Response
     /// This is where we will Generate the SqlxSession for the end user and where we add the Cookies.
     //TODO: Make lifespan Adjustable to be Permenant, Per Session OR Based on a Set Duration from Config.
-    fn call(&mut self, mut req: Request<ReqBody>) -> Self::Future {
+    fn call(&mut self, mut req: Request<Body>) -> Self::Future {
         let store = self.store.clone();
+
         // We Extract the Tower_Cookies Extensions Variable so we can add Cookies to it. Some reason can only be done here..?
         let cookies = req
             .extensions()
@@ -139,7 +140,7 @@ where
                         if timers.last_database_expiry_sweep <= Utc::now() {
                             let mut timers = RwLockUpgradableReadGuard::upgrade(timers);
                             store_wg.retain(|_k, v| v.lock().autoremove > Utc::now());
-                            let _ = block_on(store.cleanup());
+                            block_on(store.cleanup()).unwrap();
                             timers.last_database_expiry_sweep = Utc::now() + store.config.lifespan;
                         }
                     }
@@ -169,9 +170,27 @@ where
         req.extensions_mut().insert(self.store.clone());
         req.extensions_mut().insert(session.clone());
 
-        AxumDatabaseResponseFuture {
-            future: self.inner.call(req),
-            session,
-        }
+        let future = self.inner.call(req);
+
+        Box::pin(async move {
+            let response = future.await;
+            store_data(session).await;
+            response
+        })
+    }
+}
+
+async fn store_data(session: AxumSession) {
+    let session_data = {
+        session
+            .store
+            .inner
+            .upgradable_read()
+            .get(&session.id.0.to_string())
+            .map(|sess| sess.lock().clone())
+    };
+
+    if let Some(data) = session_data {
+        session.store.store_session(data).await.unwrap()
     }
 }
