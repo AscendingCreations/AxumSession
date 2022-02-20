@@ -1,4 +1,4 @@
-use crate::{AxumSession, AxumSessionData, AxumSessionID, AxumSessionStore};
+use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionID, AxumSessionStore};
 use axum::{body::Body, http::Request, response::Response};
 use chrono::{Duration, Utc};
 use futures::{executor::block_on, future::BoxFuture};
@@ -46,6 +46,7 @@ where
     //TODO: Make lifespan Adjustable to be Permenant, Per Session OR Based on a Set Duration from Config.
     fn call(&mut self, mut req: Request<Body>) -> Self::Future {
         let store = self.store.clone();
+        let config=store.config.clone();
 
         // We Extract the Tower_Cookies Extensions Variable so we can add Cookies to it. Some reason can only be done here..?
         let cookies = req
@@ -108,11 +109,7 @@ where
                             sess.autoremove = Utc::now() + store.config.memory_lifespan;
                         }
 
-                        let mut cookie =
-                            Cookie::new(store.config.cookie_name.clone(), id.0 .0.to_string());
-
-                        cookie.make_permanent();
-
+                        let cookie = create_cookie(config, id.0 .0.to_string());
                         cookies.add(cookie);
                         store_wg.insert(id.0 .0.to_string(), Mutex::new(sess));
                     }
@@ -145,9 +142,7 @@ where
                         }
                     }
 
-                    let mut cookie =
-                        Cookie::new(store.config.cookie_name.clone(), id.0 .0.to_string());
-                    cookie.make_permanent();
+                    let cookie = create_cookie(config, id.0 .0.to_string());
                     cookies.add(cookie);
 
                     let sess = AxumSessionData {
@@ -178,6 +173,26 @@ where
             response
         })
     }
+}
+
+fn  create_cookie<'a>(config: AxumSessionConfig, value: String) -> Cookie<'a> {
+    let mut cookie_builder = Cookie::build(config.cookie_name, value)
+        .path(config.cookie_path)
+        .secure(config.cookie_secure)
+        .http_only(config.cookie_http_only)
+        ;
+
+    if let Some(domain)=config.cookie_domain {
+        cookie_builder=cookie_builder.domain(domain);
+        //TODO is .same_site(SameSite::Strict) a good idea
+    }
+
+    if let Some(max_age)=config.cookie_max_age {
+       let time_duration=max_age.to_std().expect("Max Age out of bounds");
+       cookie_builder=cookie_builder.max_age(time_duration.try_into().expect("Max Age out of bounds"));
+    }
+
+    cookie_builder.finish()
 }
 
 async fn store_data(session: AxumSession) {
