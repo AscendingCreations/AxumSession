@@ -38,7 +38,6 @@ uuid = { version = "0.8", features = ["v4", "serde"] }
 rand = "0.8"
 futures-util = "0.3"
 http = "0.2"
-parking_lot = "0.11"
 pin-project-lite = "0.2"
 tower-http = { version = "0.2", features = ["full"] }
 tower-layer = "0.3"
