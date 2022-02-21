@@ -14,6 +14,7 @@ keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
+default = ["postgres"]
 sqlite = ["sqlx/sqlite", "axum_sqlite_sessions_pool"]
 postgres = ["sqlx/postgres", "axum_postgres_sessions_pool"]
 mysql = ["sqlx/mysql", "axum_mysql_sessions_pool"]
@@ -23,6 +24,7 @@ axum_mysql_sessions_pool = { version = "0.1", path = "AxumMySqlSessionPool", opt
 axum_postgres_sessions_pool = { version = "0.1", path = "AxumPostgresSessionPool", optional = true }
 axum_sqlite_sessions_pool = { version = "0.1", path = "AxumSqliteSessionPool", optional = true }
 axum = "0.4"
+axum-extra = "0.1.2"
 serde = "1.0"
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["clock", "serde", "std"] }

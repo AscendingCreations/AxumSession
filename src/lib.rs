@@ -14,7 +14,6 @@ compile_error!("only one of ['postgres', 'mysql', 'sqlite'] can be enabled");
 
 mod config;
 mod errors;
-mod layer;
 mod manager;
 mod session;
 mod session_data;
@@ -33,8 +32,7 @@ pub use axum_sqlite_sessions_pool::AxumDatabasePool;
 
 pub use config::AxumSessionConfig;
 pub use errors::SessionError;
-pub use layer::AxumSessionLayer;
-pub use manager::AxumDatabaseSessionManager;
+pub use manager::axum_session_runner;
 pub use session::AxumSession;
 pub use session_data::AxumSessionData;
 pub use session_id::AxumSessionID;
