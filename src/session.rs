@@ -39,39 +39,41 @@ where
 
 impl AxumSession {
     ///Runs a Closure that can return Data from the users SessionData Hashmap.
-    pub fn tap<T: DeserializeOwned>(
+    pub async fn tap<T: DeserializeOwned>(
         &self,
         func: impl FnOnce(&mut AxumSessionData) -> Option<T>,
     ) -> Option<T> {
-        let store_rg = self.store.inner.try_read().unwrap();
+        let store_rg = self.store.inner.read().await;
 
         let mut instance = store_rg
             .get(&self.id.0.to_string())
             .expect("Session data unexpectedly missing")
-            .try_lock()
-            .unwrap();
+            .lock()
+            .await;
 
         func(&mut instance)
     }
 
     ///Sets the Entire Session to be Cleaned on next load.
-    pub fn destroy(&self) {
+    pub async fn destroy(&self) {
         self.tap(|sess| {
             sess.destroy = true;
             Some(1)
-        });
+        })
+        .await;
     }
 
     ///Used to get data stored within SessionDatas hashmap from a key value.
-    pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
+    pub async fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         self.tap(|sess| {
             let string = sess.data.get(key)?;
             serde_json::from_str(string).ok()
         })
+        .await
     }
 
     /// Used to Set data to SessionData via a Key and the Value to Set.
-    pub fn set(&self, key: &str, value: impl Serialize) {
+    pub async fn set(&self, key: &str, value: impl Serialize) {
         let value = serde_json::to_string(&value).unwrap_or_else(|_| "".to_string());
 
         self.tap(|sess| {
@@ -79,25 +81,27 @@ impl AxumSession {
                 sess.data.insert(key.to_string(), value);
             }
             Some(1)
-        });
+        })
+        .await;
     }
 
     ///used to remove a key and its data from SessionData's Hashmap
-    pub fn remove(&self, key: &str) {
-        self.tap(|sess| sess.data.remove(key));
+    pub async fn remove(&self, key: &str) {
+        self.tap(|sess| sess.data.remove(key)).await;
     }
 
     /// Will instantly clear all data from SessionData's Hashmap
-    pub fn clear_all(&self) {
+    pub async fn clear_all(&self) {
         self.tap(|sess| {
             sess.data.clear();
             let _ = block_on(self.store.clear_store());
             Some(1)
-        });
+        })
+        .await;
     }
 
     /// Returns a Count of all Sessions currently within the Session Store.
-    pub fn count(&self) -> i64 {
-        block_on(self.store.count()).unwrap_or(0i64)
+    pub async fn count(&self) -> i64 {
+        self.store.count().await.unwrap_or(0i64)
     }
 }
