@@ -7,6 +7,7 @@ use axum::{
 use futures::executor::block_on;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::sync::Arc;
 
 ///This is the Session that is generated when a user is routed to a page that Needs one
 /// It is used to Save and load session data similar to how it is done on python.
@@ -43,12 +44,14 @@ impl AxumSession {
         &self,
         func: impl FnOnce(&mut AxumSessionData) -> Option<T>,
     ) -> Option<T> {
-        let store_rg = self.store.inner.read();
+        let store_rg = self.store.inner.try_read().unwrap();
 
         let mut instance = store_rg
             .get(&self.id.0.to_string())
             .expect("Session data unexpectedly missing")
-            .lock();
+            .try_lock()
+            .unwrap();
+
 
         func(&mut instance)
     }
