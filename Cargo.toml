@@ -14,7 +14,6 @@ keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
-default = ["postgres"]
 sqlite = ["sqlx/sqlite", "axum_sqlite_sessions_pool"]
 postgres = ["sqlx/postgres", "axum_postgres_sessions_pool"]
 mysql = ["sqlx/mysql", "axum_mysql_sessions_pool"]
