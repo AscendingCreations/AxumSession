@@ -14,17 +14,13 @@ keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
-default = ["nativetls"]
-sqlite = ["sqlx/sqlite", "axum_sqlite_sessions_pool"]
-postgres = ["sqlx/postgres", "axum_postgres_sessions_pool"]
-mysql = ["sqlx/mysql", "axum_mysql_sessions_pool"]
+sqlite = ["sqlx/sqlite"]
+postgres = ["sqlx/postgres"]
+mysql = ["sqlx/mysql"]
 rustls = ["sqlx/runtime-tokio-rustls"]
-nativetls = ["sqlx/runtime-tokio-native-tls"]
+native-tls = ["sqlx/runtime-tokio-native-tls"]
 
 [dependencies]
-axum_mysql_sessions_pool = { version = "0.1", path = "AxumMySqlSessionPool", optional = true }
-axum_postgres_sessions_pool = { version = "0.1", path = "AxumPostgresSessionPool", optional = true }
-axum_sqlite_sessions_pool = { version = "0.1", path = "AxumSqliteSessionPool", optional = true }
 axum = "0.4"
 axum-extra = "0.1.2"
 serde = "1.0"

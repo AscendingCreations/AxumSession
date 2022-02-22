@@ -1,6 +1,3 @@
-#![doc = include_str!("../README.md")]
-#![allow(dead_code)]
-
 use sqlx::{pool::Pool, PgPool, Postgres};
 
 ///Mysql's Pool type for AxumDatabasePool

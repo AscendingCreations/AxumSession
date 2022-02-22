@@ -1,21 +1,18 @@
-#![doc = include_str!("../README.md")]
-#![allow(dead_code)]
+use sqlx::{pool::Pool, MySql, MySqlPool};
 
-use sqlx::{pool::Pool, Sqlite, SqlitePool};
-
-///Mysql's Pool type for AxumDatabasePool
+/// Mysql's Pool type for AxumDatabasePool
 #[derive(Debug, Clone)]
-pub struct AxumDatabasePool(SqlitePool);
+pub struct AxumDatabasePool(MySqlPool);
 
 impl AxumDatabasePool {
     /// Grabs the Pool for direct usage
-    pub fn inner(&self) -> &SqlitePool {
+    pub fn inner(&self) -> &MySqlPool {
         &self.0
     }
 }
 
-impl From<Pool<Sqlite>> for AxumDatabasePool {
-    fn from(conn: SqlitePool) -> Self {
+impl From<Pool<MySql>> for AxumDatabasePool {
+    fn from(conn: MySqlPool) -> Self {
         AxumDatabasePool(conn)
     }
 }
@@ -24,10 +21,14 @@ pub fn migrate_query() -> String {
     String::from(
         r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
-                id TEXT PRIMARY KEY NOT NULL,
-                expires INTEGER NULL,
-                session TEXT NOT NULL
+                `id` VARCHAR(128) NOT NULL,
+                `expires` INTEGER NULL,
+                `session` TEXT NOT NULL,
+                PRIMARY KEY (`id`),
+                KEY `expires` (`expires`)
             )
+            ENGINE=InnoDB
+            DEFAULT CHARSET=utf8mb4
         "#,
     )
 }
@@ -48,11 +49,11 @@ pub fn load_query() -> String {
 pub fn store_query() -> String {
     String::from(
         r#"
-            INSERT INTO %%TABLE_NAME%%
-                (id, session, expires) VALUES (?, ?, ?)
-            ON CONFLICT(id) DO UPDATE SET
-                expires = excluded.expires,
-                session = excluded.session
+        INSERT INTO %%TABLE_NAME%%
+            (id, session, expires) VALUES(?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            expires = VALUES(expires),
+            session = VALUES(session)
         "#,
     )
 }
@@ -60,5 +61,5 @@ pub fn destroy_query() -> String {
     String::from(r#"DELETE FROM %%TABLE_NAME%% WHERE id = ?"#)
 }
 pub fn clear_query() -> String {
-    String::from(r#"DELETE FROM %%TABLE_NAME%%"#)
+    String::from(r#"TRUNCATE %%TABLE_NAME%%"#)
 }

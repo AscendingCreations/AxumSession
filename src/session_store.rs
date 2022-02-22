@@ -1,13 +1,7 @@
-#[cfg(feature = "mysql")]
-use axum_mysql_sessions_pool::*;
-
-#[cfg(feature = "postgres")]
-use axum_postgres_sessions_pool::*;
-
-#[cfg(feature = "sqlite")]
-use axum_sqlite_sessions_pool::*;
-
-use crate::{AxumSessionConfig, AxumSessionData, AxumSessionTimers, SessionError};
+use crate::{
+    databases::{self, AxumDatabasePool},
+    AxumSessionConfig, AxumSessionData, AxumSessionTimers, SessionError,
+};
 use chrono::{Duration, Utc};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{Mutex, RwLock};
@@ -42,7 +36,7 @@ impl AxumSessionStore {
     }
 
     pub async fn migrate(&self) -> Result<(), SessionError> {
-        sqlx::query(&*self.substitute_table_name(migrate_query()))
+        sqlx::query(&*self.substitute_table_name(databases::migrate_query()))
             .execute(self.client.inner())
             .await?;
 
@@ -54,7 +48,7 @@ impl AxumSessionStore {
     }
 
     pub async fn cleanup(&self) -> Result<(), SessionError> {
-        sqlx::query(&self.substitute_table_name(cleanup_query()))
+        sqlx::query(&self.substitute_table_name(databases::cleanup_query()))
             .bind(Utc::now().timestamp())
             .execute(self.client.inner())
             .await?;
@@ -63,7 +57,7 @@ impl AxumSessionStore {
     }
 
     pub async fn count(&self) -> Result<i64, SessionError> {
-        let (count,) = sqlx::query_as(&self.substitute_table_name(count_query()))
+        let (count,) = sqlx::query_as(&self.substitute_table_name(databases::count_query()))
             .fetch_one(self.client.inner())
             .await?;
 
@@ -74,11 +68,12 @@ impl AxumSessionStore {
         &self,
         cookie_value: String,
     ) -> Result<Option<AxumSessionData>, SessionError> {
-        let result: Option<(String,)> = sqlx::query_as(&self.substitute_table_name(load_query()))
-            .bind(&cookie_value)
-            .bind(Utc::now().timestamp())
-            .fetch_optional(self.client.inner())
-            .await?;
+        let result: Option<(String,)> =
+            sqlx::query_as(&self.substitute_table_name(databases::load_query()))
+                .bind(&cookie_value)
+                .bind(Utc::now().timestamp())
+                .fetch_optional(self.client.inner())
+                .await?;
 
         Ok(result
             .map(|(session,)| serde_json::from_str(&session))
@@ -86,7 +81,7 @@ impl AxumSessionStore {
     }
 
     pub async fn store_session(&self, session: AxumSessionData) -> Result<(), SessionError> {
-        sqlx::query(&self.substitute_table_name(store_query()))
+        sqlx::query(&self.substitute_table_name(databases::store_query()))
             .bind(session.id.to_string())
             .bind(&serde_json::to_string(&session)?)
             .bind(&session.expires.timestamp())
@@ -97,7 +92,7 @@ impl AxumSessionStore {
     }
 
     pub async fn destroy_session(&self, id: &str) -> Result<(), SessionError> {
-        sqlx::query(&self.substitute_table_name(destroy_query()))
+        sqlx::query(&self.substitute_table_name(databases::destroy_query()))
             .bind(&id)
             .execute(self.client.inner())
             .await?;
@@ -106,7 +101,7 @@ impl AxumSessionStore {
     }
 
     pub async fn clear_store(&self) -> Result<(), SessionError> {
-        sqlx::query(&self.substitute_table_name(clear_query()))
+        sqlx::query(&self.substitute_table_name(databases::clear_query()))
             .execute(self.client.inner())
             .await?;
 

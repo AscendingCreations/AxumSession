@@ -21,17 +21,10 @@ mod session_id;
 mod session_store;
 mod session_timers;
 
-#[cfg(feature = "mysql")]
-pub use axum_mysql_sessions_pool::AxumDatabasePool;
-
-#[cfg(feature = "postgres")]
-pub use axum_postgres_sessions_pool::AxumDatabasePool;
-
-#[cfg(feature = "sqlite")]
-pub use axum_sqlite_sessions_pool::AxumDatabasePool;
-
+mod databases;
 pub use axum_extra::middleware::from_fn;
 pub use config::{AxumSessionConfig, SameSite};
+pub use databases::AxumDatabasePool;
 pub use errors::SessionError;
 pub use manager::axum_session_manager_run;
 pub use session::AxumSession;
