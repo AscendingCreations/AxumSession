@@ -9,7 +9,7 @@ You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this
 
 ## Install
 
-Axum Database Sessions uses [`tokio`] runtime along with ['sqlx']; it supports [`native-tls`] and [`rustls`] TLS backends. When adding the dependency, you must chose a runtime feature that is `DatabaseType` and `tls`. You can only choose one database type and one TLS Backend.
+Axum Database Sessions uses [`tokio`] runtime along with ['sqlx']; it supports [`native-tls`] and [`rustls`] TLS backends. When adding the dependency, you must chose a database feature that is `DatabaseType` and a `tls` backend. You can only choose one database type and one TLS Backend.
 
 [`tokio`]: https://github.com/tokio-rs/tokio
 [`native-tls`]: https://crates.io/crates/native-tls
