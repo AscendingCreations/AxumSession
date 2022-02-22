@@ -30,11 +30,19 @@ pub use axum_postgres_sessions_pool::AxumDatabasePool;
 #[cfg(feature = "sqlite")]
 pub use axum_sqlite_sessions_pool::AxumDatabasePool;
 
+pub use axum_extra::middleware::from_fn;
 pub use config::{AxumSessionConfig, SameSite};
 pub use errors::SessionError;
-pub use manager::axum_session_runner;
+pub use manager::axum_session_manager_run;
 pub use session::AxumSession;
 pub use session_data::AxumSessionData;
 pub use session_id::AxumSessionID;
 pub use session_store::AxumSessionStore;
 pub use session_timers::AxumSessionTimers;
+
+#[macro_export]
+macro_rules! axum_session_runner {
+    ($session_store:expr) => {
+        from_fn(move |req, next| axum_session_manager_run(req, next, $session_store.clone()))
+    };
+}

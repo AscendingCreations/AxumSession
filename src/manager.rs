@@ -10,10 +10,10 @@ use tokio::sync::Mutex;
 use tower_cookies::{Cookie, Cookies};
 use uuid::Uuid;
 
-///axum_session_runner Creates, Manages and Sets an AxumSession into the Request extensions.
+///axum_session_manager_run Creates, Manages and Sets an AxumSession into the Request extensions.
 ///This will unload and load other Session data based on Access and a timer check.
 ///returns an Response when all the Futures After run.
-pub async fn axum_session_runner<B>(
+pub async fn axum_session_manager_run<B>(
     mut req: Request<B>,
     next: Next<B>,
     store: AxumSessionStore,
@@ -48,18 +48,24 @@ pub async fn axum_session_runner<B>(
             // If a cookie did have an AxumSessionID then lets check if it still exists in the hash or Database
             // If not make a new Session using the ID.
             if id.1 {
-                if let Some(m) = store.inner.read().await.get(&id.0.to_string()) {
-                    let mut inner = m.lock().await;
+                let mut no_store = true;
 
-                    if inner.expires < Utc::now() || inner.destroy {
-                        // Database Session expired, reuse the ID but drop data.
-                        inner.data = HashMap::new();
+                {
+                    if let Some(m) = store.inner.read().await.get(&id.0.to_string()) {
+                        let mut inner = m.lock().await;
+
+                        if inner.expires < Utc::now() || inner.destroy {
+                            // Database Session expired, reuse the ID but drop data.
+                            inner.data = HashMap::new();
+                        }
+
+                        // Session is extended by making a request with valid ID
+                        inner.expires = Utc::now() + store.config.lifespan;
+                        inner.autoremove = Utc::now() + store.config.memory_lifespan;
+                        no_store = false;
                     }
-
-                    // Session is extended by making a request with valid ID
-                    inner.expires = Utc::now() + store.config.lifespan;
-                    inner.autoremove = Utc::now() + store.config.memory_lifespan;
-                } else {
+                }
+                if no_store {
                     let mut sess = store
                         .load_session(id.0.to_string())
                         .await
