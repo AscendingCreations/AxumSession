@@ -4,7 +4,6 @@ use axum::{
     extract::{FromRequest, RequestParts},
     http::{self, StatusCode},
 };
-use futures::executor::block_on;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -92,12 +91,16 @@ impl AxumSession {
 
     /// Will instantly clear all data from SessionData's Hashmap
     pub async fn clear_all(&self) {
-        self.tap(|sess| {
-            sess.data.clear();
-            let _ = block_on(self.store.clear_store());
-            Some(1)
-        })
-        .await;
+        let store_rg = self.store.inner.read().await;
+
+        let mut sess = store_rg
+            .get(&self.id.0.to_string())
+            .expect("Session data unexpectedly missing")
+            .lock()
+            .await;
+
+        sess.data.clear();
+        self.store.clear_store().await.unwrap()
     }
 
     /// Returns a Count of all Sessions currently within the Session Store.

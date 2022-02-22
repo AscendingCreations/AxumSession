@@ -30,7 +30,7 @@ pub use axum_postgres_sessions_pool::AxumDatabasePool;
 #[cfg(feature = "sqlite")]
 pub use axum_sqlite_sessions_pool::AxumDatabasePool;
 
-pub use config::AxumSessionConfig;
+pub use config::{AxumSessionConfig, SameSite};
 pub use errors::SessionError;
 pub use manager::axum_session_runner;
 pub use session::AxumSession;

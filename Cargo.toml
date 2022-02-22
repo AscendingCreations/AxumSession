@@ -50,3 +50,4 @@ sqlx = { version = "0.5", features = [
     "all-types",
 ] }
 anyhow = "1.0"
+cookie = "0.16.0"

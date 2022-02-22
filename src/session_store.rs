@@ -86,16 +86,12 @@ impl AxumSessionStore {
     }
 
     pub async fn store_session(&self, session: AxumSessionData) -> Result<(), SessionError> {
-        let string = serde_json::to_string(&session)?;
-
         sqlx::query(&self.substitute_table_name(store_query()))
             .bind(session.id.to_string())
-            .bind(&string)
+            .bind(&serde_json::to_string(&session)?)
             .bind(&session.expires.timestamp())
             .execute(self.client.inner())
             .await?;
-
-        println!("Stored data");
 
         Ok(())
     }
