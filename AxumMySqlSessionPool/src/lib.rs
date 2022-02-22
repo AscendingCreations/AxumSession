@@ -3,7 +3,7 @@
 
 use sqlx::{pool::Pool, MySql, MySqlPool};
 
-///Mysql's Pool type for AxumDatabasePool
+/// Mysql's Pool type for AxumDatabasePool
 #[derive(Debug, Clone)]
 pub struct AxumDatabasePool(MySqlPool);
 

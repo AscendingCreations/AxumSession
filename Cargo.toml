@@ -14,9 +14,12 @@ keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
+default = ["nativetls"]
 sqlite = ["sqlx/sqlite", "axum_sqlite_sessions_pool"]
 postgres = ["sqlx/postgres", "axum_postgres_sessions_pool"]
 mysql = ["sqlx/mysql", "axum_mysql_sessions_pool"]
+rustls = ["sqlx/runtime-tokio-rustls"]
+nativetls = ["sqlx/runtime-tokio-native-tls"]
 
 [dependencies]
 axum_mysql_sessions_pool = { version = "0.1", path = "AxumMySqlSessionPool", optional = true }
@@ -42,11 +45,6 @@ tower-http = { version = "0.2", features = ["full"] }
 tower-layer = "0.3"
 tower-service = "0.3"
 tower-cookies = "0.5"
-sqlx = { version = "0.5", features = [
-    "runtime-tokio-rustls",
-    "chrono",
-    "json",
-    "all-types",
-] }
+sqlx = { version = "0.5", features = ["chrono", "json", "all-types"] }
 anyhow = "1.0"
 cookie = "0.16.0"

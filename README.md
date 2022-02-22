@@ -7,6 +7,28 @@ You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this
 [![https://crates.io/crates/axum_database_sessions](https://img.shields.io/badge/crates.io-v0.1.0-blue)](https://crates.io/crates/axum_database_sessions)
 [![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
 
+## Install
+
+Axum Database Sessions uses [`tokio`] runtime along with ['sqlx']; it supports [`native-tls`] and [`rustls`] TLS backends. When adding the dependency, you must chose a runtime feature that is `DatabaseType` and `tls`. You can only choose one database type and one TLS Backend.
+
+[`tokio`]: https://github.com/tokio-rs/tokio
+[`native-tls`]: https://crates.io/crates/native-tls
+[`rustls`]: https://crates.io/crates/rustls
+[`sqlx`]: https://crates.io/crates/sqlx
+
+```toml
+# Cargo.toml
+[dependencies]
+# Postgres + rustls
+axum_database_sessions = { version = "0.1", features = [ "postgres" ] }
+```
+#### Cargo Feature Flags
+`sqlite`: `Sqlx` support for the self-contained [SQLite](https://sqlite.org/) database engine.
+`postgres`: `Sqlx` support for the Postgres database server.
+`mysql`: `Sqlx` support for the MySQL/MariaDB database server.
+`native-tls`: Use the `tokio` runtime and `native-tls` TLS backend.
+`rustls`: Use the `tokio` runtime and `rustls` TLS backend.
+
 # Example
 
 ```rust
