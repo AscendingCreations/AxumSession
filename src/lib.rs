@@ -13,6 +13,7 @@ compile_error!("one of the features ['postgres', 'mysql', 'sqlite'] must be enab
 compile_error!("only one of ['postgres', 'mysql', 'sqlite'] can be enabled");
 
 mod config;
+mod databases;
 mod errors;
 mod manager;
 mod session;
@@ -20,8 +21,8 @@ mod session_data;
 mod session_id;
 mod session_store;
 mod session_timers;
+pub extern crate axum_extra;
 
-mod databases;
 pub use axum_extra::middleware::from_fn;
 pub use config::{AxumSessionConfig, SameSite};
 pub use databases::AxumDatabasePool;
@@ -36,6 +37,8 @@ pub use session_timers::AxumSessionTimers;
 #[macro_export]
 macro_rules! axum_session_runner {
     ($session_store:expr) => {
-        from_fn(move |req, next| axum_session_manager_run(req, next, $session_store.clone()))
+        $crate::from_fn(move |req, next| {
+            $crate::axum_session_manager_run(req, next, $session_store.clone())
+        })
     };
 }
