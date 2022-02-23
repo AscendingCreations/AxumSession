@@ -1,9 +1,6 @@
-[workspace]
-members = ["."]
-
 [package]
 name = "axum_database_sessions"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "Library to Provide a SQLx Database Session management layer. You must also include Tower_cookies in order to use this Library."
 edition = "2021"
@@ -12,10 +9,6 @@ readme = "README.md"
 documentation = "https://docs.rs/axum_database_sessions"
 keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
-
-[package.metadata.docs.rs]
-features = ["postgres", "native-tls"]
-rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 sqlite = ["sqlx/sqlite"]
@@ -45,6 +38,13 @@ tower-http = { version = "0.2", features = ["full"] }
 tower-layer = "0.3"
 tower-service = "0.3"
 tower-cookies = "0.5"
-sqlx = { version = "0.5", features = ["chrono", "json", "all-types"] }
+sqlx = { version = "0.5", default-features = false, features = [
+    "chrono",
+    "json",
+    "all-types",
+] }
 anyhow = "1.0"
 cookie = "0.16.0"
+
+[package.metadata.docs.rs]
+features = ["postgres", "rustls"]
