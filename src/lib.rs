@@ -35,6 +35,7 @@ pub use session_store::AxumSessionStore;
 pub use session_timers::AxumSessionTimers;
 
 #[macro_export]
+/// Used to Setup the Layer for Axum_Sessions.
 macro_rules! axum_session_runner {
     ($session_store:expr) => {
         $crate::from_fn(move |req, next| {

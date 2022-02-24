@@ -112,7 +112,7 @@ impl AxumSession {
         if self.store.is_persistent() {
             self.store.count().await.unwrap_or(0i64)
         } else {
-            self.store.inner.read().await.len()
+            self.store.inner.read().await.len() as i64
         }
     }
 }
