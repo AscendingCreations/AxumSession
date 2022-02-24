@@ -100,11 +100,19 @@ impl AxumSession {
             .await;
 
         sess.data.clear();
-        self.store.clear_store().await.unwrap()
+        if self.store.is_persistent() {
+            self.store.clear_store().await.unwrap();
+        }
     }
 
     /// Returns a Count of all Sessions currently within the Session Store.
+    /// If is_persistant then returns all database saved sessions.
+    /// if not is_persistant returns count of sessions in memory store.
     pub async fn count(&self) -> i64 {
-        self.store.count().await.unwrap_or(0i64)
+        if self.store.is_persistent() {
+            self.store.count().await.unwrap_or(0i64)
+        } else {
+            self.store.inner.read().await.len()
+        }
     }
 }

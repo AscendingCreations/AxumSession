@@ -139,7 +139,7 @@ pub async fn axum_session_manager_run<B>(
     }
 
     // Throttle by database lifespan - e.g. sweep every 6 hours
-    if last_database_sweep <= Utc::now() {
+    if last_database_sweep <= Utc::now() && store.is_persistent() {
         store.cleanup().await.unwrap();
         store.timers.write().await.last_database_expiry_sweep = Utc::now() + store.config.lifespan;
     }
@@ -148,18 +148,20 @@ pub async fn axum_session_manager_run<B>(
     req.extensions_mut().insert(store.clone());
     req.extensions_mut().insert(session.clone());
 
-    if let Some(session_data) = session
-        .store
-        .inner
-        .read()
-        .await
-        .get(&session.id.0.to_string())
-    {
-        session
+    if store.is_persistent() {
+        if let Some(session_data) = session
             .store
-            .store_session(session_data.lock().await.clone())
+            .inner
+            .read()
             .await
-            .unwrap()
+            .get(&session.id.0.to_string())
+        {
+            session
+                .store
+                .store_session(session_data.lock().await.clone())
+                .await
+                .unwrap()
+        }
     }
 
     Ok(next.run(req).await)

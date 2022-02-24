@@ -11,7 +11,7 @@ use tokio::sync::{Mutex, RwLock};
 #[derive(Clone, Debug)]
 pub struct AxumSessionStore {
     //Sqlx Pool Holder for (Sqlite, Postgres, Mysql)
-    pub client: AxumDatabasePool,
+    pub client: Option<AxumDatabasePool>,
     /// locked Hashmap containing UserID and their session data
     pub inner: Arc<RwLock<HashMap<String, Mutex<AxumSessionData>>>>,
     //move this to creation upon layer
@@ -21,7 +21,7 @@ pub struct AxumSessionStore {
 }
 
 impl AxumSessionStore {
-    pub fn new(client: AxumDatabasePool, config: AxumSessionConfig) -> Self {
+    pub fn new(client: Option<AxumDatabasePool>, config: AxumSessionConfig) -> Self {
         Self {
             client,
             inner: Default::default(),
@@ -35,10 +35,16 @@ impl AxumSessionStore {
         }
     }
 
+    pub fn is_persistent(&self) -> bool {
+        self.client.is_some()
+    }
+
     pub async fn migrate(&self) -> Result<(), SessionError> {
-        sqlx::query(&*self.substitute_table_name(databases::migrate_query()))
-            .execute(self.client.inner())
-            .await?;
+        if let Some(client) = self.client {
+            sqlx::query(&*self.substitute_table_name(databases::migrate_query()))
+                .execute(client.inner())
+                .await?;
+        }
 
         Ok(())
     }
@@ -48,18 +54,22 @@ impl AxumSessionStore {
     }
 
     pub async fn cleanup(&self) -> Result<(), SessionError> {
-        sqlx::query(&self.substitute_table_name(databases::cleanup_query()))
-            .bind(Utc::now().timestamp())
-            .execute(self.client.inner())
-            .await?;
+        if let Some(client) = self.client {
+            sqlx::query(&self.substitute_table_name(databases::cleanup_query()))
+                .bind(Utc::now().timestamp())
+                .execute(self.client.inner())
+                .await?;
+        }
 
         Ok(())
     }
 
     pub async fn count(&self) -> Result<i64, SessionError> {
-        let (count,) = sqlx::query_as(&self.substitute_table_name(databases::count_query()))
-            .fetch_one(self.client.inner())
-            .await?;
+        if let Some(client) = self.client {
+            let (count,) = sqlx::query_as(&self.substitute_table_name(databases::count_query()))
+                .fetch_one(self.client.inner())
+                .await?;
+        }
 
         Ok(count)
     }
@@ -68,42 +78,52 @@ impl AxumSessionStore {
         &self,
         cookie_value: String,
     ) -> Result<Option<AxumSessionData>, SessionError> {
-        let result: Option<(String,)> =
-            sqlx::query_as(&self.substitute_table_name(databases::load_query()))
-                .bind(&cookie_value)
-                .bind(Utc::now().timestamp())
-                .fetch_optional(self.client.inner())
-                .await?;
+        if let Some(client) = self.client {
+            let result: Option<(String,)> =
+                sqlx::query_as(&self.substitute_table_name(databases::load_query()))
+                    .bind(&cookie_value)
+                    .bind(Utc::now().timestamp())
+                    .fetch_optional(self.client.inner())
+                    .await?;
 
-        Ok(result
-            .map(|(session,)| serde_json::from_str(&session))
-            .transpose()?)
+            Ok(result
+                .map(|(session,)| serde_json::from_str(&session))
+                .transpose()?)
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn store_session(&self, session: AxumSessionData) -> Result<(), SessionError> {
-        sqlx::query(&self.substitute_table_name(databases::store_query()))
-            .bind(session.id.to_string())
-            .bind(&serde_json::to_string(&session)?)
-            .bind(&session.expires.timestamp())
-            .execute(self.client.inner())
-            .await?;
+        if let Some(client) = self.client {
+            sqlx::query(&self.substitute_table_name(databases::store_query()))
+                .bind(session.id.to_string())
+                .bind(&serde_json::to_string(&session)?)
+                .bind(&session.expires.timestamp())
+                .execute(self.client.inner())
+                .await?;
+        }
 
         Ok(())
     }
 
     pub async fn destroy_session(&self, id: &str) -> Result<(), SessionError> {
-        sqlx::query(&self.substitute_table_name(databases::destroy_query()))
-            .bind(&id)
-            .execute(self.client.inner())
-            .await?;
+        if let Some(client) = self.client {
+            sqlx::query(&self.substitute_table_name(databases::destroy_query()))
+                .bind(&id)
+                .execute(self.client.inner())
+                .await?;
+        }
 
         Ok(())
     }
 
     pub async fn clear_store(&self) -> Result<(), SessionError> {
-        sqlx::query(&self.substitute_table_name(databases::clear_query()))
-            .execute(self.client.inner())
-            .await?;
+        if let Some(client) = self.client {
+            sqlx::query(&self.substitute_table_name(databases::clear_query()))
+                .execute(self.client.inner())
+                .await?;
+        }
 
         Ok(())
     }
