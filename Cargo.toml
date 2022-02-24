@@ -1,6 +1,6 @@
 [package]
 name = "axum_database_sessions"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "Library to Provide a SQLx Database Session management layer. You must also include Tower_cookies in order to use this Library."
 edition = "2021"
@@ -19,7 +19,6 @@ rustls = ["sqlx/runtime-tokio-rustls"]
 native-tls = ["sqlx/runtime-tokio-native-tls"]
 
 [dependencies]
-axum-macros = "0.1.1"
 axum-core = "0.1.2"
 axum-extra = "0.1.2"
 serde = "1.0"
