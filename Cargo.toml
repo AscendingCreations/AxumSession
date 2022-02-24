@@ -11,6 +11,7 @@ keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
+default = ["postgres", "rustls"]
 sqlite = ["sqlx/sqlite"]
 postgres = ["sqlx/postgres"]
 mysql = ["sqlx/mysql"]
@@ -18,7 +19,8 @@ rustls = ["sqlx/runtime-tokio-rustls"]
 native-tls = ["sqlx/runtime-tokio-native-tls"]
 
 [dependencies]
-axum = "0.4"
+axum-macros = "0.1.1"
+axum-core = "0.1.2"
 axum-extra = "0.1.2"
 serde = "1.0"
 serde_json = "1.0"

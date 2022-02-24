@@ -1,10 +1,8 @@
 use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionID, AxumSessionStore};
-use axum::{
-    http::{Request, StatusCode},
-    response::IntoResponse,
-};
+use axum_core::response::IntoResponse;
 use axum_extra::middleware::Next;
 use chrono::{Duration, Utc};
+use http::{self, Request, StatusCode};
 use std::collections::HashMap;
 use tokio::sync::Mutex;
 use tower_cookies::{Cookie, Cookies};

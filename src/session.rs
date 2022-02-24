@@ -1,9 +1,7 @@
 use crate::{AxumSessionData, AxumSessionID, AxumSessionStore};
-use axum::{
-    async_trait,
-    extract::{FromRequest, RequestParts},
-    http::{self, StatusCode},
-};
+use async_trait::async_trait;
+use axum_core::extract::{FromRequest, RequestParts};
+use http::{self, StatusCode};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
