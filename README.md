@@ -4,7 +4,7 @@ Library to Provide a Sqlx Database Session management layer. You must also inclu
 
 You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this library.
 
-[![https://crates.io/crates/axum_database_sessions](https://img.shields.io/badge/crates.io-v0.2.1-blue)](https://crates.io/crates/axum_database_sessions)
+[![https://crates.io/crates/axum_database_sessions](https://img.shields.io/badge/crates.io-v0.2.2-blue)](https://crates.io/crates/axum_database_sessions)
 [![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
 
 ## Install
