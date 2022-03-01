@@ -17,49 +17,34 @@ impl From<Pool<MySql>> for AxumDatabasePool {
     }
 }
 
-pub fn migrate_query() -> String {
-    String::from(
-        r#"
-            CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
-                `id` VARCHAR(128) NOT NULL,
-                `expires` INTEGER NULL,
-                `session` TEXT NOT NULL,
-                PRIMARY KEY (`id`),
-                KEY `expires` (`expires`)
-            )
-            ENGINE=InnoDB
-            DEFAULT CHARSET=utf8mb4
-        "#,
-    )
-}
+pub const MIGRATE_QUERY: &str = r#"
+        CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
+            `id` VARCHAR(128) NOT NULL,
+            `expires` INTEGER NULL,
+            `session` TEXT NOT NULL,
+            PRIMARY KEY (`id`),
+            KEY `expires` (`expires`)
+        )
+        ENGINE=InnoDB
+        DEFAULT CHARSET=utf8mb4
+    "#;
 
-pub fn cleanup_query() -> String {
-    String::from(r#"DELETE FROM %%TABLE_NAME%% WHERE expires < ?"#)
-}
+pub const CLEANUP_QUERY: &str = r#"DELETE FROM %%TABLE_NAME%% WHERE expires < ?"#;
 
-pub fn count_query() -> String {
-    String::from(r#"SELECT COUNT(*) FROM %%TABLE_NAME%%"#)
-}
+pub const COUNT_QUERY: &str = r#"SELECT COUNT(*) FROM %%TABLE_NAME%%"#;
 
-pub fn load_query() -> String {
-    String::from(
-        r#"SELECT session FROM %%TABLE_NAME%% WHERE id = ? AND (expires IS NULL OR expires > ?)"#,
-    )
-}
-pub fn store_query() -> String {
-    String::from(
-        r#"
+pub const LOAD_QUERY: &str = r#"
+        SELECT session FROM %%TABLE_NAME%%
+        WHERE id = ? AND (expires IS NULL OR expires > ?)
+    "#;
+
+pub const STORE_QUERY: &str = r#"
         INSERT INTO %%TABLE_NAME%%
             (id, session, expires) VALUES(?, ?, ?)
         ON DUPLICATE KEY UPDATE
             expires = VALUES(expires),
             session = VALUES(session)
-        "#,
-    )
-}
-pub fn destroy_query() -> String {
-    String::from(r#"DELETE FROM %%TABLE_NAME%% WHERE id = ?"#)
-}
-pub fn clear_query() -> String {
-    String::from(r#"TRUNCATE %%TABLE_NAME%%"#)
-}
+    "#;
+pub const DESTROY_QUERY: &str = r#"DELETE FROM %%TABLE_NAME%% WHERE id = ?"#;
+
+pub const CLEAR_QUERY: &str = r#"TRUNCATE %%TABLE_NAME%%"#;

@@ -41,24 +41,24 @@ impl AxumSessionStore {
 
     pub async fn migrate(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(&*self.substitute_table_name(databases::migrate_query()))
-                .execute(client.inner())
-                .await?;
+            sqlx::query(
+                &databases::MIGRATE_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
+            )
+            .execute(client.inner())
+            .await?;
         }
 
         Ok(())
     }
 
-    fn substitute_table_name(&self, query: String) -> String {
-        query.replace("%%TABLE_NAME%%", &self.config.table_name)
-    }
-
     pub async fn cleanup(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(&self.substitute_table_name(databases::cleanup_query()))
-                .bind(Utc::now().timestamp())
-                .execute(client.inner())
-                .await?;
+            sqlx::query(
+                &databases::CLEANUP_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
+            )
+            .bind(Utc::now().timestamp())
+            .execute(client.inner())
+            .await?;
         }
 
         Ok(())
@@ -66,9 +66,11 @@ impl AxumSessionStore {
 
     pub async fn count(&self) -> Result<i64, SessionError> {
         if let Some(client) = &self.client {
-            let (count,) = sqlx::query_as(&self.substitute_table_name(databases::count_query()))
-                .fetch_one(client.inner())
-                .await?;
+            let (count,) = sqlx::query_as(
+                &databases::COUNT_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
+            )
+            .fetch_one(client.inner())
+            .await?;
 
             return Ok(count);
         }
@@ -81,12 +83,13 @@ impl AxumSessionStore {
         cookie_value: String,
     ) -> Result<Option<AxumSessionData>, SessionError> {
         if let Some(client) = &self.client {
-            let result: Option<(String,)> =
-                sqlx::query_as(&self.substitute_table_name(databases::load_query()))
-                    .bind(&cookie_value)
-                    .bind(Utc::now().timestamp())
-                    .fetch_optional(client.inner())
-                    .await?;
+            let result: Option<(String,)> = sqlx::query_as(
+                &databases::LOAD_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
+            )
+            .bind(&cookie_value)
+            .bind(Utc::now().timestamp())
+            .fetch_optional(client.inner())
+            .await?;
 
             Ok(result
                 .map(|(session,)| serde_json::from_str(&session))
@@ -98,7 +101,7 @@ impl AxumSessionStore {
 
     pub async fn store_session(&self, session: AxumSessionData) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(&self.substitute_table_name(databases::store_query()))
+            sqlx::query(&databases::STORE_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name))
                 .bind(session.id.to_string())
                 .bind(&serde_json::to_string(&session)?)
                 .bind(&session.expires.timestamp())
@@ -111,10 +114,12 @@ impl AxumSessionStore {
 
     pub async fn destroy_session(&self, id: &str) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(&self.substitute_table_name(databases::destroy_query()))
-                .bind(&id)
-                .execute(client.inner())
-                .await?;
+            sqlx::query(
+                &databases::DESTROY_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
+            )
+            .bind(&id)
+            .execute(client.inner())
+            .await?;
         }
 
         Ok(())
@@ -122,7 +127,7 @@ impl AxumSessionStore {
 
     pub async fn clear_store(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(&self.substitute_table_name(databases::clear_query()))
+            sqlx::query(&databases::CLEAR_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name))
                 .execute(client.inner())
                 .await?;
         }
