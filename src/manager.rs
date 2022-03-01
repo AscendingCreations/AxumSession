@@ -146,6 +146,9 @@ pub async fn axum_session_manager_run<B>(
     req.extensions_mut().insert(store.clone());
     req.extensions_mut().insert(session.clone());
 
+    let response = next.run(req).await;
+
+    //run this After a response has returned so we save the most updated data to sql.
     if store.is_persistent() {
         if let Some(session_data) = session
             .store
@@ -162,7 +165,7 @@ pub async fn axum_session_manager_run<B>(
         }
     }
 
-    Ok(next.run(req).await)
+    Ok(response)
 }
 
 fn create_cookie<'a>(config: AxumSessionConfig, value: String) -> Cookie<'a> {
