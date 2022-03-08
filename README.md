@@ -32,7 +32,7 @@ axum_database_sessions = { version = "0.2", features = [ "postgres", "rustls"] }
 
 # Example
 
-```rust
+```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, axum_session_runner};
@@ -43,11 +43,10 @@ use axum::{
 
 #[tokio::main]
 async fn main() {
-    # async {
+
     let poll = connect_to_database().await.unwrap();
 
     let session_config = AxumSessionConfig::default()
-        .with_database("test")
         .with_table_name("test_table");
 
     let session_store = AxumSessionStore::new(Some(poll.clone().into()), session_config);
@@ -65,7 +64,6 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
-    # };
 }
 
 async fn greet(session: AxumSession) -> String {
@@ -78,14 +76,14 @@ async fn greet(session: AxumSession) -> String {
 
 async fn connect_to_database() -> anyhow::Result<sqlx::Pool<sqlx::Postgres>> {
     // ...
-    # unimplemented!()
+    unimplemented!()
 }
 ```
 
 To use Axum_database_session in non_persistant mode Set the client to None.
 # Example
 
-```rust
+```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, axum_session_runner};
@@ -96,9 +94,7 @@ use axum::{
 
 #[tokio::main]
 async fn main() {
-    # async {
     let session_config = AxumSessionConfig::default()
-        .with_database("test")
         .with_table_name("test_table");
 
     let session_store = AxumSessionStore::new(None, session_config);
@@ -116,6 +112,14 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
-    # };
 }
+
+async fn greet(session: AxumSession) -> String {
+    let mut count: usize = session.get("count").await.unwrap_or(0);
+    count += 1;
+    session.set("count", count).await;
+
+    count.to_string()
+}
+
 ```
