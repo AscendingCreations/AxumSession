@@ -42,13 +42,13 @@ impl AxumSession {
     ) -> Option<T> {
         let store_rg = self.store.inner.read().await;
 
-        let mut instance = store_rg
-            .get(&self.id.0.to_string())
-            .expect("Session data unexpectedly missing")
-            .lock()
-            .await;
-
-        func(&mut instance)
+        if let Some(v) = store_rg.get(&self.id.0.to_string()) {
+            let mut instance = v.lock().await;
+            func(&mut instance)
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+            None
+        }
     }
 
     ///Sets the Entire Session to be Cleaned on next load.
