@@ -87,17 +87,16 @@ impl AxumSession {
         self.tap(|sess| sess.data.remove(key)).await;
     }
 
-    /// Will instantly clear all data from SessionData's Hashmap
+    /// Will instantly clear all data from SessionData's Hashmap and database
     pub async fn clear_all(&self) {
         let store_rg = self.store.inner.read().await;
 
-        let mut sess = store_rg
-            .get(&self.id.0.to_string())
-            .expect("Session data unexpectedly missing")
-            .lock()
-            .await;
+        if let Some(v) = store_rg.get(&self.id.0.to_string()) {
+            let mut instance = v.lock().await;
 
-        sess.data.clear();
+            instance.data.clear();
+        }
+
         if self.store.is_persistent() {
             self.store.clear_store().await.unwrap();
         }

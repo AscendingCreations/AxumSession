@@ -27,7 +27,13 @@ pub async fn axum_session_manager_run<B>(
         id: {
             let id = if let Some(cookie) = cookies.get(&store.config.cookie_name) {
                 (
-                    AxumSessionID(Uuid::parse_str(cookie.value()).expect("`Could not parse Uuid")),
+                    AxumSessionID(match Uuid::parse_str(cookie.value()) {
+                        Ok(v) => v,
+                        Err(_) => {
+                            tracing::warn!("Uuid \" {} \" is invalid", cookie.value());
+                            return Err(StatusCode::UNAUTHORIZED);
+                        }
+                    }),
                     true,
                 )
             } else {
