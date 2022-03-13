@@ -53,9 +53,9 @@ async fn main() {
 
     // build our application with some routes
     let app = Router::new()
-        .route("/greet/:name", get(greet))
-        .layer(tower_cookies::CookieManagerLayer::new())
-        .layer(axum_session_runner!(session_store));
+        .route("/greet", get(greet))
+        .layer(axum_session_runner!(session_store))
+        .layer(tower_cookies::CookieManagerLayer::new());
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -101,9 +101,9 @@ async fn main() {
 
     // build our application with some routes
     let app = Router::new()
-        .route("/greet/:name", get(greet))
-        .layer(tower_cookies::CookieManagerLayer::new())
-        .layer(axum_session_runner!(session_store));
+        .route("/greet", get(greet))
+        .layer(axum_session_runner!(session_store))
+        .layer(tower_cookies::CookieManagerLayer::new());
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
