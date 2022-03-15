@@ -1,13 +1,14 @@
 use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionID, AxumSessionStore};
 use axum_core::{
-    body,
+    body::{self, BoxBody},
     response::{IntoResponse, Response},
     BoxError,
 };
+use bytes::Bytes;
 use chrono::{Duration, Utc};
 use futures::future::BoxFuture;
 use http::{self, Request, StatusCode};
-use http_body::Body as HttpBody;
+use http_body::{Body as HttpBody, Full};
 use pin_project_lite::pin_project;
 use std::collections::HashMap;
 use std::{
@@ -29,8 +30,8 @@ use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AxumSessionService<S> {
-    session_store: AxumSessionStore,
-    inner: S,
+    pub(crate) session_store: AxumSessionStore,
+    pub(crate) inner: S,
 }
 
 impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for AxumSessionService<S>
@@ -40,10 +41,12 @@ where
         + Send
         + 'static,
     S::Future: Send + 'static,
+    ReqBody: Send + 'static,
     Infallible: From<<S as Service<Request<ReqBody>>>::Error>,
-    ResBody: HttpBody + Send + 'static,
+    ResBody: HttpBody<Data = Bytes> + Send + 'static,
+    ResBody::Error: Into<BoxError>,
 {
-    type Response = S::Response;
+    type Response = Response<BoxBody>;
     type Error = Infallible;
     type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
@@ -51,19 +54,26 @@ where
         self.inner.poll_ready(cx)
     }
 
-    fn call(&mut self, req: Request<ReqBody>) -> Self::Future {
-        let future = self.inner.call(req);
+    fn call(&mut self, mut req: Request<ReqBody>) -> Self::Future {
         let store = self.session_store.clone();
+        let not_ready_inner = self.inner.clone();
+        let ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
+
+        let mut inner = ServiceBuilder::new()
+            .boxed_clone()
+            .map_response_body(body::boxed)
+            .service(ready_inner);
 
         Box::pin(async move {
             let config = store.config.clone();
+
             // We Extract the Tower_Cookies Extensions Variable so we can add Cookies to it. Some reason can only be done here..?
             let cookies = match req.extensions().get::<Cookies>() {
                 Some(cookies) => cookies,
                 None => {
                     return Ok(Response::builder()
                         .status(StatusCode::UNAUTHORIZED)
-                        .body("401 Unauthorized")
+                        .body(body::boxed(Full::from("401 Unauthorized")))
                         .unwrap())
                 }
             };
@@ -78,7 +88,7 @@ where
                                     tracing::warn!("Uuid \" {} \" is invalid", cookie.value());
                                     return Ok(Response::builder()
                                         .status(StatusCode::UNAUTHORIZED)
-                                        .body("401 Unauthorized")
+                                        .body(body::boxed(Full::from("401 Unauthorized")))
                                         .unwrap());
                                 }
                             }),
@@ -202,7 +212,7 @@ where
             req.extensions_mut().insert(store.clone());
             req.extensions_mut().insert(session.clone());
 
-            let response = future.await?;
+            let response = inner.call(req).await?.map(body::boxed);
 
             //run this After a response has returned so we save the most updated data to sql.
             if store.is_persistent() {
