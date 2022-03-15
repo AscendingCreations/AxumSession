@@ -37,7 +37,10 @@ pub use session_timers::AxumSessionTimers;
 #[macro_export]
 /// Used to Setup the Layer for Axum_Sessions.
 /// For backwards compatibility.
-/// TODO: Remove this later on.
+#[deprecated(
+    since = "0.3.0",
+    note = "Macro was only needed when from_fn was in use in the library. Use AxumSessionLayer instead. This will be removed in a later version"
+)]
 macro_rules! axum_session_runner {
     ($session_store:expr) => {
         $crate::AxumSessionLayer::new($session_store.clone())

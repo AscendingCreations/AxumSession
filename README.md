@@ -35,7 +35,7 @@ axum_database_sessions = { version = "0.2", features = [ "postgres", "rustls"] }
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, axum_session_runner};
+use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
 use axum::{
     Router,
     routing::get,
@@ -54,7 +54,7 @@ async fn main() {
     // build our application with some routes
     let app = Router::new()
         .route("/greet", get(greet))
-        .layer(axum_session_runner!(session_store))
+        .layer(AxumSessionLayer::new(session_store))
         .layer(tower_cookies::CookieManagerLayer::new());
 
     // run it
@@ -86,7 +86,7 @@ To use Axum_database_session in non_persistant mode Set the client to None.
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, axum_session_runner};
+use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
 use axum::{
     Router,
     routing::get,
@@ -102,7 +102,7 @@ async fn main() {
     // build our application with some routes
     let app = Router::new()
         .route("/greet", get(greet))
-        .layer(axum_session_runner!(session_store))
+        .layer(AxumSessionLayer::new(session_store))
         .layer(tower_cookies::CookieManagerLayer::new());
 
     // run it

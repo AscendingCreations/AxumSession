@@ -17,9 +17,7 @@ use std::{
     task::{Context, Poll},
 };
 use tokio::sync::Mutex;
-use tower::ServiceBuilder;
 use tower_cookies::{Cookie, Cookies};
-use tower_http::ServiceBuilderExt;
 use tower_service::Service;
 use uuid::Uuid;
 
@@ -53,11 +51,6 @@ where
         let store = self.session_store.clone();
         let not_ready_inner = self.inner.clone();
         let mut ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
-
-        /*let mut inner = ServiceBuilder::new()
-        .boxed_clone()
-        .map_response_body(body::boxed)
-        .service(ready_inner);*/
 
         Box::pin(async move {
             let config = store.config.clone();
