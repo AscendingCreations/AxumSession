@@ -52,12 +52,12 @@ where
     fn call(&mut self, mut req: Request<ReqBody>) -> Self::Future {
         let store = self.session_store.clone();
         let not_ready_inner = self.inner.clone();
-        let ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
+        let mut ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
 
-        let mut inner = ServiceBuilder::new()
-            .boxed_clone()
-            .map_response_body(body::boxed)
-            .service(ready_inner);
+        /*let mut inner = ServiceBuilder::new()
+        .boxed_clone()
+        .map_response_body(body::boxed)
+        .service(ready_inner);*/
 
         Box::pin(async move {
             let config = store.config.clone();
@@ -207,7 +207,7 @@ where
             req.extensions_mut().insert(store.clone());
             req.extensions_mut().insert(session.clone());
 
-            let response = inner.call(req).await?.map(body::boxed);
+            let response = ready_inner.call(req).await?.map(body::boxed);
 
             //run this After a response has returned so we save the most updated data to sql.
             if store.is_persistent() {
