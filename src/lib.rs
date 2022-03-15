@@ -40,6 +40,6 @@ pub use session_timers::AxumSessionTimers;
 /// TODO: Remove this later on.
 macro_rules! axum_session_runner {
     ($session_store:expr) => {
-        AxumSessionLayer::new($session_store.clone())
+        $crate::AxumSessionLayer::new($session_store.clone())
     };
 }
