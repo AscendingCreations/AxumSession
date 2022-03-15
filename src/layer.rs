@@ -1,25 +1,5 @@
 use crate::{AxumSessionService, AxumSessionStore};
-use axum_core::{
-    body,
-    response::{IntoResponse, Response},
-    BoxError,
-};
-use http::Request;
-use http::{self, StatusCode};
-use http_body::Body as HttpBody;
-use pin_project_lite::pin_project;
-use std::{
-    any::type_name,
-    convert::Infallible,
-    fmt,
-    future::Future,
-    pin::Pin,
-    task::{Context, Poll},
-};
-use tower::{util::BoxCloneService, ServiceBuilder};
-use tower_http::ServiceBuilderExt;
 use tower_layer::Layer;
-use tower_service::Service;
 
 #[derive(Clone)]
 pub struct AxumSessionLayer {

@@ -1,7 +1,7 @@
 use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionID, AxumSessionStore};
 use axum_core::{
     body::{self, BoxBody},
-    response::{IntoResponse, Response},
+    response::Response,
     BoxError,
 };
 use bytes::Bytes;
@@ -9,22 +9,17 @@ use chrono::{Duration, Utc};
 use futures::future::BoxFuture;
 use http::{self, Request, StatusCode};
 use http_body::{Body as HttpBody, Full};
-use pin_project_lite::pin_project;
 use std::collections::HashMap;
 use std::{
-    any::type_name,
     boxed::Box,
     convert::Infallible,
     fmt,
-    future::Future,
-    pin::Pin,
     task::{Context, Poll},
 };
 use tokio::sync::Mutex;
-use tower::{util::BoxCloneService, ServiceBuilder};
+use tower::ServiceBuilder;
 use tower_cookies::{Cookie, Cookies};
 use tower_http::ServiceBuilderExt;
-use tower_layer::Layer;
 use tower_service::Service;
 use uuid::Uuid;
 
