@@ -33,8 +33,6 @@ rand = "0.8"
 futures-util = "0.3"
 http = "0.2"
 pin-project-lite = "0.2"
-tower = { version = "0.4", default-features = false, features = ["util"] }
-tower-http = { version = "0.2", features = ["full"] }
 tower-layer = "0.3"
 tower-service = "0.3"
 tower-cookies = "0.5"
