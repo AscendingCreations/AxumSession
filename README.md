@@ -4,7 +4,7 @@ Library to Provide a Sqlx Database Session management layer. You must also inclu
 
 You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this library.
 
-[![https://crates.io/crates/axum_database_sessions](https://img.shields.io/badge/crates.io-v0.2.3-blue)](https://crates.io/crates/axum_database_sessions)
+[![https://crates.io/crates/axum_database_sessions](https://img.shields.io/badge/crates.io-v0.3.0-blue)](https://crates.io/crates/axum_database_sessions)
 [![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
 
 ## Install
@@ -20,7 +20,7 @@ Axum Database Sessions uses [`tokio`] runtime along with ['sqlx']; it supports [
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_database_sessions = { version = "0.2", features = [ "postgres", "rustls"] }
+axum_database_sessions = { version = "0.3", features = [ "postgres", "rustls"] }
 ```
 
 #### Cargo Feature Flags
@@ -35,7 +35,7 @@ axum_database_sessions = { version = "0.2", features = [ "postgres", "rustls"] }
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, axum_session_runner};
+use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
 use axum::{
     Router,
     routing::get,
@@ -54,7 +54,7 @@ async fn main() {
     // build our application with some routes
     let app = Router::new()
         .route("/greet", get(greet))
-        .layer(axum_session_runner!(session_store))
+        .layer(AxumSessionLayer::new(session_store))
         .layer(tower_cookies::CookieManagerLayer::new());
 
     // run it
@@ -86,7 +86,7 @@ To use Axum_database_session in non_persistant mode Set the client to None.
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, axum_session_runner};
+use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
 use axum::{
     Router,
     routing::get,
@@ -102,7 +102,7 @@ async fn main() {
     // build our application with some routes
     let app = Router::new()
         .route("/greet", get(greet))
-        .layer(axum_session_runner!(session_store))
+        .layer(AxumSessionLayer::new(session_store))
         .layer(tower_cookies::CookieManagerLayer::new());
 
     // run it
