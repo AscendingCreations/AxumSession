@@ -23,8 +23,7 @@ where
     type Rejection = (http::StatusCode, &'static str);
 
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
-        let extensions = req.extensions();
-        extensions.get::<AxumSession>().cloned().ok_or((
+        req.extensions().get::<AxumSession>().cloned().ok_or((
             StatusCode::INTERNAL_SERVER_ERROR,
             "Can't extract AxumSession. Is `AxumSessionLayer` enabled?",
         ))
