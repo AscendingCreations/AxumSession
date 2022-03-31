@@ -1,6 +1,6 @@
 # Axum_database_Sessions
 
-Library to Provide a Sqlx Database Session management layer. You must also include Tower_cookies in order to use these Library.
+Library to Provide a Sqlx Database Session management layer..
 
 You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this library.
 
@@ -54,8 +54,7 @@ async fn main() {
     // build our application with some routes
     let app = Router::new()
         .route("/greet", get(greet))
-        .layer(AxumSessionLayer::new(session_store))
-        .layer(tower_cookies::CookieManagerLayer::new());
+        .layer(AxumSessionLayer::new(session_store));
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -102,8 +101,7 @@ async fn main() {
     // build our application with some routes
     let app = Router::new()
         .route("/greet", get(greet))
-        .layer(AxumSessionLayer::new(session_store))
-        .layer(tower_cookies::CookieManagerLayer::new());
+        .layer(AxumSessionLayer::new(session_store));
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
