@@ -4,11 +4,15 @@ use axum_core::{
     response::Response,
     BoxError,
 };
-use axum_extra::extract::cookie::{Cookie, CookieJar};
 use bytes::Bytes;
 use chrono::{Duration, Utc};
+use cookie::{Cookie, CookieJar};
 use futures::future::BoxFuture;
-use http::{self, Request, StatusCode};
+use http::{
+    self,
+    header::{COOKIE, SET_COOKIE},
+    HeaderMap, Request, StatusCode,
+};
 use http_body::{Body as HttpBody, Full};
 use std::collections::HashMap;
 use std::{
@@ -54,17 +58,7 @@ where
 
         Box::pin(async move {
             let config = store.config.clone();
-
-            // We Extract the Tower_Cookies Extensions Variable so we can add Cookies to it. Some reason can only be done here..?
-            let cookies = match req.extensions().get::<CookieJar>() {
-                Some(cookies) => cookies,
-                None => {
-                    return Ok(Response::builder()
-                        .status(StatusCode::UNAUTHORIZED)
-                        .body(body::boxed(Full::from("401 Unauthorized")))
-                        .unwrap())
-                }
-            };
+            let mut cookies = get_cookies(&req);
 
             let session = AxumSession {
                 id: {
@@ -199,6 +193,7 @@ where
             //Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage
             req.extensions_mut().insert(store.clone());
             req.extensions_mut().insert(session.clone());
+            set_cookies(cookies, req.headers_mut());
 
             let response = ready_inner.call(req).await?.map(body::boxed);
 
@@ -255,4 +250,29 @@ fn create_cookie<'a>(config: AxumSessionConfig, value: String) -> Cookie<'a> {
     }
 
     cookie_builder.finish()
+}
+
+fn get_cookies<ReqBody>(req: &Request<ReqBody>) -> CookieJar {
+    let mut jar = CookieJar::new();
+    let cookie_iter = req
+        .headers()
+        .get_all(COOKIE)
+        .into_iter()
+        .filter_map(|value| value.to_str().ok())
+        .flat_map(|value| value.split(';'))
+        .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok());
+
+    for cookie in cookie_iter {
+        jar.add_original(cookie);
+    }
+
+    jar
+}
+
+fn set_cookies(jar: CookieJar, headers: &mut HeaderMap) {
+    for cookie in jar.delta() {
+        if let Ok(header_value) = cookie.encoded().to_string().parse() {
+            headers.append(SET_COOKIE, header_value);
+        }
+    }
 }
