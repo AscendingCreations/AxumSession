@@ -4,6 +4,7 @@ use axum_core::{
     response::Response,
     BoxError,
 };
+use axum_extra::extract::cookie::{Cookie, CookieJar};
 use bytes::Bytes;
 use chrono::{Duration, Utc};
 use futures::future::BoxFuture;
@@ -17,7 +18,6 @@ use std::{
     task::{Context, Poll},
 };
 use tokio::sync::Mutex;
-use tower_cookies::{Cookie, Cookies};
 use tower_service::Service;
 use uuid::Uuid;
 
@@ -56,7 +56,7 @@ where
             let config = store.config.clone();
 
             // We Extract the Tower_Cookies Extensions Variable so we can add Cookies to it. Some reason can only be done here..?
-            let cookies = match req.extensions().get::<Cookies>() {
+            let cookies = match req.extensions().get::<CookieJar>() {
                 Some(cookies) => cookies,
                 None => {
                     return Ok(Response::builder()

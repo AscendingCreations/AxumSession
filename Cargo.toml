@@ -1,6 +1,6 @@
 [package]
 name = "axum_database_sessions"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "Library to Provide a SQLx Database Session management layer. You must also include Tower_cookies in order to use this Library."
 edition = "2021"
@@ -20,6 +20,7 @@ native-tls = ["sqlx/runtime-tokio-native-tls"]
 
 [dependencies]
 axum-core = "0.2"
+axum-extra = { version = "0.2", features = ["cookie"] }
 serde = "1.0"
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["clock", "serde", "std"] }
@@ -33,13 +34,11 @@ rand = "0.8"
 http = "0.2"
 tower-layer = "0.3"
 tower-service = "0.3"
-tower-cookies = "0.5"
 sqlx = { version = "0.5", default-features = false, features = [
     "chrono",
     "json",
     "all-types",
 ] }
-cookie = "0.16"
 futures = "0.3"
 bytes = "1.1"
 
