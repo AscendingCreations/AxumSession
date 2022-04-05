@@ -193,9 +193,8 @@ where
             //Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage
             req.extensions_mut().insert(store.clone());
             req.extensions_mut().insert(session.clone());
-            set_cookies(cookies, req.headers_mut());
 
-            let response = ready_inner.call(req).await?.map(body::boxed);
+            let mut response = ready_inner.call(req).await?.map(body::boxed);
 
             //run this After a response has returned so we save the most updated data to sql.
             if store.is_persistent() {
@@ -213,6 +212,8 @@ where
                         .unwrap()
                 }
             }
+
+            set_cookies(cookies, response.headers_mut());
 
             Ok(response)
         })
