@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - None.
 
-# 1.0.1 (31. March, 2022)
+# 1.0.1 (4. April, 2022)
 
 - **fixed:** Removed need for Tower-cookies and implemented cookie handling.
 
