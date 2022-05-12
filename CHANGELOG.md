@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - None.
 
+# 1.1.0 (12. May, 2022)
+
+- **added:** Long Term Session Switch. Useful for Remember Me.
+
 # 1.0.1 (4. April, 2022)
 
 - **fixed:** Removed need for Tower-cookies and implemented cookie handling.
