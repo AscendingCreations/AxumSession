@@ -31,12 +31,12 @@ pub struct AxumSessionConfig {
     /// this works fine since the data can stay in the database till its needed
     /// if not yet expired.
     pub(crate) memory_lifespan: Duration,
+    /// This is the long term lifespan for things like Remember Me.
+    pub(crate) max_lifespan: Duration,
 }
 
 impl AxumSessionConfig {
     /// Set session database pools max connections limit.
-    ///
-    /// Call on the fairing before passing it to `rocket.attach()`
     #[must_use]
     pub fn set_max_connections(mut self, max: u32) -> Self {
         let max = std::cmp::max(max, 1);
@@ -45,17 +45,20 @@ impl AxumSessionConfig {
     }
 
     /// Set session lifetime (expiration time) within database storage.
-    ///
-    /// Call on the fairing before passing it to `rocket.attach()`
     #[must_use]
     pub fn with_lifetime(mut self, time: Duration) -> Self {
         self.lifespan = time;
         self
     }
 
+    /// Set session's long term lifetime (expiration time) within database storage.
+    #[must_use]
+    pub fn with_max_lifetime(mut self, time: Duration) -> Self {
+        self.max_lifespan = time;
+        self
+    }
+
     /// Set session lifetime (expiration time) within Memory storage.
-    ///
-    /// Call on the fairing before passing it to `rocket.attach()`
     #[must_use]
     pub fn with_memory_lifetime(mut self, time: Duration) -> Self {
         self.memory_lifespan = time;
@@ -63,7 +66,7 @@ impl AxumSessionConfig {
     }
 
     /// Set session cookie max_age (expiration time) in browser.
-    ///
+    /// Set this to be the duration of max_lifespan or longer.
     #[must_use]
     pub fn with_max_age(mut self, time: Option<Duration>) -> Self {
         self.cookie_max_age = time;
@@ -72,7 +75,6 @@ impl AxumSessionConfig {
 
     /// Set session cookie http_only flag.
     /// If set javascript has no access to the cookie.
-    ///
     #[must_use]
     pub fn with_http_only(mut self, is_set: bool) -> Self {
         self.cookie_http_only = is_set;
@@ -81,7 +83,6 @@ impl AxumSessionConfig {
 
     /// Set session cookie secure flag.
     /// If set the cookie will only be sent over https.
-    ///
     #[must_use]
     pub fn with_secure(mut self, is_set: bool) -> Self {
         self.cookie_secure = is_set;
@@ -89,7 +90,6 @@ impl AxumSessionConfig {
     }
 
     /// Set session cookie domain name
-    ///
     #[must_use]
     pub fn with_cookie_domain(mut self, name: Option<String>) -> Self {
         self.cookie_domain = name;
@@ -98,7 +98,6 @@ impl AxumSessionConfig {
 
     /// Set session cookie Same Site Setting for Cross-Site restrictions
     /// Only works if Domain is also set.
-    ///
     #[must_use]
     pub fn with_cookie_same_site(mut self, same_site: SameSite) -> Self {
         self.cookie_same_site = same_site;
@@ -106,8 +105,6 @@ impl AxumSessionConfig {
     }
 
     /// Set session cookie name
-    ///
-    /// Call on the fairing before passing it to `rocket.attach()`
     #[must_use]
     pub fn with_cookie_name(mut self, name: &str) -> Self {
         self.cookie_name = name.into();
@@ -115,8 +112,6 @@ impl AxumSessionConfig {
     }
 
     /// Set session cookie length
-    ///
-    /// Call on the fairing before passing it to `rocket.attach()`
     #[must_use]
     pub fn with_cookie_len(mut self, length: usize) -> Self {
         self.cookie_len = length;
@@ -124,8 +119,6 @@ impl AxumSessionConfig {
     }
 
     /// Set session cookie path
-    ///
-    /// Call on the fairing before passing it to `rocket.attach()`
     #[must_use]
     pub fn with_cookie_path(mut self, path: &str) -> Self {
         self.cookie_path = path.into();
@@ -133,8 +126,6 @@ impl AxumSessionConfig {
     }
 
     /// Set session database table name
-    ///
-    /// Call on the fairing before passing it to `rocket.attach()`
     #[must_use]
     pub fn with_table_name(mut self, table_name: &str) -> Self {
         self.table_name = table_name.into();
@@ -159,6 +150,8 @@ impl Default for AxumSessionConfig {
             max_connections: 5,
             /// Unload memory after 60mins if it has not been accessed.
             memory_lifespan: Duration::minutes(60),
+            /// Unload session after 60days if it has not been accessed.
+            max_lifespan: Duration::days(60),
         }
     }
 }

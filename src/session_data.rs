@@ -11,6 +11,7 @@ pub struct AxumSessionData {
     pub expires: DateTime<Utc>,
     pub autoremove: DateTime<Utc>,
     pub destroy: bool,
+    pub longterm: bool,
 }
 
 impl AxumSessionData {

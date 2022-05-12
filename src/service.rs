@@ -99,12 +99,10 @@ where
                                 let mut inner = m.lock().await;
 
                                 if inner.expires < Utc::now() || inner.destroy {
-                                    // Database Session expired, reuse the ID but drop data.
+                                    inner.longterm = false;
                                     inner.data = HashMap::new();
                                 }
 
-                                // Session is extended by making a request with valid ID
-                                inner.expires = Utc::now() + store.config.lifespan;
                                 inner.autoremove = Utc::now() + store.config.memory_lifespan;
                                 no_store = false;
                             }
@@ -118,14 +116,14 @@ where
                                 .unwrap_or(AxumSessionData {
                                     id: id.0 .0,
                                     data: HashMap::new(),
-                                    expires: Utc::now() + Duration::hours(6),
+                                    expires: Utc::now() + store.config.lifespan,
                                     destroy: false,
                                     autoremove: Utc::now() + store.config.memory_lifespan,
+                                    longterm: false,
                                 });
 
                             if !sess.validate() || sess.destroy {
                                 sess.data = HashMap::new();
-                                sess.expires = Utc::now() + Duration::hours(6);
                                 sess.autoremove = Utc::now() + store.config.memory_lifespan;
                             }
 
@@ -143,9 +141,10 @@ where
                         let sess = AxumSessionData {
                             id: id.0 .0,
                             data: HashMap::new(),
-                            expires: Utc::now() + Duration::hours(6),
+                            expires: Utc::now() + store.config.lifespan,
                             destroy: false,
                             autoremove: Utc::now() + store.config.memory_lifespan,
+                            longterm: false,
                         };
 
                         store
@@ -205,11 +204,15 @@ where
                     .await
                     .get(&session.id.0.to_string())
                 {
-                    session
-                        .store
-                        .store_session(session_data.lock().await.clone())
-                        .await
-                        .unwrap()
+                    let sess = session_data.lock().await;
+
+                    if sess.longterm {
+                        sess.expires = Utc::now() + store.config.max_lifespan;
+                    } else {
+                        sess.expires = Utc::now() + store.config.lifespan;
+                    }
+
+                    session.store.store_session(&sess).await.unwrap()
                 }
             }
 

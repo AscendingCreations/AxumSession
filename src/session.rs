@@ -56,6 +56,17 @@ impl AxumSession {
         .await;
     }
 
+    ///Sets the Entire Session to be set to the long term expiration.
+    ///Good for remember_me.
+    ///Stays set unless Session no longer exists or Expires.
+    pub async fn set_longterm(&self, longterm: bool) {
+        self.tap(|sess| {
+            sess.longterm = is_longterm;
+            Some(1)
+        })
+        .await;
+    }
+
     ///Used to get data stored within SessionDatas hashmap from a key value.
     pub async fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         self.tap(|sess| {
