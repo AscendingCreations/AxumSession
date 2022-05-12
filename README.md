@@ -121,3 +121,7 @@ async fn greet(session: AxumSession) -> String {
 }
 
 ```
+
+# Help
+
+If you need help with this library please go to our [Discord Group](https://discord.gg/xKkm7UhM36)
