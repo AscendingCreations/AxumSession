@@ -61,7 +61,7 @@ impl AxumSession {
     ///Stays set unless Session no longer exists or Expires.
     pub async fn set_longterm(&self, longterm: bool) {
         self.tap(|sess| {
-            sess.longterm = is_longterm;
+            sess.longterm = longterm;
             Some(1)
         })
         .await;
