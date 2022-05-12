@@ -5,7 +5,7 @@ use axum_core::{
     BoxError,
 };
 use bytes::Bytes;
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use cookie::{Cookie, CookieJar};
 use futures::future::BoxFuture;
 use http::{
@@ -204,7 +204,7 @@ where
                     .await
                     .get(&session.id.0.to_string())
                 {
-                    let sess = session_data.lock().await;
+                    let mut sess = session_data.lock().await;
 
                     if sess.longterm {
                         sess.expires = Utc::now() + store.config.max_lifespan;
