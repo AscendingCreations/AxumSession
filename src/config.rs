@@ -175,7 +175,7 @@ impl Default for AxumSessionConfig {
             cookie_secure: false,
             cookie_domain: None,
             cookie_same_site: SameSite::None,
-            accepted_cookie_name: String,
+            accepted_cookie_name: "session_acceptance".into(),
             accepted_cookie_max_age: Some(Duration::days(100)),
             table_name: "async_sessions".into(),
             max_connections: 5,

@@ -126,11 +126,9 @@ where
                         .await
                         .ok()
                         .flatten()
-                        .unwrap_or_else(AxumSessionData::new(
-                            session.id.0,
-                            accepted,
-                            &store.config,
-                        ));
+                        .unwrap_or_else(|| {
+                            AxumSessionData::new(session.id.0, accepted, &store.config)
+                        });
 
                     if !sess.validate() || sess.destroy {
                         sess.data = HashMap::new();
@@ -189,17 +187,23 @@ where
             let (remove, accepted) = if let Some(session_data) =
                 session.store.inner.read().await.get(&session.id.inner())
             {
-                let mut sess = session_data.lock().await;
+                let sess = session_data.lock().await;
 
                 (
                     if (!store.config.disable_gdpr && sess.accepted) || store.config.disable_gdpr {
-                        cookies.add(create_cookie(config, sess.id.to_string(), CookieType::Data));
+                        cookies.add(create_cookie(
+                            config.clone(),
+                            sess.id.to_string(),
+                            CookieType::Data,
+                        ));
                         false
                     } else {
                         true
                     },
                     sess.accepted,
                 )
+            } else {
+                (false, false)
             };
 
             //Add the Accepted Cookie so we cna keep track if they accepted it or not.
