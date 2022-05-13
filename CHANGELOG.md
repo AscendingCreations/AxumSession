@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - **added:** Config for GDPR Sessions.
 - **added:** GDPR Memory and Database Session unloading on not accepted.
 - **added:** Accepted GDPR Cookie.
+- **breaking:** GDPR is Enabled by default so you must use set_accepted on user data for a session to save or disable gdpr_mode.
 
 # 1.1.0 (12. May, 2022)
 

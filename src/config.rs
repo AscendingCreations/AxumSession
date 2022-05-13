@@ -26,7 +26,7 @@ pub struct AxumSessionConfig {
     /// Session cookie secure flag
     pub(crate) cookie_secure: bool,
     /// Disables the need to avoid cookie saving.
-    pub(crate) disable_gdpr: bool,
+    pub(crate) gdpr_mode: bool,
     /// Sessions lifespan within the Database.
     pub(crate) lifespan: Duration,
     /// Session Database Max Poll Connections. Can not be 0
@@ -104,8 +104,8 @@ impl AxumSessionConfig {
 
     /// Set sessions to ignore gdpr rules.
     #[must_use]
-    pub fn with_gdpr(mut self, disable: bool) -> Self {
-        self.disable_gdpr = disable;
+    pub fn with_gdpr(mut self, enable: bool) -> Self {
+        self.gdpr_mode = enable;
         self
     }
 
@@ -183,7 +183,7 @@ impl Default for AxumSessionConfig {
             memory_lifespan: Duration::minutes(60),
             /// Unload long term session after 60 days if it has not been accessed.
             max_lifespan: Duration::days(60),
-            disable_gdpr: false,
+            gdpr_mode: true,
         }
     }
 }
