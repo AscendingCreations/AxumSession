@@ -25,6 +25,11 @@ use tokio::sync::Mutex;
 use tower_service::Service;
 use uuid::Uuid;
 
+enum CookieType {
+    Accepted,
+    Data,
+}
+
 #[derive(Clone)]
 pub struct AxumSessionService<S> {
     pub(crate) session_store: AxumSessionStore,
@@ -59,23 +64,21 @@ where
         Box::pin(async move {
             let config = store.config.clone();
             let mut cookies = get_cookies(&req);
+            let mut is_new_id = false;
 
             let session = AxumSession {
                 id: {
-                    let id = if let Some(cookie) = cookies.get(&store.config.cookie_name) {
-                        (
-                            AxumSessionID(match Uuid::parse_str(cookie.value()) {
-                                Ok(v) => v,
-                                Err(_) => {
-                                    tracing::warn!("Uuid \" {} \" is invalid", cookie.value());
-                                    return Ok(Response::builder()
-                                        .status(StatusCode::UNAUTHORIZED)
-                                        .body(body::boxed(Full::from("401 Unauthorized")))
-                                        .unwrap());
-                                }
-                            }),
-                            true,
-                        )
+                    if let Some(cookie) = cookies.get(&store.config.cookie_name) {
+                        AxumSessionID(match Uuid::parse_str(cookie.value()) {
+                            Ok(v) => v,
+                            Err(_) => {
+                                tracing::warn!("Uuid \" {} \" is invalid", cookie.value());
+                                return Ok(Response::builder()
+                                    .status(StatusCode::UNAUTHORIZED)
+                                    .body(body::boxed(Full::from("401 Unauthorized")))
+                                    .unwrap());
+                            }
+                        })
                     } else {
                         let store_ug = store.inner.read().await;
                         let new_id = loop {
@@ -86,78 +89,66 @@ where
                             }
                         };
 
-                        (AxumSessionID(new_id), false)
-                    };
-
-                    // If a cookie did have an AxumSessionID then lets check if it still exists in the hash or Database
-                    // If not make a new Session using the ID.
-                    if id.1 {
-                        let mut no_store = true;
-
-                        {
-                            if let Some(m) = store.inner.read().await.get(&id.0.to_string()) {
-                                let mut inner = m.lock().await;
-
-                                if inner.expires < Utc::now() || inner.destroy {
-                                    inner.longterm = false;
-                                    inner.data = HashMap::new();
-                                }
-
-                                inner.autoremove = Utc::now() + store.config.memory_lifespan;
-                                no_store = false;
-                            }
-                        }
-                        if no_store {
-                            let mut sess = store
-                                .load_session(id.0.to_string())
-                                .await
-                                .ok()
-                                .flatten()
-                                .unwrap_or(AxumSessionData {
-                                    id: id.0 .0,
-                                    data: HashMap::new(),
-                                    expires: Utc::now() + store.config.lifespan,
-                                    destroy: false,
-                                    autoremove: Utc::now() + store.config.memory_lifespan,
-                                    longterm: false,
-                                });
-
-                            if !sess.validate() || sess.destroy {
-                                sess.data = HashMap::new();
-                                sess.autoremove = Utc::now() + store.config.memory_lifespan;
-                            }
-
-                            cookies.add(create_cookie(config, id.0 .0.to_string()));
-                            store
-                                .inner
-                                .write()
-                                .await
-                                .insert(id.0 .0.to_string(), Mutex::new(sess));
-                        }
-                    } else {
-                        // --- New ID was generated Lets make a session for it ---
-                        cookies.add(create_cookie(config, id.0 .0.to_string()));
-
-                        let sess = AxumSessionData {
-                            id: id.0 .0,
-                            data: HashMap::new(),
-                            expires: Utc::now() + store.config.lifespan,
-                            destroy: false,
-                            autoremove: Utc::now() + store.config.memory_lifespan,
-                            longterm: false,
-                        };
-
-                        store
-                            .inner
-                            .write()
-                            .await
-                            .insert(id.0 .0.to_string(), Mutex::new(sess));
+                        is_new_id = true;
+                        AxumSessionID(new_id)
                     }
-
-                    id.0
                 },
                 store: store.clone(),
             };
+
+            let accepted = if let Some(cookie) = cookies.get(&store.config.accepted_cookie_name) {
+                cookie.value().parse().unwrap_or(false)
+            } else {
+                false
+            };
+
+            // If a cookie did have an AxumSessionID then lets check if it still exists in the hash or Database
+            // If not make a new Session using the ID.
+            if !is_new_id {
+                let mut no_store = true;
+
+                {
+                    if let Some(m) = store.inner.read().await.get(&session.id.inner()) {
+                        let mut inner = m.lock().await;
+
+                        if inner.expires < Utc::now() || inner.destroy {
+                            inner.longterm = false;
+                            inner.data = HashMap::new();
+                        }
+
+                        inner.autoremove = Utc::now() + store.config.memory_lifespan;
+                        no_store = false;
+                    }
+                }
+                if no_store {
+                    let mut sess = store
+                        .load_session(session.id.inner())
+                        .await
+                        .ok()
+                        .flatten()
+                        .unwrap_or_else(AxumSessionData::new(
+                            session.id.0,
+                            accepted,
+                            &store.config,
+                        ));
+
+                    if !sess.validate() || sess.destroy {
+                        sess.data = HashMap::new();
+                        sess.autoremove = Utc::now() + store.config.memory_lifespan;
+                    }
+
+                    store
+                        .inner
+                        .write()
+                        .await
+                        .insert(session.id.inner(), Mutex::new(sess));
+                }
+            } else {
+                store.inner.write().await.insert(
+                    session.id.inner(),
+                    Mutex::new(AxumSessionData::new(session.id.0, accepted, &store.config)),
+                );
+            }
 
             let (last_sweep, last_database_sweep) = {
                 let timers = store.timers.read().await;
@@ -195,14 +186,33 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
+            let (remove, accepted) = if let Some(session_data) =
+                session.store.inner.read().await.get(&session.id.inner())
+            {
+                let mut sess = session_data.lock().await;
+
+                (
+                    if (!store.config.disable_gdpr && sess.accepted) || store.config.disable_gdpr {
+                        cookies.add(create_cookie(config, sess.id.to_string(), CookieType::Data));
+                        false
+                    } else {
+                        true
+                    },
+                    sess.accepted,
+                )
+            };
+
+            //Add the Accepted Cookie so we cna keep track if they accepted it or not.
+            cookies.add(create_cookie(
+                config,
+                accepted.to_string(),
+                CookieType::Accepted,
+            ));
+
             //run this After a response has returned so we save the most updated data to sql.
-            if store.is_persistent() {
-                if let Some(session_data) = session
-                    .store
-                    .inner
-                    .read()
-                    .await
-                    .get(&session.id.0.to_string())
+            if store.is_persistent() && !remove {
+                if let Some(session_data) =
+                    session.store.inner.read().await.get(&session.id.inner())
                 {
                     let mut sess = session_data.lock().await;
 
@@ -214,6 +224,16 @@ where
 
                     session.store.store_session(&sess).await.unwrap()
                 }
+            }
+
+            if remove {
+                store.inner.write().await.remove(&session.id.inner());
+                //Also run this just in case it was stored int he database and they rejected the cookies.
+                session
+                    .store
+                    .destroy_session(&session.id.inner())
+                    .await
+                    .unwrap();
             }
 
             set_cookies(cookies, response.headers_mut());
@@ -235,11 +255,21 @@ where
     }
 }
 
-fn create_cookie<'a>(config: AxumSessionConfig, value: String) -> Cookie<'a> {
-    let mut cookie_builder = Cookie::build(config.cookie_name, value)
-        .path(config.cookie_path)
-        .secure(config.cookie_secure)
-        .http_only(config.cookie_http_only);
+fn create_cookie<'a>(
+    config: AxumSessionConfig,
+    value: String,
+    cookie_type: CookieType,
+) -> Cookie<'a> {
+    let mut cookie_builder = Cookie::build(
+        match cookie_type {
+            CookieType::Data => config.cookie_name,
+            CookieType::Accepted => config.accepted_cookie_name,
+        },
+        value,
+    )
+    .path(config.cookie_path)
+    .secure(config.cookie_secure)
+    .http_only(config.cookie_http_only);
 
     if let Some(domain) = config.cookie_domain {
         cookie_builder = cookie_builder
@@ -247,7 +277,12 @@ fn create_cookie<'a>(config: AxumSessionConfig, value: String) -> Cookie<'a> {
             .same_site(config.cookie_same_site);
     }
 
-    if let Some(max_age) = config.cookie_max_age {
+    let cookie_max_age = match cookie_type {
+        CookieType::Data => config.cookie_max_age,
+        CookieType::Accepted => config.accepted_cookie_max_age,
+    };
+
+    if let Some(max_age) = cookie_max_age {
         let time_duration = max_age.to_std().expect("Max Age out of bounds");
         cookie_builder =
             cookie_builder.max_age(time_duration.try_into().expect("Max Age out of bounds"));

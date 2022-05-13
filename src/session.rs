@@ -67,6 +67,15 @@ impl AxumSession {
         .await;
     }
 
+    ///Sets if the cookies have been accepted by the end user or not.
+    pub async fn set_accepted(&self, accepted: bool) {
+        self.tap(|sess| {
+            sess.accepted = accepted;
+            Some(1)
+        })
+        .await;
+    }
+
     ///Used to get data stored within SessionDatas hashmap from a key value.
     pub async fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         self.tap(|sess| {
