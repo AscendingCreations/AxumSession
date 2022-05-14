@@ -190,7 +190,7 @@ where
                 let sess = session_data.lock().await;
 
                 (
-                    if (store.config.gdpr_mode && sess.accepted) || !store.config.gdpr_mode {
+                    if !store.config.gdpr_mode || sess.accepted {
                         cookies.add(create_cookie(
                             config.clone(),
                             sess.id.to_string(),
