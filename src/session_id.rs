@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 use uuid::Uuid;
 
-///This Contains the ID of the Session which is stored in a Cookie and in the Main SessionStore Hash
+/// Contains the ID of the Session which is stored in a Cookie and in the Main SessionStore Hash
 /// to find their SessionData
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct AxumSessionID(pub Uuid);

@@ -6,7 +6,7 @@ use chrono::{Duration, Utc};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{Mutex, RwLock};
 
-/// This stores the Postgresql Pool and the Main timers and a hash table that stores the SessionData.
+/// Stores the Postgresql Pool and the Main timers and a hash table that stores the SessionData.
 /// It is also used to Initiate a Database Migrate, Cleanup, etc when used directly.
 #[derive(Clone, Debug)]
 pub struct AxumSessionStore {
@@ -21,6 +21,7 @@ pub struct AxumSessionStore {
 }
 
 impl AxumSessionStore {
+    /// Used to Create a new Session.
     pub fn new(client: Option<AxumDatabasePool>, config: AxumSessionConfig) -> Self {
         Self {
             client,
@@ -35,10 +36,12 @@ impl AxumSessionStore {
         }
     }
 
+    /// Checks if the database is in persistent mode.
     pub fn is_persistent(&self) -> bool {
         self.client.is_some()
     }
 
+    /// Creates the Table needed for the Session if it does not exist.
     pub async fn migrate(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             sqlx::query(
@@ -51,6 +54,7 @@ impl AxumSessionStore {
         Ok(())
     }
 
+    /// Cleans Expired sessions from the Table.
     pub async fn cleanup(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             sqlx::query(
@@ -64,6 +68,7 @@ impl AxumSessionStore {
         Ok(())
     }
 
+    /// returns a count of active sessions.
     pub async fn count(&self) -> Result<i64, SessionError> {
         if let Some(client) = &self.client {
             let (count,) = sqlx::query_as(
@@ -78,6 +83,7 @@ impl AxumSessionStore {
         Ok(0)
     }
 
+    /// loads the session from the UUID.
     pub async fn load_session(
         &self,
         cookie_value: String,
@@ -99,6 +105,7 @@ impl AxumSessionStore {
         }
     }
 
+    /// stores the session using the UUID.
     pub async fn store_session(&self, session: &AxumSessionData) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             sqlx::query(&databases::STORE_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name))
@@ -112,6 +119,7 @@ impl AxumSessionStore {
         Ok(())
     }
 
+    /// Deletes the session from the UUID.
     pub async fn destroy_session(&self, id: &str) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             sqlx::query(
@@ -125,6 +133,7 @@ impl AxumSessionStore {
         Ok(())
     }
 
+    /// Deletes all the stored Sessions.
     pub async fn clear_store(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             sqlx::query(&databases::CLEAR_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name))
