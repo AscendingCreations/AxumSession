@@ -1,7 +1,15 @@
 use chrono::Duration;
 pub use cookie::SameSite;
 
-///This is the Sessions Config it is used to Setup the SQL database and sets the hashmap saved Memory and Session life spans.
+/// Configuration for how the Session and Cookies are used.
+///
+/// # Examples
+/// ```
+/// use axum_database_sessions::AxumSessionConfig;
+///
+/// let config = AxumSessionConfig::default();
+/// ```
+///
 #[derive(Debug, Clone)]
 pub struct AxumSessionConfig {
     /// The acepted cookies max age None means the browser deletes cookie on close
@@ -12,8 +20,6 @@ pub struct AxumSessionConfig {
     pub(crate) cookie_domain: Option<String>,
     /// Session cookie http only flag
     pub(crate) cookie_http_only: bool,
-    /// Session ID character length
-    pub(crate) cookie_len: usize,
     /// Session cookie max age None means the browser deletes cookie on close
     pub(crate) cookie_max_age: Option<Duration>,
     /// Session cookie name
@@ -43,7 +49,15 @@ pub struct AxumSessionConfig {
 }
 
 impl AxumSessionConfig {
-    /// Set session database pools max connections limit.
+    /// Sets the sessions database pool's max connection's limit.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().set_max_connections(5);
+    /// ```
+    ///
     #[must_use]
     pub fn set_max_connections(mut self, max: u32) -> Self {
         let max = std::cmp::max(max, 1);
@@ -51,110 +65,228 @@ impl AxumSessionConfig {
         self
     }
 
-    /// Set session accepted cookie name
+    /// Set the session's accepted cookie name.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().with_accepted_cookie_name("my_accepted_cookie");
+    /// ```
+    ///
     #[must_use]
     pub fn with_accepted_cookie_name(mut self, name: &str) -> Self {
         self.accepted_cookie_name = name.into();
         self
     }
 
-    /// Set session accepted cookies max_age (expiration time) in browser.
-    /// Set this to be the duration of max_lifespan or longer.
+    /// Set's the session's accepted cookies max_age (expiration time).
+    ///
+    /// If this is set to None then the Accepted Cookie will be unloaded on browser Close.
+    /// Set this to be the duration of max_lifespan or longer to prevent session drops.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    /// use chrono::Duration;
+    ///
+    /// let config = AxumSessionConfig::default().with_accepted_max_age(Some(Duration::days(64)));
+    /// ```
+    ///
     #[must_use]
     pub fn with_accepted_max_age(mut self, time: Option<Duration>) -> Self {
         self.accepted_cookie_max_age = time;
         self
     }
 
-    /// Set session cookie domain name
+    /// Set's the session's cookie's domain name.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().with_cookie_domain(Some("www.helpme.com".to_string()));
+    /// ```
+    ///
     #[must_use]
     pub fn with_cookie_domain(mut self, name: Option<String>) -> Self {
         self.cookie_domain = name;
         self
     }
 
-    /// Set session cookie length
-    #[must_use]
-    pub fn with_cookie_len(mut self, length: usize) -> Self {
-        self.cookie_len = length;
-        self
-    }
-
-    /// Set session cookie name
+    /// Set's the session's cookie's name.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().with_cookie_name("my_cookie");
+    /// ```
+    ///
     #[must_use]
     pub fn with_cookie_name(mut self, name: &str) -> Self {
         self.cookie_name = name.into();
         self
     }
 
-    /// Set session cookie path
+    /// Set's the session's cookie's path.
+    ///
+    /// This is used to deturmine when the cookie takes effect within the website path.
+    /// Leave as default ("/") for cookie to be used site wide.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().with_cookie_path("/");
+    /// ```
+    ///
     #[must_use]
     pub fn with_cookie_path(mut self, path: &str) -> Self {
         self.cookie_path = path.into();
         self
     }
 
-    /// Set session cookie Same Site Setting for Cross-Site restrictions
-    /// Only works if Domain is also set.
+    /// Set's the session's cookie's Same Site Setting for Cross-Site restrictions.
+    ///
+    /// Only works if Domain is also set to restrict it to that domain only.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    /// use cookie::SameSite;
+    ///
+    /// let config = AxumSessionConfig::default().with_cookie_same_site(SameSite::Strict);
+    /// ```
+    ///
     #[must_use]
     pub fn with_cookie_same_site(mut self, same_site: SameSite) -> Self {
         self.cookie_same_site = same_site;
         self
     }
 
-    /// Set sessions to ignore gdpr rules.
+    /// Set's whether the session ignores or enforces GDPR cookie restrictions.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    /// use cookie::SameSite;
+    ///
+    /// let config = AxumSessionConfig::default().with_gdpr(false);
+    /// ```
+    ///
     #[must_use]
     pub fn with_gdpr(mut self, enable: bool) -> Self {
         self.gdpr_mode = enable;
         self
     }
 
-    /// Set session cookie http_only flag.
-    /// If set javascript has no access to the cookie.
+    /// Set's the session's cookie's to http only.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().with_http_only(false);
+    /// ```
+    ///
     #[must_use]
     pub fn with_http_only(mut self, is_set: bool) -> Self {
         self.cookie_http_only = is_set;
         self
     }
 
-    /// Set session lifetime (expiration time) within database storage.
+    /// Set's the session's lifetime (expiration time) within database storage.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    /// use chrono::Duration;
+    ///
+    /// let config = AxumSessionConfig::default().with_lifetime(Duration::days(32));
+    /// ```
+    ///
     #[must_use]
     pub fn with_lifetime(mut self, time: Duration) -> Self {
         self.lifespan = time;
         self
     }
 
-    /// Set session cookie max_age (expiration time) in browser.
-    /// Set this to be the duration of max_lifespan or longer.
+    /// Set's the session's cookies max_age (expiration time).
+    ///
+    /// If this is set to None then the Cookie will be unloaded on browser Close.
+    /// Set this to be the duration of max_lifespan or longer to prevent session drops.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    /// use chrono::Duration;
+    ///
+    /// let config = AxumSessionConfig::default().with_max_age(Some(Duration::days(64)));
+    /// ```
+    ///
     #[must_use]
     pub fn with_max_age(mut self, time: Option<Duration>) -> Self {
         self.cookie_max_age = time;
         self
     }
 
-    /// Set session's long term lifetime (expiration time) within database storage.
+    /// Set's the session's long term lifetime (expiration time) within database storage.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    /// use chrono::Duration;
+    ///
+    /// let config = AxumSessionConfig::default().with_max_lifetime(Duration::days(32));
+    /// ```
+    ///
     #[must_use]
     pub fn with_max_lifetime(mut self, time: Duration) -> Self {
         self.max_lifespan = time;
         self
     }
 
-    /// Set session lifetime (expiration time) within Memory storage.
+    /// Set's the session's lifetime (expiration time) within memory storage.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    /// use chrono::Duration;
+    ///
+    /// let config = AxumSessionConfig::default().with_memory_lifetime(Duration::days(32));
+    /// ```
+    ///
     #[must_use]
     pub fn with_memory_lifetime(mut self, time: Duration) -> Self {
         self.memory_lifespan = time;
         self
     }
 
-    /// Set session cookie secure flag.
-    /// If set the cookie will only be sent over https.
+    /// Set's the session's secure flag for if it gets sent over https.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().with_secure(true);
+    /// ```
+    ///
     #[must_use]
     pub fn with_secure(mut self, is_set: bool) -> Self {
         self.cookie_secure = is_set;
         self
     }
 
-    /// Set session database table name
+    /// Set's the session's database table name.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().with_table_name("my_table");
+    /// ```
+    ///
     #[must_use]
     pub fn with_table_name(mut self, table_name: &str) -> Self {
         self.table_name = table_name.into();
@@ -169,7 +301,6 @@ impl Default for AxumSessionConfig {
             lifespan: Duration::hours(6),
             cookie_name: "sqlx_session".into(),
             cookie_path: "/".into(),
-            cookie_len: 16,
             cookie_max_age: Some(Duration::days(100)),
             cookie_http_only: true,
             cookie_secure: false,

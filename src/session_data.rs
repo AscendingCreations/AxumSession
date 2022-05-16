@@ -4,7 +4,18 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-/// Contains all of out Sessions Data including their Hashed Data they access.
+/// The Store and Configured Data for a Session.
+///
+/// # Examples
+/// ```
+/// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
+/// use uuid::Uuid;
+///
+/// let config = AxumSessionConfig::default();
+/// let token = Uuid::new_v4();
+/// let session_data = AxumSessionData::new(token, true, &config);
+/// ```
+///
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AxumSessionData {
     pub id: Uuid,
@@ -17,6 +28,18 @@ pub struct AxumSessionData {
 }
 
 impl AxumSessionData {
+    /// Constructs a new AxumSessionData.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
+    /// use uuid::Uuid;
+    ///
+    /// let config = AxumSessionConfig::default();
+    /// let token = Uuid::new_v4();
+    /// let session_data = AxumSessionData::new(token, true, &config);
+    /// ```
+    ///
     pub fn new(id: Uuid, accepted: bool, config: &AxumSessionConfig) -> Self {
         Self {
             id,
@@ -29,6 +52,19 @@ impl AxumSessionData {
         }
     }
 
+    /// Validates if the Session is to expire.
+    ///
+    /// # Examples
+    /// ```
+    /// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
+    /// use uuid::Uuid;
+    ///
+    /// let config = AxumSessionConfig::default();
+    /// let token = Uuid::new_v4();
+    /// let session_data = AxumSessionData::new(token, true, &config);
+    /// let expired = session_data.validate();
+    /// ```
+    ///
     pub fn validate(&self) -> bool {
         self.expires >= Utc::now()
     }
