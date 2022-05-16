@@ -1,6 +1,7 @@
 use crate::{AxumSessionData, AxumSessionID, AxumSessionStore};
 use async_trait::async_trait;
 use axum_core::extract::{FromRequest, RequestParts};
+use cookie::CookieJar;
 use http::{self, StatusCode};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -53,6 +54,29 @@ where
 }
 
 impl AxumSession {
+    pub(crate) async fn new(store: &AxumSessionStore, cookies: &CookieJar) -> AxumSession {
+        let value = cookies.get(&store.config.cookie_name).map_or(None, |c| {
+            Uuid::parse_str(cookie.value())
+                .ok()
+                .map_or(None, |value| Some(value))
+        });
+
+        let uuid = value.unwrap_or_else(async || {
+            let store_ug = store.inner.read().await;
+            loop {
+                let token = Uuid::new_v4();
+
+                if !store_ug.contains_key(&token.to_string()) {
+                    break token;
+                }
+            }
+        });
+
+        AxumSession {
+            id: AxumSessionID(uuid),
+            store: store.clone(),
+        }
+    }
     /// Runs a Closure upon the Current Sessions stored data to get or set session data.
     ///
     /// Provides an Option<T> that returns the requested data from the Sessions store.

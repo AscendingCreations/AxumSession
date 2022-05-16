@@ -1,6 +1,6 @@
 use crate::{
     databases::{self, AxumDatabasePool},
-    AxumSessionConfig, AxumSessionData, AxumSessionTimers, SessionError,
+    AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionTimers, SessionError,
 };
 use chrono::{Duration, Utc};
 use std::{collections::HashMap, sync::Arc};
@@ -303,5 +303,24 @@ impl AxumSessionStore {
         }
 
         Ok(())
+    }
+
+    /// Attempts to load check and clear Data.
+    ///
+    /// If no session is found returns false.
+    pub(crate) async fn service_session_data(&self, session: &AxumSession) -> bool {
+        if let Some(m) = store.inner.read().await.get(&session.id.inner()) {
+            let mut inner = m.lock().await;
+
+            if inner.expires < Utc::now() || inner.destroy {
+                inner.longterm = false;
+                inner.data = HashMap::new();
+            }
+
+            inner.autoremove = Utc::now() + store.config.memory_lifespan;
+            return true;
+        }
+
+        false
     }
 }
