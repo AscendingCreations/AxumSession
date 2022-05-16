@@ -30,6 +30,22 @@ enum CookieType {
     Data,
 }
 
+impl CookieType {
+    fn get_name(&self, config: &AxumSessionConfig) -> &str {
+        match self {
+            CookieType::Data => &config.cookie_name,
+            CookieType::Accepted => &config.accepted_cookie_name,
+        }
+    }
+
+    fn get_age(&self, config: &AxumSessionConfig) -> &str {
+        match self {
+            CookieType::Data => &config.cookie_max_age,
+            CookieType::Accepted => &config.accepted_cookie_max_age,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct AxumSessionService<S> {
     pub(crate) session_store: AxumSessionStore,
@@ -96,11 +112,7 @@ where
                 store: store.clone(),
             };
 
-            let accepted = if let Some(cookie) = cookies.get(&store.config.accepted_cookie_name) {
-                cookie.value().parse().unwrap_or(false)
-            } else {
-                false
-            };
+            let accepted = cookies.get(&store.config.accepted_cookie_name).map_or(false, |c| c.value().parse().unwrap_or(false));
 
             // If a cookie did have an AxumSessionID then lets check if it still exists in the hash or Database
             // If not make a new Session using the ID.
@@ -268,10 +280,7 @@ fn create_cookie<'a>(
     cookie_type: CookieType,
 ) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build(
-        match cookie_type {
-            CookieType::Data => config.cookie_name,
-            CookieType::Accepted => config.accepted_cookie_name,
-        },
+        cookie_type.get_name(&config),
         value,
     )
     .path(config.cookie_path)
@@ -284,12 +293,7 @@ fn create_cookie<'a>(
             .same_site(config.cookie_same_site);
     }
 
-    let cookie_max_age = match cookie_type {
-        CookieType::Data => config.cookie_max_age,
-        CookieType::Accepted => config.accepted_cookie_max_age,
-    };
-
-    if let Some(max_age) = cookie_max_age {
+    if let Some(max_age) = cookie_type.get_age(&config) {
         let time_duration = max_age.to_std().expect("Max Age out of bounds");
         cookie_builder =
             cookie_builder.max_age(time_duration.try_into().expect("Max Age out of bounds"));
