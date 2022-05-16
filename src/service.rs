@@ -232,12 +232,15 @@ where
 
             if remove {
                 store.inner.write().await.remove(&session.id.inner());
-                //Also run this just in case it was stored int he database and they rejected the cookies.
-                session
-                    .store
-                    .destroy_session(&session.id.inner())
-                    .await
-                    .unwrap();
+
+                //Also run this just in case it was stored in the database and they rejected the cookies.
+                if store.is_persistent() {
+                    session
+                        .store
+                        .destroy_session(&session.id.inner())
+                        .await
+                        .unwrap();
+                }
             }
 
             set_cookies(cookies, response.headers_mut());
