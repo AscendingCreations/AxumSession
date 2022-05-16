@@ -9,7 +9,7 @@ use tokio::sync::{Mutex, RwLock};
 /// Contains the main Services storage for all session's and database access for persistant Sessions.
 ///
 /// # Examples
-/// ```
+/// ```rust
 /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
 ///
 /// let config = AxumSessionConfig::default();
@@ -32,7 +32,7 @@ impl AxumSessionStore {
     /// Constructs a New AxumSessionStore.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
     ///
     /// let config = AxumSessionConfig::default();
@@ -58,7 +58,7 @@ impl AxumSessionStore {
     /// Returns true if client is Some().
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
     ///
     /// let config = AxumSessionConfig::default();
@@ -78,7 +78,7 @@ impl AxumSessionStore {
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
     ///
     /// let config = AxumSessionConfig::default();
@@ -108,7 +108,7 @@ impl AxumSessionStore {
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
     ///
     /// let config = AxumSessionConfig::default();
@@ -139,7 +139,7 @@ impl AxumSessionStore {
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
     ///
     /// let config = AxumSessionConfig::default();
@@ -172,7 +172,7 @@ impl AxumSessionStore {
     /// - ['SessionError::SerdeJson'] is returned if it failed to deserialize the sessions data.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
     /// use uuid::Uuid;
     ///
@@ -214,7 +214,7 @@ impl AxumSessionStore {
     /// - ['SessionError::SerdeJson'] is returned if it failed to serialize the sessions data.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore, AxumSessionData};
     /// use uuid::Uuid;
     ///
@@ -249,7 +249,7 @@ impl AxumSessionStore {
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore, AxumSessionData};
     /// use uuid::Uuid;
     ///
@@ -283,7 +283,7 @@ impl AxumSessionStore {
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore, AxumSessionData};
     /// use uuid::Uuid;
     ///

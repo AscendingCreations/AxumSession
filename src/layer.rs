@@ -23,7 +23,7 @@ impl AxumSessionLayer {
     /// Constructs a AxumSessionLayer used with Axum to activate the Service.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
     /// use uuid::Uuid;
     ///

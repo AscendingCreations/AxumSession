@@ -31,7 +31,7 @@ impl AxumSessionData {
     /// Constructs a new AxumSessionData.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
     /// use uuid::Uuid;
     ///
@@ -55,7 +55,7 @@ impl AxumSessionData {
     /// Validates if the Session is to expire.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
     /// use uuid::Uuid;
     ///

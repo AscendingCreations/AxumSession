@@ -24,7 +24,7 @@ impl AxumSessionID {
     /// Constructs a new AxumSessionID hold a UUID.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionID;
     /// use uuid::Uuid;
     ///
@@ -40,7 +40,7 @@ impl AxumSessionID {
     /// Returns the inner UUID as a string.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionID;
     /// use uuid::Uuid;
     ///

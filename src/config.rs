@@ -4,7 +4,7 @@ pub use cookie::SameSite;
 /// Configuration for how the Session and Cookies are used.
 ///
 /// # Examples
-/// ```
+/// ```rust
 /// use axum_database_sessions::AxumSessionConfig;
 ///
 /// let config = AxumSessionConfig::default();
@@ -52,7 +52,7 @@ impl AxumSessionConfig {
     /// Sets the sessions database pool's max connection's limit.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
     /// let config = AxumSessionConfig::default().set_max_connections(5);
@@ -68,7 +68,7 @@ impl AxumSessionConfig {
     /// Set the session's accepted cookie name.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
     /// let config = AxumSessionConfig::default().with_accepted_cookie_name("my_accepted_cookie");
@@ -86,7 +86,7 @@ impl AxumSessionConfig {
     /// Set this to be the duration of max_lifespan or longer to prevent session drops.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     /// use chrono::Duration;
     ///
@@ -102,7 +102,7 @@ impl AxumSessionConfig {
     /// Set's the session's cookie's domain name.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
     /// let config = AxumSessionConfig::default().with_cookie_domain(Some("www.helpme.com".to_string()));
@@ -117,7 +117,7 @@ impl AxumSessionConfig {
     /// Set's the session's cookie's name.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
     /// let config = AxumSessionConfig::default().with_cookie_name("my_cookie");
@@ -135,7 +135,7 @@ impl AxumSessionConfig {
     /// Leave as default ("/") for cookie to be used site wide.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
     /// let config = AxumSessionConfig::default().with_cookie_path("/");
@@ -152,7 +152,7 @@ impl AxumSessionConfig {
     /// Only works if Domain is also set to restrict it to that domain only.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     /// use cookie::SameSite;
     ///
@@ -168,7 +168,7 @@ impl AxumSessionConfig {
     /// Set's whether the session ignores or enforces GDPR cookie restrictions.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     /// use cookie::SameSite;
     ///
@@ -184,7 +184,7 @@ impl AxumSessionConfig {
     /// Set's the session's cookie's to http only.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
     /// let config = AxumSessionConfig::default().with_http_only(false);
@@ -199,7 +199,7 @@ impl AxumSessionConfig {
     /// Set's the session's lifetime (expiration time) within database storage.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     /// use chrono::Duration;
     ///
@@ -218,7 +218,7 @@ impl AxumSessionConfig {
     /// Set this to be the duration of max_lifespan or longer to prevent session drops.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     /// use chrono::Duration;
     ///
@@ -234,7 +234,7 @@ impl AxumSessionConfig {
     /// Set's the session's long term lifetime (expiration time) within database storage.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     /// use chrono::Duration;
     ///
@@ -250,7 +250,7 @@ impl AxumSessionConfig {
     /// Set's the session's lifetime (expiration time) within memory storage.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     /// use chrono::Duration;
     ///
@@ -266,7 +266,7 @@ impl AxumSessionConfig {
     /// Set's the session's secure flag for if it gets sent over https.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
     /// let config = AxumSessionConfig::default().with_secure(true);
@@ -281,7 +281,7 @@ impl AxumSessionConfig {
     /// Set's the session's database table name.
     ///
     /// # Examples
-    /// ```
+    /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
     /// let config = AxumSessionConfig::default().with_table_name("my_table");

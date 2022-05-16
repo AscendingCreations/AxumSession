@@ -151,6 +151,7 @@ async fn main() {
         .with_table_name("test_table").with_gdpr(false);
 
     let session_store = AxumSessionStore::new(None, session_config);
+    session_store.migrate().await.unwrap();
 
     // build our application with some routes
     let app = Router::new()
