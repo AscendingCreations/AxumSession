@@ -115,13 +115,9 @@ where
             // Throttle by memory lifespan - e.g. sweep every hour
             if last_sweep <= Utc::now() {
                 store.inner.write().await.retain(|_k, v| {
-                    if let Ok(data) = v.try_lock() {
-                        data.autoremove > Utc::now()
-                    } else {
-                        //the lock is busy so rather than just killing
-                        //everything lets ignore it till next time.
-                        true
-                    }
+                    v.try_lock()
+                        .map(|data| data.autoremove > Utc::now())
+                        .unwrap_or(true)
                 });
                 store.timers.write().await.last_expiry_sweep =
                     Utc::now() + store.config.memory_lifespan;
