@@ -68,6 +68,11 @@ async fn main() {
 
 async fn greet(session: AxumSession) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
+
+    //We set this to tell the system the user accepted the cookies.
+    //Otherwise the Session wont get stored and the Session ID is not sent as a cookie.
+    //The only Cookie that is always Sent is the Session Accepted Cookie.
+    session.set_accepted(true).await;
     count += 1;
     session.set("count", count).await;
 
@@ -115,6 +120,10 @@ async fn main() {
 
 async fn greet(session: AxumSession) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
+    //We set this to tell the system the user accepted the cookies.
+    //Otherwise the Session wont get stored and the Session ID is not sent as a cookie.
+    //The only Cookie that is always Sent is the Session Accepted Cookie.
+    session.set_accepted(true).await;
     count += 1;
     session.set("count", count).await;
 
@@ -123,6 +132,51 @@ async fn greet(session: AxumSession) -> String {
 
 ```
 
+
+To use Axum_database_session with GDPR mode disabled <the old way>.
+# Example
+
+```rust no_run
+use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
+use std::net::SocketAddr;
+use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
+use axum::{
+    Router,
+    routing::get,
+};
+
+#[tokio::main]
+async fn main() {
+    let session_config = AxumSessionConfig::default()
+        .with_table_name("test_table").with_gdpr(false);
+
+    let session_store = AxumSessionStore::new(None, session_config);
+    session_store.migrate().await.unwrap();
+
+    // build our application with some routes
+    let app = Router::new()
+        .route("/greet", get(greet))
+        .layer(AxumSessionLayer::new(session_store));
+
+    // run it
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    tracing::debug!("listening on {}", addr);
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+}
+
+//No need to set the sessions accepted or not with gdpr mode disabled
+async fn greet(session: AxumSession) -> String {
+    let mut count: usize = session.get("count").await.unwrap_or(0);
+    count += 1;
+    session.set("count", count).await;
+
+    count.to_string()
+}
+
+```
 # Help
 
 If you need help with this library please go to our [Discord Group](https://discord.gg/xKkm7UhM36)

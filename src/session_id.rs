@@ -2,16 +2,54 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 use uuid::Uuid;
 
-///This Contains the ID of the Session which is stored in a Cookie and in the Main SessionStore Hash
-/// to find their SessionData
+/// Contains the UUID the Session.
+///
+/// This is used to store and find the Session.
+/// Used to pass the UUID between Cookies, the Database, and AxumSession.
+///
+/// # Examples
+/// ```
+/// use axum_database_sessions::AxumSessionID;
+/// use uuid::Uuid;
+///
+///
+/// let token = Uuid::new_v4();
+/// let id = AxumSessionID::new(token);
+/// ```
+///
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct AxumSessionID(pub Uuid);
 
 impl AxumSessionID {
+    /// Constructs a new AxumSessionID hold a UUID.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_database_sessions::AxumSessionID;
+    /// use uuid::Uuid;
+    ///
+    ///
+    /// let token = Uuid::new_v4();
+    /// let id = AxumSessionID::new(token);
+    /// ```
+    ///
     pub fn new(uuid: Uuid) -> AxumSessionID {
         AxumSessionID(uuid)
     }
 
+    /// Returns the inner UUID as a string.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_database_sessions::AxumSessionID;
+    /// use uuid::Uuid;
+    ///
+    ///
+    /// let token = Uuid::new_v4();
+    /// let id = AxumSessionID::new(token);
+    /// let str_id = id.inner();
+    /// ```
+    ///
     pub fn inner(&self) -> String {
         self.0.to_string()
     }
