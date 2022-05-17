@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Unreleased
 
+# 1.2.0 (17. May, 2022)
+
 - **breaking:** GDPR Compliance.
 - **breaking:** Data Cookie ID only set if disable_gdpr is true or Accepted is true.
 - **added:** Config for GDPR Sessions.
