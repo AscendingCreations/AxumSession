@@ -1,4 +1,4 @@
-use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionID, AxumSessionStore};
+use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionStore};
 use axum_core::{
     body::{self, BoxBody},
     response::Response,
@@ -11,9 +11,9 @@ use futures::future::BoxFuture;
 use http::{
     self,
     header::{COOKIE, SET_COOKIE},
-    HeaderMap, Request, StatusCode,
+    HeaderMap, Request,
 };
-use http_body::{Body as HttpBody, Full};
+use http_body::Body as HttpBody;
 use std::collections::HashMap;
 use std::{
     boxed::Box,
@@ -23,7 +23,6 @@ use std::{
 };
 use tokio::sync::Mutex;
 use tower_service::Service;
-use uuid::Uuid;
 
 enum CookieType {
     Accepted,
@@ -31,17 +30,17 @@ enum CookieType {
 }
 
 impl CookieType {
-    pub(crate) fn get_name(&self, config: &AxumSessionConfig) -> &str {
+    pub(crate) fn get_name(&self, config: &AxumSessionConfig) -> String {
         match self {
-            CookieType::Data => &config.cookie_name,
-            CookieType::Accepted => &config.accepted_cookie_name,
+            CookieType::Data => config.cookie_name.to_string(),
+            CookieType::Accepted => config.accepted_cookie_name.to_string(),
         }
     }
 
-    pub(crate) fn get_age(&self, config: &AxumSessionConfig) -> &str {
+    pub(crate) fn get_age(&self, config: &AxumSessionConfig) -> Option<chrono::Duration> {
         match self {
-            CookieType::Data => &config.cookie_max_age,
-            CookieType::Accepted => &config.accepted_cookie_max_age,
+            CookieType::Data => config.cookie_max_age,
+            CookieType::Accepted => config.accepted_cookie_max_age,
         }
     }
 }
@@ -78,15 +77,13 @@ where
         let mut ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
 
         Box::pin(async move {
-            let config = store.config.clone();
             let mut cookies = get_cookies(&req);
             let session = AxumSession::new(&store, &cookies).await;
             let accepted = cookies
                 .get(&store.config.accepted_cookie_name)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
-            // If a cookie did have an AxumSessionID then lets check if it still exists in the hash or Database
-            // If not make a new Session using the ID.
+            // check if the session id exists if not lets check if it exists in the database or generate a new session.
             if !store.service_session_data(&session).await {
                 let mut sess = store
                     .load_session(session.id.inner())
@@ -143,53 +140,47 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let (remove, accepted) = if let Some(session_data) =
+            let accepted = if let Some(session_data) =
                 session.store.inner.read().await.get(&session.id.inner())
             {
-                let sess = session_data.lock().await;
-
-                (
-                    if !store.config.gdpr_mode || sess.accepted {
-                        cookies.add(create_cookie(
-                            config.clone(),
-                            sess.id.to_string(),
-                            CookieType::Data,
-                        ));
-                        false
-                    } else {
-                        true
-                    },
-                    sess.accepted,
-                )
+                session_data.lock().await.accepted
             } else {
-                (false, false)
+                false
             };
 
             //Add the Accepted Cookie so we cna keep track if they accepted it or not.
             cookies.add(create_cookie(
-                config,
+                &store.config,
                 accepted.to_string(),
                 CookieType::Accepted,
             ));
 
-            //run this After a response has returned so we save the most updated data to sql.
-            if store.is_persistent() && !remove {
-                if let Some(session_data) =
-                    session.store.inner.read().await.get(&session.id.inner())
-                {
-                    let mut sess = session_data.lock().await;
+            if !store.config.gdpr_mode || accepted {
+                cookies.add(create_cookie(
+                    &store.config,
+                    session.id.inner(),
+                    CookieType::Data,
+                ));
 
-                    if sess.longterm {
-                        sess.expires = Utc::now() + store.config.max_lifespan;
-                    } else {
-                        sess.expires = Utc::now() + store.config.lifespan;
+                //run this After a response has returned so we save the most updated data to sql.
+                if store.is_persistent() {
+                    if let Some(session_data) =
+                        session.store.inner.read().await.get(&session.id.inner())
+                    {
+                        let mut sess = session_data.lock().await;
+
+                        if sess.longterm {
+                            sess.expires = Utc::now() + store.config.max_lifespan;
+                        } else {
+                            sess.expires = Utc::now() + store.config.lifespan;
+                        }
+
+                        session.store.store_session(&sess).await.unwrap()
                     }
-
-                    session.store.store_session(&sess).await.unwrap()
                 }
             }
 
-            if remove {
+            if store.config.gdpr_mode && !accepted {
                 store.inner.write().await.remove(&session.id.inner());
 
                 //Also run this just in case it was stored in the database and they rejected the cookies.
@@ -222,22 +213,22 @@ where
 }
 
 fn create_cookie<'a>(
-    config: AxumSessionConfig,
+    config: &AxumSessionConfig,
     value: String,
     cookie_type: CookieType,
 ) -> Cookie<'a> {
-    let mut cookie_builder = Cookie::build(cookie_type.get_name(&config), value)
-        .path(config.cookie_path)
+    let mut cookie_builder = Cookie::build(cookie_type.get_name(config), value)
+        .path(config.cookie_path.clone())
         .secure(config.cookie_secure)
         .http_only(config.cookie_http_only);
 
-    if let Some(domain) = config.cookie_domain {
+    if let Some(domain) = &config.cookie_domain {
         cookie_builder = cookie_builder
-            .domain(domain)
+            .domain(domain.clone())
             .same_site(config.cookie_same_site);
     }
 
-    if let Some(max_age) = cookie_type.get_age(&config) {
+    if let Some(max_age) = cookie_type.get_age(config) {
         let time_duration = max_age.to_std().expect("Max Age out of bounds");
         cookie_builder =
             cookie_builder.max_age(time_duration.try_into().expect("Max Age out of bounds"));

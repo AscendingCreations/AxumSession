@@ -1,5 +1,6 @@
 use chrono::Duration;
 pub use cookie::SameSite;
+use std::borrow::Cow;
 
 /// Configuration for how the Session and Cookies are used.
 ///
@@ -15,17 +16,17 @@ pub struct AxumSessionConfig {
     /// The acepted cookies max age None means the browser deletes cookie on close
     pub(crate) accepted_cookie_max_age: Option<Duration>,
     /// The cookie name that contains a boolean for GDPR acceptance.
-    pub(crate) accepted_cookie_name: String,
+    pub(crate) accepted_cookie_name: Cow<'static, str>,
     /// Session cookie domain
-    pub(crate) cookie_domain: Option<String>,
+    pub(crate) cookie_domain: Option<Cow<'static, str>>,
     /// Session cookie http only flag
     pub(crate) cookie_http_only: bool,
     /// Session cookie max age None means the browser deletes cookie on close
     pub(crate) cookie_max_age: Option<Duration>,
     /// Session cookie name
-    pub(crate) cookie_name: String,
+    pub(crate) cookie_name: Cow<'static, str>,
     /// Session cookie path
-    pub(crate) cookie_path: String,
+    pub(crate) cookie_path: Cow<'static, str>,
     /// Resticts how Cookies are sent cross-site. Default is `SameSite::None`
     /// Only works if domain is also set.
     pub(crate) cookie_same_site: SameSite,
@@ -45,7 +46,7 @@ pub struct AxumSessionConfig {
     /// if not yet expired.
     pub(crate) memory_lifespan: Duration,
     /// Session Database table name default is async_sessions
-    pub(crate) table_name: String,
+    pub(crate) table_name: Cow<'static, str>,
 }
 
 impl AxumSessionConfig {
@@ -75,7 +76,7 @@ impl AxumSessionConfig {
     /// ```
     ///
     #[must_use]
-    pub fn with_accepted_cookie_name(mut self, name: &str) -> Self {
+    pub fn with_accepted_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
         self.accepted_cookie_name = name.into();
         self
     }
@@ -109,8 +110,8 @@ impl AxumSessionConfig {
     /// ```
     ///
     #[must_use]
-    pub fn with_cookie_domain(mut self, name: Option<String>) -> Self {
-        self.cookie_domain = name;
+    pub fn with_cookie_domain(mut self, name: impl Into<Option<Cow<'static, str>>>) -> Self {
+        self.cookie_domain = name.into();
         self
     }
 
@@ -124,7 +125,7 @@ impl AxumSessionConfig {
     /// ```
     ///
     #[must_use]
-    pub fn with_cookie_name(mut self, name: &str) -> Self {
+    pub fn with_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
         self.cookie_name = name.into();
         self
     }
@@ -142,7 +143,7 @@ impl AxumSessionConfig {
     /// ```
     ///
     #[must_use]
-    pub fn with_cookie_path(mut self, path: &str) -> Self {
+    pub fn with_cookie_path(mut self, path: impl Into<Cow<'static, str>>) -> Self {
         self.cookie_path = path.into();
         self
     }
@@ -288,7 +289,7 @@ impl AxumSessionConfig {
     /// ```
     ///
     #[must_use]
-    pub fn with_table_name(mut self, table_name: &str) -> Self {
+    pub fn with_table_name(mut self, table_name: impl Into<Cow<'static, str>>) -> Self {
         self.table_name = table_name.into();
         self
     }

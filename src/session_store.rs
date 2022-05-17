@@ -309,7 +309,7 @@ impl AxumSessionStore {
     ///
     /// If no session is found returns false.
     pub(crate) async fn service_session_data(&self, session: &AxumSession) -> bool {
-        if let Some(m) = store.inner.read().await.get(&session.id.inner()) {
+        if let Some(m) = self.inner.read().await.get(&session.id.inner()) {
             let mut inner = m.lock().await;
 
             if inner.expires < Utc::now() || inner.destroy {
@@ -317,7 +317,7 @@ impl AxumSessionStore {
                 inner.data = HashMap::new();
             }
 
-            inner.autoremove = Utc::now() + store.config.memory_lifespan;
+            inner.autoremove = Utc::now() + self.config.memory_lifespan;
             return true;
         }
 
