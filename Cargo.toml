@@ -19,32 +19,30 @@ rustls = ["sqlx/runtime-tokio-rustls"]
 native-tls = ["sqlx/runtime-tokio-native-tls"]
 
 [dependencies]
-axum-core = "0.2"
-serde = "1.0"
-serde_json = "1.0"
-chrono = { version = "0.4", features = ["clock", "serde", "std"] }
-tokio = { version = "1.18", features = ["full"] }
-async-trait = "0.1"
-tracing = "0.1"
-thiserror = "1.0"
-http-body = "0.4"
-uuid = { version = "0.8", features = ["v4", "serde"] }
-rand = "0.8"
-http = "0.2"
-tower-layer = "0.3"
-tower-service = "0.3"
-sqlx = { version = "0.5", default-features = false, features = [
+axum-core = "0.2.4"
+serde = "1.0.137"
+serde_json = "1.0.81"
+chrono = { version = "0.4.19", features = ["clock", "serde", "std"] }
+tokio = { version = "1.18.2", features = ["full"] }
+async-trait = "0.1.53"
+tracing = "0.1.34"
+thiserror = "1.0.31"
+http-body = "0.4.4"
+uuid = { version = "0.8.2", features = ["v4", "serde"] }
+http = "0.2.7"
+tower-layer = "0.3.1"
+tower-service = "0.3.1"
+sqlx = { version = "0.5.13", default-features = false, features = [
     "chrono",
-    "json",
-    "all-types",
+    "uuid",
 ] }
-cookie = { version = "0.16", features = ["percent-encode"] }
-futures = "0.3"
-bytes = "1.1"
+cookie = { version = "0.16.0", features = ["percent-encode"] }
+futures = "0.3.21"
+bytes = "1.1.0"
 
 [dev-dependencies]
-anyhow = "1.0"
-axum = "0.5"
+anyhow = "1.0.57"
+axum = "0.5.6"
 
 [package.metadata.docs.rs]
 features = ["postgres", "rustls"]
