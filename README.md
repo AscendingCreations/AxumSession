@@ -1,6 +1,6 @@
 # Axum_database_Sessions
 
-Library to Provide a Sqlx Database Session management layer..
+Library to Provide a Sqlx Database Session management layer.
 
 You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this library.
 
@@ -10,6 +10,8 @@ You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this
 ## Install
 
 Axum Database Sessions uses [`tokio`] runtime along with ['sqlx']; it supports [`native-tls`] and [`rustls`] TLS backends. When adding the dependency, you must chose a database feature that is `DatabaseType` and a `tls` backend. You can only choose one database type and one TLS Backend.
+By default, GDPR mode is enabled due to this it will require you to add an acceptance to your website before a Session or Cookie with Session id can be saved.
+If you want to disable GDPR mode, please see the examples.
 
 [`tokio`]: https://github.com/tokio-rs/tokio
 [`native-tls`]: https://crates.io/crates/native-tls
