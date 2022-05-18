@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## 2.0.1 (18. May, 2022)
+### Fixed
+- Documentation issues.
+
 ## 2.0.0 (18. May, 2022)
 ### Changed
 - Renamed gdpr_mode to session_mode and added a enumeration for 2 session types.

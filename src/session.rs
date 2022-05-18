@@ -117,14 +117,14 @@ impl AxumSession {
         .await;
     }
 
-    /// Sets the Current Session to be GDPR Accepted.
+    /// Sets the Current Session to be storable.
     ///
     /// This will allow the Session to save its data for the lifetime if set to true.
     /// If this is set to false it will unload the stored session.
     ///
     /// # Examples
     /// ```rust no_run
-    /// session.set_accepted(true).await;
+    /// session.set_store(true).await;
     /// ```
     ///
     pub async fn set_store(&self, storable: bool) {

@@ -126,7 +126,7 @@ async fn greet(session: AxumSession) -> String {
 ```
 
 
-To use Axum_database_session with session mode set as AcceptedOnly.
+To use Axum_database_session with session mode set as Storable.
 # Example
 
 ```rust no_run
@@ -165,7 +165,7 @@ async fn greet(session: AxumSession) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
 
     // Allow the Session data to be keep in memory and the database for the lifetime.
-    session.set_accepted(true).await;
+    session.set_store(true).await;
     count += 1;
     session.set("count", count).await;
 
