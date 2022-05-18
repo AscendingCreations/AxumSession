@@ -25,7 +25,7 @@ use tokio::sync::Mutex;
 use tower_service::Service;
 
 enum CookieType {
-    Accepted,
+    Storable,
     Data,
 }
 
@@ -33,14 +33,14 @@ impl CookieType {
     pub(crate) fn get_name(&self, config: &AxumSessionConfig) -> String {
         match self {
             CookieType::Data => config.cookie_name.to_string(),
-            CookieType::Accepted => config.accepted_cookie_name.to_string(),
+            CookieType::Storable => config.storable_cookie_name.to_string(),
         }
     }
 
     pub(crate) fn get_age(&self, config: &AxumSessionConfig) -> Option<chrono::Duration> {
         match self {
             CookieType::Data => config.cookie_max_age,
-            CookieType::Accepted => config.accepted_cookie_max_age,
+            CookieType::Storable => config.storable_cookie_max_age,
         }
     }
 }
@@ -80,7 +80,7 @@ where
             let mut cookies = get_cookies(&req);
             let session = AxumSession::new(&store, &cookies).await;
             let accepted = cookies
-                .get(&store.config.accepted_cookie_name)
+                .get(&store.config.storable_cookie_name)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
             // check if the session id exists if not lets check if it exists in the database or generate a new session.
@@ -136,20 +136,20 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let accepted = if let Some(session_data) =
+            let storable = if let Some(session_data) =
                 session.store.inner.read().await.get(&session.id.inner())
             {
-                session_data.lock().await.accepted
+                session_data.lock().await.storable
             } else {
                 false
             };
 
-            // Add the Accepted Cookie so we can keep track if they accepted it or not.
+            // Add the Storable Cookie so we can keep track if they can store the session.
             // Todo: Maybe add a way to store expiration times and such for accepted or not accept via json.
             cookies.add(create_cookie(
                 &store.config,
-                accepted.to_string(),
-                CookieType::Accepted,
+                storable.to_string(),
+                CookieType::Storable,
             ));
 
             // Add the Session ID so it can link back to a Session if one exists.
@@ -159,8 +159,8 @@ where
                 CookieType::Data,
             ));
 
-            if !store.config.session_mode.is_accepted_only() || accepted {
-                //run this After a response has returned so we save the most updated data to sql.
+            if !store.config.session_mode.is_storable() || accepted {
+                // run this After a response has returned so we save the most updated data to sql.
                 if store.is_persistent() {
                     if let Some(session_data) =
                         session.store.inner.read().await.get(&session.id.inner())
@@ -178,10 +178,10 @@ where
                 }
             }
 
-            if store.config.session_mode.is_accepted_only() && !accepted {
+            if store.config.session_mode.is_storable() && !accepted {
                 store.inner.write().await.remove(&session.id.inner());
 
-                //Also run this just in case it was stored in the database and they rejected the cookies.
+                // Also run this just in case it was stored in the database and they rejected storability.
                 if store.is_persistent() {
                     session
                         .store

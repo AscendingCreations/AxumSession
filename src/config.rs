@@ -13,17 +13,17 @@ use std::borrow::Cow;
 ///
 #[derive(Debug, Clone)]
 pub enum AxumSessionMode {
-    /// Deletes Session Data if accepted is false, if Accepted is true saves data.
-    AcceptedOnly,
-    /// Always in Memory and Database. regardless of Acceptance.
+    /// Deletes Session Data if session.storable is false, if session.storable is true saves data.
+    Storable,
+    /// Always in Memory and Database. regardless of if storable.
     Always,
 }
 
 impl AxumSessionMode {
-    /// Checks if the Mode is set to Accepted Only.
+    /// Checks if the Mode is set to only if Storable.
     ///
-    pub fn is_accepted_only(&self) -> bool {
-        matches!(self, AxumSessionMode::AcceptedOnly)
+    pub fn is_storable(&self) -> bool {
+        matches!(self, AxumSessionMode::Storable)
     }
 }
 
@@ -39,9 +39,9 @@ impl AxumSessionMode {
 #[derive(Debug, Clone)]
 pub struct AxumSessionConfig {
     /// The acepted cookies max age None means the browser deletes cookie on close
-    pub(crate) accepted_cookie_max_age: Option<Duration>,
+    pub(crate) storable_cookie_max_age: Option<Duration>,
     /// The cookie name that contains a boolean for session saving.
-    pub(crate) accepted_cookie_name: Cow<'static, str>,
+    pub(crate) storable_cookie_name: Cow<'static, str>,
     /// Session cookie domain
     pub(crate) cookie_domain: Option<Cow<'static, str>>,
     /// Session cookie http only flag
@@ -91,7 +91,7 @@ impl AxumSessionConfig {
         self
     }
 
-    /// Set the session's accepted cookie name.
+    /// Set the session's storable cookie name.
     ///
     /// # Examples
     /// ```rust
@@ -101,14 +101,14 @@ impl AxumSessionConfig {
     /// ```
     ///
     #[must_use]
-    pub fn with_accepted_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
-        self.accepted_cookie_name = name.into();
+    pub fn with_storable_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+        self.storable_cookie_name = name.into();
         self
     }
 
-    /// Set's the session's accepted cookies max_age (expiration time).
+    /// Set's the session's storable cookies max_age (expiration time).
     ///
-    /// If this is set to None then the Accepted Cookie will be unloaded on browser Close.
+    /// If this is set to None then the storable Cookie will be unloaded on browser Close.
     /// Set this to be the duration of max_lifespan or longer to prevent session drops.
     ///
     /// # Examples
@@ -120,8 +120,8 @@ impl AxumSessionConfig {
     /// ```
     ///
     #[must_use]
-    pub fn with_accepted_max_age(mut self, time: Option<Duration>) -> Self {
-        self.accepted_cookie_max_age = time;
+    pub fn with_storable_max_age(mut self, time: Option<Duration>) -> Self {
+        self.storable_cookie_max_age = time;
         self
     }
 
@@ -191,7 +191,7 @@ impl AxumSessionConfig {
         self
     }
 
-    /// Set's whether the session ignores or enforces GDPR cookie restrictions.
+    /// Set's whether the session Always stores data or on stores if storable.
     ///
     /// # Examples
     /// ```rust
@@ -332,8 +332,8 @@ impl Default for AxumSessionConfig {
             cookie_secure: false,
             cookie_domain: None,
             cookie_same_site: SameSite::None,
-            accepted_cookie_name: "session_acceptance".into(),
-            accepted_cookie_max_age: Some(Duration::days(100)),
+            storable_cookie_name: "session_acceptance".into(),
+            storable_cookie_max_age: Some(Duration::days(100)),
             table_name: "async_sessions".into(),
             max_connections: 5,
             /// Unload memory after 60 minutes if it has not been accessed.

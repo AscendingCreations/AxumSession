@@ -127,9 +127,9 @@ impl AxumSession {
     /// session.set_accepted(true).await;
     /// ```
     ///
-    pub async fn set_accepted(&self, accepted: bool) {
+    pub async fn set_store(&self, storable: bool) {
         self.tap(|sess| {
-            sess.accepted = accepted;
+            sess.storable = storable;
             Some(1)
         })
         .await;

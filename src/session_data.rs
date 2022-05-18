@@ -24,7 +24,7 @@ pub struct AxumSessionData {
     pub autoremove: DateTime<Utc>,
     pub destroy: bool,
     pub longterm: bool,
-    pub accepted: bool,
+    pub storable: bool,
 }
 
 impl AxumSessionData {
@@ -40,7 +40,7 @@ impl AxumSessionData {
     /// let session_data = AxumSessionData::new(token, true, &config);
     /// ```
     ///
-    pub fn new(id: Uuid, accepted: bool, config: &AxumSessionConfig) -> Self {
+    pub fn new(id: Uuid, storable: bool, config: &AxumSessionConfig) -> Self {
         Self {
             id,
             data: HashMap::new(),
@@ -48,7 +48,7 @@ impl AxumSessionData {
             destroy: false,
             autoremove: Utc::now() + config.memory_lifespan,
             longterm: false,
-            accepted,
+            storable,
         }
     }
 
