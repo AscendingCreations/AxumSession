@@ -2,6 +2,31 @@ use chrono::Duration;
 pub use cookie::SameSite;
 use std::borrow::Cow;
 
+/// Mode at which the Session will function As.
+///
+/// # Examples
+/// ```rust
+/// use axum_database_sessions::{AxumSessionConfig, AxumSessionMode};
+///
+/// let config = AxumSessionConfig::default().with_mode(AxumSessionMode::Always);
+/// ```
+///
+#[derive(Debug, Clone)]
+pub enum AxumSessionMode {
+    /// Deletes Session Data if accepted is false, if Accepted is true saves data.
+    AcceptedOnly,
+    /// Always in Memory and Database. regardless of Acceptance.
+    Always,
+}
+
+impl AxumSessionMode {
+    /// Checks if the Mode is set to Accepted Only.
+    ///
+    pub fn is_accepted_only(&self) -> bool {
+        matches!(self, AxumSessionMode::AcceptedOnly)
+    }
+}
+
 /// Configuration for how the Session and Cookies are used.
 ///
 /// # Examples
@@ -15,7 +40,7 @@ use std::borrow::Cow;
 pub struct AxumSessionConfig {
     /// The acepted cookies max age None means the browser deletes cookie on close
     pub(crate) accepted_cookie_max_age: Option<Duration>,
-    /// The cookie name that contains a boolean for GDPR acceptance.
+    /// The cookie name that contains a boolean for session saving.
     pub(crate) accepted_cookie_name: Cow<'static, str>,
     /// Session cookie domain
     pub(crate) cookie_domain: Option<Cow<'static, str>>,
@@ -32,8 +57,8 @@ pub struct AxumSessionConfig {
     pub(crate) cookie_same_site: SameSite,
     /// Session cookie secure flag
     pub(crate) cookie_secure: bool,
-    /// Disables the need to avoid cookie saving.
-    pub(crate) gdpr_mode: bool,
+    /// Disables the need to avoid session saving.
+    pub(crate) session_mode: AxumSessionMode,
     /// Sessions lifespan within the Database.
     pub(crate) lifespan: Duration,
     /// Session Database Max Poll Connections. Can not be 0
@@ -173,12 +198,12 @@ impl AxumSessionConfig {
     /// use axum_database_sessions::AxumSessionConfig;
     /// use cookie::SameSite;
     ///
-    /// let config = AxumSessionConfig::default().with_gdpr(false);
+    /// let config = AxumSessionConfig::default().with_mode(AxumSessionMode::Always);
     /// ```
     ///
     #[must_use]
-    pub fn with_gdpr(mut self, enable: bool) -> Self {
-        self.gdpr_mode = enable;
+    pub fn with_mode(mut self, mode: AxumSessionMode) -> Self {
+        self.session_mode = mode;
         self
     }
 
@@ -315,7 +340,7 @@ impl Default for AxumSessionConfig {
             memory_lifespan: Duration::minutes(60),
             /// Unload long term session after 60 days if it has not been accessed.
             max_lifespan: Duration::days(60),
-            gdpr_mode: true,
+            session_mode: AxumSessionMode::Always,
         }
     }
 }

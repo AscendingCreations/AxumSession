@@ -119,9 +119,8 @@ impl AxumSession {
 
     /// Sets the Current Session to be GDPR Accepted.
     ///
-    /// This will allow the Session to save its data and push a Cookie to the Browser if set to true.
-    /// If this is set to false it will unload the stored session. It will not unload an already set cookie.
-    /// Use this to tell if the end user accepted your cookie Policy or not based on GDPR Rules.
+    /// This will allow the Session to save its data for the lifetime if set to true.
+    /// If this is set to false it will unload the stored session.
     ///
     /// # Examples
     /// ```rust no_run

@@ -144,20 +144,22 @@ where
                 false
             };
 
-            //Add the Accepted Cookie so we cna keep track if they accepted it or not.
+            // Add the Accepted Cookie so we can keep track if they accepted it or not.
+            // Todo: Maybe add a way to store expiration times and such for accepted or not accept via json.
             cookies.add(create_cookie(
                 &store.config,
                 accepted.to_string(),
                 CookieType::Accepted,
             ));
 
-            if !store.config.gdpr_mode || accepted {
-                cookies.add(create_cookie(
-                    &store.config,
-                    session.id.inner(),
-                    CookieType::Data,
-                ));
+            // Add the Session ID so it can link back to a Session if one exists.
+            cookies.add(create_cookie(
+                &store.config,
+                session.id.inner(),
+                CookieType::Data,
+            ));
 
+            if !store.config.session_mode.is_accepted_only() || accepted {
                 //run this After a response has returned so we save the most updated data to sql.
                 if store.is_persistent() {
                     if let Some(session_data) =
@@ -176,7 +178,7 @@ where
                 }
             }
 
-            if store.config.gdpr_mode && !accepted {
+            if store.config.session_mode.is_accepted_only() && !accepted {
                 store.inner.write().await.remove(&session.id.inner());
 
                 //Also run this just in case it was stored in the database and they rejected the cookies.
