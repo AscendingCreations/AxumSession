@@ -10,8 +10,6 @@ You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this
 ## Install
 
 Axum Database Sessions uses [`tokio`] runtime along with ['sqlx']; it supports [`native-tls`] and [`rustls`] TLS backends. When adding the dependency, you must chose a database feature that is `DatabaseType` and a `tls` backend. You can only choose one database type and one TLS Backend.
-By default, GDPR mode is enabled due to this it will require you to add an acceptance to your website before a Session or Cookie with Session id can be saved.
-If you want to disable GDPR mode, please see the examples.
 
 [`tokio`]: https://github.com/tokio-rs/tokio
 [`native-tls`]: https://crates.io/crates/native-tls
@@ -71,10 +69,6 @@ async fn main() {
 async fn greet(session: AxumSession) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
 
-    //We set this to tell the system the user accepted the cookies.
-    //Otherwise the Session wont get stored and the Session ID is not sent as a cookie.
-    //The only Cookie that is always Sent is the Session Accepted Cookie.
-    session.set_accepted(true).await;
     count += 1;
     session.set("count", count).await;
 
@@ -122,10 +116,7 @@ async fn main() {
 
 async fn greet(session: AxumSession) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
-    //We set this to tell the system the user accepted the cookies.
-    //Otherwise the Session wont get stored and the Session ID is not sent as a cookie.
-    //The only Cookie that is always Sent is the Session Accepted Cookie.
-    session.set_accepted(true).await;
+
     count += 1;
     session.set("count", count).await;
 
@@ -135,13 +126,13 @@ async fn greet(session: AxumSession) -> String {
 ```
 
 
-To use Axum_database_session with GDPR mode disabled <the old way>.
+To use Axum_database_session with session mode set as AcceptedOnly.
 # Example
 
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
+use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode};
 use axum::{
     Router,
     routing::get,
@@ -150,7 +141,7 @@ use axum::{
 #[tokio::main]
 async fn main() {
     let session_config = AxumSessionConfig::default()
-        .with_table_name("test_table").with_gdpr(false);
+        .with_table_name("test_table").with_mode(AxumSessionMode::AcceptedOnly);
 
     let session_store = AxumSessionStore::new(None, session_config);
     session_store.migrate().await.unwrap();
@@ -172,6 +163,9 @@ async fn main() {
 //No need to set the sessions accepted or not with gdpr mode disabled
 async fn greet(session: AxumSession) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
+
+    // Allow the Session data to be keep in memory and the database for the lifetime.
+    session.set_accepted(true).await;
     count += 1;
     session.set("count", count).await;
 
