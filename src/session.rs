@@ -1,4 +1,4 @@
-use crate::{AxumSessionData, AxumSessionID, AxumSessionStore};
+use crate::{AxumSessionData, AxumSessionID, AxumSessionStore, CookiesExt};
 use async_trait::async_trait;
 use axum_core::extract::{FromRequest, RequestParts};
 use cookie::CookieJar;
@@ -37,8 +37,8 @@ where
 
 impl AxumSession {
     pub(crate) async fn new(store: &AxumSessionStore, cookies: &CookieJar) -> AxumSession {
-        let value = cookies.private(&store.config.key)
-            .get(&store.config.cookie_name)
+        let value = cookies
+            .get_cookie(&store.config.cookie_name, &store.config.key)
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 
         let uuid = match value {

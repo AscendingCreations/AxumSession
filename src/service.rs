@@ -6,7 +6,7 @@ use axum_core::{
 };
 use bytes::Bytes;
 use chrono::Utc;
-use cookie::{Cookie, CookieJar};
+use cookie::{Cookie, CookieJar, Key};
 use futures::future::BoxFuture;
 use http::{
     self,
@@ -80,8 +80,7 @@ where
             let mut cookies = get_cookies(&req);
             let session = AxumSession::new(&store, &cookies).await;
             let accepted = cookies
-                .private(&store.config.key)
-                .get(&store.config.storable_cookie_name)
+                .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
             // check if the session id exists if not lets check if it exists in the database or generate a new session.
@@ -147,18 +146,16 @@ where
 
             // Add the Storable Cookie so we can keep track if they can store the session.
             // Todo: Maybe add a way to store expiration times and such for accepted or not accept via json.
-            cookies.private_mut(&store.config.key).add(create_cookie(
-                &store.config,
-                storable.to_string(),
-                CookieType::Storable,
-            ));
+            cookies.add_cookie(
+                create_cookie(&store.config, storable.to_string(), CookieType::Storable),
+                &store.config.key,
+            );
 
             // Add the Session ID so it can link back to a Session if one exists.
-            cookies.private_mut(&store.config.key).add(create_cookie(
-                &store.config,
-                session.id.inner(),
-                CookieType::Data,
-            ));
+            cookies.add_cookie(
+                create_cookie(&store.config, session.id.inner(), CookieType::Data),
+                &store.config.key,
+            );
 
             if !store.config.session_mode.is_storable() || accepted {
                 // run this After a response has returned so we save the most updated data to sql.
@@ -208,6 +205,29 @@ where
             .field("session_store", &self.session_store)
             .field("inner", &self.inner)
             .finish()
+    }
+}
+
+pub(crate) trait CookiesExt {
+    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<&Cookie<'static>>;
+    fn add_cookie(&mut self, cookie: Cookie<'static>, key: &Option<Key>);
+}
+
+impl CookiesExt for CookieJar {
+    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<&Cookie<'static>> {
+        if let Some(key) = key {
+            self.private(&key).get(name).as_ref()
+        } else {
+            self.get(name)
+        }
+    }
+
+    fn add_cookie(&mut self, cookie: Cookie<'static>, key: &Option<Key>) {
+        if let Some(key) = key {
+            self.private_mut(&key).add(cookie)
+        } else {
+            self.add(cookie)
+        }
     }
 }
 

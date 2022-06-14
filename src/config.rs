@@ -73,7 +73,7 @@ pub struct AxumSessionConfig {
     /// Session Database table name default is async_sessions
     pub(crate) table_name: Cow<'static, str>,
     ///Encyption Key used to encypt cookies for confidentiality, integrity, and authenticity.
-    pub(crate) key: Key,
+    pub(crate) key: Option<Key>,
 }
 
 impl std::fmt::Debug for AxumSessionConfig {
@@ -355,7 +355,7 @@ impl AxumSessionConfig {
     ///
     #[must_use]
     pub fn with_key(mut self, key: Key) -> Self {
-        self.key = key;
+        self.key = Some(key);
         self
     }
 }
@@ -382,7 +382,7 @@ impl Default for AxumSessionConfig {
             max_lifespan: Duration::days(60),
             session_mode: AxumSessionMode::Always,
             /// Makes a Random Key on each Boot if not set statically. Will affect long term cookies.
-            key: Key::generate(),
+            key: None,
         }
     }
 }
