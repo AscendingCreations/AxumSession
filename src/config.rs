@@ -344,7 +344,13 @@ impl AxumSessionConfig {
         self
     }
 
-    /// Set's the session's cookie encyption key.
+    /// Set's the session's cookie encyption key enabling private cookies.
+    ///
+    /// When Set it will enforce Private cookies across all Sessions.
+    /// If you use Key::generate() it will make a new key each server reboot.
+    /// To prevent this make and save a key to a config file for long term usage.
+    /// For Extra Security Regenerate the key every so many months to a year.
+    /// A new key will invalidate all old Sessions so it be wise to run session_store.clear_store() on reboot.
     ///
     /// # Examples
     /// ```rust

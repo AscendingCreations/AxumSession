@@ -46,6 +46,8 @@ async fn main() {
 
     let poll = connect_to_database().await.unwrap();
 
+    //This Defaults as normal Cookies.
+    //To enable Private cookies for integrity, and authenticity please check the next Example.
     let session_config = AxumSessionConfig::default()
         .with_table_name("test_table");
 
@@ -78,6 +80,47 @@ async fn greet(session: AxumSession) -> String {
 async fn connect_to_database() -> anyhow::Result<sqlx::Pool<sqlx::Postgres>> {
     // ...
     unimplemented!()
+}
+```
+
+To enable private cookies for confidentiality, integrity, and authenticity.
+When a Key is set it will automatically set the Cookie into an encypted Private cookie which
+both protects the cookies data from prying eye's it also ensures the authenticity of the cookie.
+# Example
+
+```rust no_run
+use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
+use std::net::SocketAddr;
+use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode, Key};
+use axum::{
+    Router,
+    routing::get,
+};
+
+#[tokio::main]
+async fn main() {
+    let session_config = AxumSessionConfig::default()
+        .with_table_name("test_table")
+        // 'Key::generate()' will generate a new key each restart of the server.
+        // If you want it to be more permanent then generate and set it to a config file.
+        // If with_key() is used it will set all cookies as private, which guarantees integrity, and authenticity.
+        .with_key(Key::generate());
+
+    let session_store = AxumSessionStore::new(None, session_config);
+    session_store.migrate().await.unwrap();
+
+    // build our application with some routes
+    let app = Router::new()
+        .route("/greet", get(greet))
+        .layer(AxumSessionLayer::new(session_store));
+
+    // run it
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    tracing::debug!("listening on {}", addr);
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }
 ```
 
