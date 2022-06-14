@@ -37,7 +37,7 @@ where
 
 impl AxumSession {
     pub(crate) async fn new(store: &AxumSessionStore, cookies: &CookieJar) -> AxumSession {
-        let value = cookies
+        let value = cookies.private(&store.config.key)
             .get(&store.config.cookie_name)
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 

@@ -80,6 +80,7 @@ where
             let mut cookies = get_cookies(&req);
             let session = AxumSession::new(&store, &cookies).await;
             let accepted = cookies
+                .private(&store.config.key)
                 .get(&store.config.storable_cookie_name)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
@@ -146,14 +147,14 @@ where
 
             // Add the Storable Cookie so we can keep track if they can store the session.
             // Todo: Maybe add a way to store expiration times and such for accepted or not accept via json.
-            cookies.add(create_cookie(
+            cookies.private_mut(&store.config.key).add(create_cookie(
                 &store.config,
                 storable.to_string(),
                 CookieType::Storable,
             ));
 
             // Add the Session ID so it can link back to a Session if one exists.
-            cookies.add(create_cookie(
+            cookies.private_mut(&store.config.key).add(create_cookie(
                 &store.config,
                 session.id.inner(),
                 CookieType::Data,
@@ -237,6 +238,7 @@ fn create_cookie<'a>(
 
 fn get_cookies<ReqBody>(req: &Request<ReqBody>) -> CookieJar {
     let mut jar = CookieJar::new();
+
     let cookie_iter = req
         .headers()
         .get_all(COOKIE)

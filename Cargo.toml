@@ -36,7 +36,7 @@ sqlx = { version = "0.5.13", default-features = false, features = [
     "chrono",
     "uuid",
 ] }
-cookie = { version = "0.16.0", features = ["percent-encode"] }
+cookie = { version = "0.16.0", features = ["percent-encode", "private"] }
 futures = "0.3.21"
 bytes = "1.1.0"
 

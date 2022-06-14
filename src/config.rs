@@ -1,5 +1,5 @@
 use chrono::Duration;
-pub use cookie::SameSite;
+pub use cookie::{Key, SameSite};
 use std::borrow::Cow;
 
 /// Mode at which the Session will function As.
@@ -36,7 +36,7 @@ impl AxumSessionMode {
 /// let config = AxumSessionConfig::default();
 /// ```
 ///
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct AxumSessionConfig {
     /// The acepted cookies max age None means the browser deletes cookie on close
     pub(crate) storable_cookie_max_age: Option<Duration>,
@@ -72,6 +72,31 @@ pub struct AxumSessionConfig {
     pub(crate) memory_lifespan: Duration,
     /// Session Database table name default is async_sessions
     pub(crate) table_name: Cow<'static, str>,
+    ///Encyption Key used to encypt cookies for confidentiality, integrity, and authenticity.
+    pub(crate) key: Key,
+}
+
+impl std::fmt::Debug for AxumSessionConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AxumSessionConfig")
+            .field("storable_cookie_max_age", &self.storable_cookie_max_age)
+            .field("storable_cookie_name", &self.storable_cookie_name)
+            .field("cookie_domain", &self.cookie_domain)
+            .field("cookie_http_only", &self.cookie_http_only)
+            .field("cookie_max_age", &self.cookie_max_age)
+            .field("cookie_name", &self.cookie_name)
+            .field("cookie_path", &self.cookie_path)
+            .field("cookie_same_site", &self.cookie_same_site)
+            .field("cookie_secure", &self.cookie_secure)
+            .field("session_mode", &self.session_mode)
+            .field("lifespan", &self.lifespan)
+            .field("max_connections", &self.max_connections)
+            .field("max_lifespan", &self.max_lifespan)
+            .field("memory_lifespan", &self.memory_lifespan)
+            .field("table_name", &self.table_name)
+            .field("key", &"key hidden")
+            .finish()
+    }
 }
 
 impl AxumSessionConfig {
@@ -318,6 +343,21 @@ impl AxumSessionConfig {
         self.table_name = table_name.into();
         self
     }
+
+    /// Set's the session's cookie encyption key.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_database_sessions::{Key, AxumSessionConfig};
+    ///
+    /// let config = AxumSessionConfig::default().with_key(Key::generate());
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_key(mut self, key: Key) -> Self {
+        self.key = key;
+        self
+    }
 }
 
 impl Default for AxumSessionConfig {
@@ -341,6 +381,8 @@ impl Default for AxumSessionConfig {
             /// Unload long term session after 60 days if it has not been accessed.
             max_lifespan: Duration::days(60),
             session_mode: AxumSessionMode::Always,
+            /// Makes a Random Key on each Boot if not set statically. Will affect long term cookies.
+            key: Key::generate(),
         }
     }
 }
