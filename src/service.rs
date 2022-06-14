@@ -209,22 +209,22 @@ where
 }
 
 pub(crate) trait CookiesExt {
-    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<&Cookie<'static>>;
+    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<Cookie<'static>>;
     fn add_cookie(&mut self, cookie: Cookie<'static>, key: &Option<Key>);
 }
 
 impl CookiesExt for CookieJar {
-    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<&Cookie<'static>> {
+    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<Cookie<'static>> {
         if let Some(key) = key {
-            self.private(&key).get(name).as_ref()
+            self.private(key).get(name)
         } else {
-            self.get(name)
+            self.get(name).cloned()
         }
     }
 
     fn add_cookie(&mut self, cookie: Cookie<'static>, key: &Option<Key>) {
         if let Some(key) = key {
-            self.private_mut(&key).add(cookie)
+            self.private_mut(key).add(cookie)
         } else {
             self.add(cookie)
         }
