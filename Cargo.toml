@@ -19,7 +19,7 @@ rustls = ["sqlx/runtime-tokio-rustls"]
 native-tls = ["sqlx/runtime-tokio-native-tls"]
 
 [dependencies]
-axum-core = "0.2.5"
+axum-core = "0.2.6"
 serde = "1.0.137"
 serde_json = "1.0.81"
 chrono = { version = "0.4.19", features = ["clock", "serde", "std"] }
@@ -28,11 +28,11 @@ async-trait = "0.1.56"
 tracing = "0.1.35"
 thiserror = "1.0.31"
 http-body = "0.4.5"
-uuid = { version = "0.8.2", features = ["v4", "serde"] }
+uuid = { version = "1.1.2", features = ["v4", "serde"] }
 http = "0.2.8"
 tower-layer = "0.3.1"
-tower-service = "0.3.1"
-sqlx = { version = "0.5.13", default-features = false, features = [
+tower-service = "0.3.2"
+sqlx = { version = "0.6.0", default-features = false, features = [
     "chrono",
     "uuid",
 ] }
@@ -41,8 +41,8 @@ futures = "0.3.21"
 bytes = "1.1.0"
 
 [dev-dependencies]
-anyhow = "1.0.57"
-axum = "0.5.7"
+anyhow = "1.0.58"
+axum = "0.5.9"
 
 [package.metadata.docs.rs]
 features = ["postgres", "rustls"]
