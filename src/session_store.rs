@@ -21,11 +21,11 @@ pub struct AxumSessionStore {
     //Sqlx Pool Holder for (Sqlite, Postgres, Mysql)
     pub client: Option<AxumDatabasePool>,
     /// locked Hashmap containing UserID and their session data
-    pub inner: Arc<RwLock<HashMap<String, Mutex<AxumSessionData>>>>,
+    pub(crate) inner: Arc<RwLock<HashMap<String, Mutex<AxumSessionData>>>>,
     //move this to creation upon layer
     pub config: AxumSessionConfig,
     //move this to creation on layer.
-    pub timers: Arc<RwLock<AxumSessionTimers>>,
+    pub(crate) timers: Arc<RwLock<AxumSessionTimers>>,
 }
 
 impl AxumSessionStore {
@@ -163,7 +163,7 @@ impl AxumSessionStore {
         Ok(0)
     }
 
-    /// loads a session's data from the database using a UUID string.
+    /// private internal function that loads a session's data from the database using a UUID string.
     ///
     /// If client is None it will return Ok(None).
     ///
@@ -184,7 +184,7 @@ impl AxumSessionStore {
     /// };
     /// ```
     ///
-    pub async fn load_session(
+    pub(crate) async fn load_session(
         &self,
         cookie_value: String,
     ) -> Result<Option<AxumSessionData>, SessionError> {
@@ -205,7 +205,7 @@ impl AxumSessionStore {
         }
     }
 
-    /// stores a session's data to the database.
+    /// private internal function that stores a session's data to the database.
     ///
     /// If client is None it will return Ok(()).
     ///
@@ -228,7 +228,10 @@ impl AxumSessionStore {
     /// };
     /// ```
     ///
-    pub async fn store_session(&self, session: &AxumSessionData) -> Result<(), SessionError> {
+    pub(crate) async fn store_session(
+        &self,
+        session: &AxumSessionData,
+    ) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             sqlx::query(&databases::STORE_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name))
                 .bind(session.id.to_string())

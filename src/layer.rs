@@ -9,7 +9,6 @@ use tower_layer::Layer;
 /// use uuid::Uuid;
 ///
 /// let config = AxumSessionConfig::default();
-/// let token = Uuid::new_v4();
 /// let session_store = AxumSessionStore::new(None, &config);
 /// let layer = AxumSessionLayer::new(session_store);
 /// ```
@@ -28,7 +27,6 @@ impl AxumSessionLayer {
     /// use uuid::Uuid;
     ///
     /// let config = AxumSessionConfig::default();
-    /// let token = Uuid::new_v4();
     /// let session_store = AxumSessionStore::new(None, &config);
     /// let layer = AxumSessionLayer::new(session_store);
     /// ```

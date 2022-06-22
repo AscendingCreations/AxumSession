@@ -27,9 +27,10 @@ pub use config::{AxumSessionConfig, AxumSessionMode, Key, SameSite};
 pub use databases::AxumDatabasePool;
 pub use errors::SessionError;
 pub use layer::AxumSessionLayer;
-pub(crate) use service::{CookiesExt, AxumSessionService};
 pub use session::AxumSession;
-pub use session_data::AxumSessionData;
-pub use session_id::AxumSessionID;
 pub use session_store::AxumSessionStore;
-pub use session_timers::AxumSessionTimers;
+
+pub(crate) use service::{AxumSessionService, CookiesExt};
+pub(crate) use session_data::AxumSessionData;
+pub(crate) use session_id::AxumSessionID;
+pub(crate) use session_timers::AxumSessionTimers;

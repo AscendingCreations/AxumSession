@@ -17,14 +17,14 @@ use uuid::Uuid;
 /// ```
 ///
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct AxumSessionData {
-    pub id: Uuid,
-    pub data: HashMap<String, String>,
-    pub expires: DateTime<Utc>,
-    pub autoremove: DateTime<Utc>,
-    pub destroy: bool,
-    pub longterm: bool,
-    pub storable: bool,
+pub(crate) struct AxumSessionData {
+    pub(crate) id: Uuid,
+    pub(crate) data: HashMap<String, String>,
+    pub(crate) expires: DateTime<Utc>,
+    pub(crate) autoremove: DateTime<Utc>,
+    pub(crate) destroy: bool,
+    pub(crate) longterm: bool,
+    pub(crate) storable: bool,
 }
 
 impl AxumSessionData {
@@ -40,7 +40,7 @@ impl AxumSessionData {
     /// let session_data = AxumSessionData::new(token, true, &config);
     /// ```
     ///
-    pub fn new(id: Uuid, storable: bool, config: &AxumSessionConfig) -> Self {
+    pub(crate) fn new(id: Uuid, storable: bool, config: &AxumSessionConfig) -> Self {
         Self {
             id,
             data: HashMap::new(),
@@ -65,7 +65,7 @@ impl AxumSessionData {
     /// let expired = session_data.validate();
     /// ```
     ///
-    pub fn validate(&self) -> bool {
+    pub(crate) fn validate(&self) -> bool {
         self.expires >= Utc::now()
     }
 }

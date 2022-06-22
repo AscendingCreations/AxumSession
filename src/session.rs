@@ -72,7 +72,7 @@ impl AxumSession {
     /// }).await;
     /// ```
     ///
-    pub async fn tap<T: DeserializeOwned>(
+    pub(crate) async fn tap<T: DeserializeOwned>(
         &self,
         func: impl FnOnce(&mut AxumSessionData) -> Option<T>,
     ) -> Option<T> {

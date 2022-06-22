@@ -18,7 +18,7 @@ use uuid::Uuid;
 /// ```
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-pub struct AxumSessionID(pub Uuid);
+pub(crate) struct AxumSessionID(pub(crate) Uuid);
 
 impl AxumSessionID {
     /// Constructs a new AxumSessionID hold a UUID.
@@ -33,7 +33,7 @@ impl AxumSessionID {
     /// let id = AxumSessionID::new(token);
     /// ```
     ///
-    pub fn new(uuid: Uuid) -> AxumSessionID {
+    pub(crate) fn new(uuid: Uuid) -> AxumSessionID {
         AxumSessionID(uuid)
     }
 
@@ -50,7 +50,7 @@ impl AxumSessionID {
     /// let str_id = id.inner();
     /// ```
     ///
-    pub fn inner(&self) -> String {
+    pub(crate) fn inner(&self) -> String {
         self.0.to_string()
     }
 }
