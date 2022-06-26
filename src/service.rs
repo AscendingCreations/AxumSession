@@ -14,7 +14,6 @@ use http::{
     HeaderMap, Request,
 };
 use http_body::Body as HttpBody;
-use std::collections::HashMap;
 use std::{
     boxed::Box,
     convert::Infallible,
