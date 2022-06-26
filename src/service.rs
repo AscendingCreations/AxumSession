@@ -94,7 +94,7 @@ where
 
                 if !sess.validate() || sess.destroy {
                     sess.destroy = false;
-                    sess.data = HashMap::new();
+                    sess.data.clear();
                     sess.autoremove = Utc::now() + store.config.memory_lifespan;
                 }
 
