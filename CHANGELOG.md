@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-## 3.0.1 (22. June, 2022)
+## 3.0.2 (26. June, 2022)
+### Fixed
+- Session destroy not getting set back to false after session was reset for inner
+
+### Changed
+- on Session Destroy hashmap is cleared instead of unloaded and remade.
+
+## 3.0.1 (26. June, 2022)
 ### Fixed
 - Session destroy not getting set back to false after session was reset. Good find @bbigras
 
