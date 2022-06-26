@@ -316,8 +316,9 @@ impl AxumSessionStore {
             let mut inner = m.lock().await;
 
             if inner.expires < Utc::now() || inner.destroy {
+                inner.destroy = false;
                 inner.longterm = false;
-                inner.data = HashMap::new();
+                inner.data.clear();
             }
 
             inner.autoremove = Utc::now() + self.config.memory_lifespan;
