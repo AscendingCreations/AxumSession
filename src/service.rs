@@ -93,6 +93,7 @@ where
                     .unwrap_or_else(|| AxumSessionData::new(session.id.0, accepted, &store.config));
 
                 if !sess.validate() || sess.destroy {
+                    sess.destroy = false;
                     sess.data = HashMap::new();
                     sess.autoremove = Utc::now() + store.config.memory_lifespan;
                 }
