@@ -100,6 +100,12 @@ impl std::fmt::Debug for AxumSessionConfig {
 }
 
 impl AxumSessionConfig {
+    /// Creates [`Default`] configuration of [`AxumSessionConfig`].
+    /// This is equivalent to the [`AxumSessionConfig::default()`].
+    #[must_use]
+    pub fn new() -> Self {
+        Default::default()
+    }
     /// Sets the sessions database pool's max connection's limit.
     ///
     /// # Examples
