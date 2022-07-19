@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
+### Changed
+- changed internal data structure to use dashmap and remove need for RWlock and Mutex lock.
 
 ## 3.0.2 (26. June, 2022)
 ### Fixed
