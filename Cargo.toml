@@ -19,11 +19,11 @@ rustls = ["sqlx/runtime-tokio-rustls"]
 native-tls = ["sqlx/runtime-tokio-native-tls"]
 
 [dependencies]
-axum-core = "0.2.6"
-serde = "1.0.137"
-serde_json = "1.0.81"
+axum-core = "0.2.7"
+serde = "1.0.139"
+serde_json = "1.0.82"
 chrono = { version = "0.4.19", features = ["clock", "serde", "std"] }
-tokio = { version = "1.19.2", features = ["full"] }
+tokio = { version = "1.20.0", features = ["full"] }
 async-trait = "0.1.56"
 tracing = "0.1.35"
 thiserror = "1.0.31"
@@ -38,11 +38,11 @@ sqlx = { version = "0.6.0", default-features = false, features = [
 ] }
 cookie = { version = "0.16.0", features = ["percent-encode", "private"] }
 futures = "0.3.21"
-bytes = "1.1.0"
+bytes = "1.2.0"
 
 [dev-dependencies]
 anyhow = "1.0.58"
-axum = "0.5.9"
+axum = "0.5.13"
 
 [package.metadata.docs.rs]
 features = ["postgres", "rustls"]
