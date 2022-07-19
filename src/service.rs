@@ -20,7 +20,6 @@ use std::{
     fmt,
     task::{Context, Poll},
 };
-use tokio::sync::Mutex;
 use tower_service::Service;
 
 enum CookieType {
@@ -77,13 +76,13 @@ where
 
         Box::pin(async move {
             let mut cookies = get_cookies(&req);
-            let session = AxumSession::new(&store, &cookies).await;
+            let session = AxumSession::new(&store, &cookies);
             let accepted = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
             // check if the session id exists if not lets check if it exists in the database or generate a new session.
-            if !store.service_session_data(&session).await {
+            if !store.service_session_data(&session) {
                 let mut sess = store
                     .load_session(session.id.inner())
                     .await
@@ -97,11 +96,7 @@ where
                     sess.autoremove = Utc::now() + store.config.memory_lifespan;
                 }
 
-                store
-                    .inner
-                    .write()
-                    .await
-                    .insert(session.id.inner(), Mutex::new(sess));
+                store.inner.insert(session.id.inner(), sess);
             }
 
             let (last_sweep, last_database_sweep) = {
@@ -114,11 +109,7 @@ where
             // forever by abandoned sessions (e.g. when a client lost their cookie)
             // Throttle by memory lifespan - e.g. sweep every hour
             if last_sweep <= Utc::now() {
-                store.inner.write().await.retain(|_k, v| {
-                    v.try_lock()
-                        .map(|data| data.autoremove > Utc::now())
-                        .unwrap_or(true)
-                });
+                store.inner.retain(|_k, v| v.autoremove > Utc::now());
                 store.timers.write().await.last_expiry_sweep =
                     Utc::now() + store.config.memory_lifespan;
             }
@@ -136,10 +127,9 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let storable = if let Some(session_data) =
-                session.store.inner.read().await.get(&session.id.inner())
+            let storable = if let Some(session_data) = session.store.inner.get(&session.id.inner())
             {
-                session_data.lock().await.storable
+                session_data.storable
             } else {
                 false
             };
@@ -160,24 +150,27 @@ where
             if !store.config.session_mode.is_storable() || accepted {
                 // run this After a response has returned so we save the most updated data to sql.
                 if store.is_persistent() {
-                    if let Some(session_data) =
-                        session.store.inner.read().await.get(&session.id.inner())
+                    let sess = if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner())
                     {
-                        let mut sess = session_data.lock().await;
-
                         if sess.longterm {
                             sess.expires = Utc::now() + store.config.max_lifespan;
                         } else {
                             sess.expires = Utc::now() + store.config.lifespan;
                         }
 
+                        Some(sess.clone())
+                    } else {
+                        None
+                    };
+
+                    if let Some(sess) = sess {
                         session.store.store_session(&sess).await.unwrap()
                     }
                 }
             }
 
             if store.config.session_mode.is_storable() && !accepted {
-                store.inner.write().await.remove(&session.id.inner());
+                store.inner.remove(&session.id.inner());
 
                 // Also run this just in case it was stored in the database and they rejected storability.
                 if store.is_persistent() {

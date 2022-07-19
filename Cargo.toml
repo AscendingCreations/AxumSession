@@ -39,6 +39,7 @@ sqlx = { version = "0.6.0", default-features = false, features = [
 cookie = { version = "0.16.0", features = ["percent-encode", "private"] }
 futures = "0.3.21"
 bytes = "1.2.0"
+dashmap = "5.3.4"
 
 [dev-dependencies]
 anyhow = "1.0.58"
