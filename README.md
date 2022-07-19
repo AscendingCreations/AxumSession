@@ -4,7 +4,7 @@ Library to Provide a Sqlx Database Session management layer.
 
 You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this library.
 
-[![https://crates.io/crates/axum_database_sessions](https://img.shields.io/badge/crates.io-v3.0.2-blue)](https://crates.io/crates/axum_database_sessions)
+[![https://crates.io/crates/axum_database_sessions](https://img.shields.io/badge/crates.io-v3.1.0-blue)](https://crates.io/crates/axum_database_sessions)
 [![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
 
 ## Install
@@ -22,7 +22,7 @@ Axum Database Sessions uses [`tokio`] runtime along with [`sqlx`]; it supports [
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_database_sessions = { version = "3.0.2", features = [ "postgres", "rustls"] }
+axum_database_sessions = { version = "3.1.0", features = [ "postgres", "rustls"] }
 ```
 
 #### Cargo Feature Flags
