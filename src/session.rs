@@ -36,23 +36,20 @@ where
 }
 
 impl AxumSession {
-    pub(crate) async fn new(store: &AxumSessionStore, cookies: &CookieJar) -> AxumSession {
+    pub(crate) fn new(store: &AxumSessionStore, cookies: &CookieJar) -> AxumSession {
         let value = cookies
             .get_cookie(&store.config.cookie_name, &store.config.key)
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 
         let uuid = match value {
             Some(v) => v,
-            None => {
-                let store_ug = store.inner.read().await;
-                loop {
-                    let token = Uuid::new_v4();
+            None => loop {
+                let token = Uuid::new_v4();
 
-                    if !store_ug.contains_key(&token.to_string()) {
-                        break token;
-                    }
+                if !store.inner.contains_key(&token.to_string()) {
+                    break token;
                 }
-            }
+            },
         };
 
         AxumSession {
@@ -72,14 +69,11 @@ impl AxumSession {
     /// }).await;
     /// ```
     ///
-    pub(crate) async fn tap<T: DeserializeOwned>(
+    pub(crate) fn tap<T: DeserializeOwned>(
         &self,
         func: impl FnOnce(&mut AxumSessionData) -> Option<T>,
     ) -> Option<T> {
-        let store_rg = self.store.inner.read().await;
-
-        if let Some(v) = store_rg.get(&self.id.0.to_string()) {
-            let mut instance = v.lock().await;
+        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
             func(&mut instance)
         } else {
             tracing::warn!("Session data unexpectedly missing");
@@ -98,8 +92,7 @@ impl AxumSession {
         self.tap(|sess| {
             sess.destroy = true;
             Some(1)
-        })
-        .await;
+        });
     }
 
     /// Sets the Current Session to a long term expiration. Useful for Remember Me setups.
@@ -113,8 +106,7 @@ impl AxumSession {
         self.tap(|sess| {
             sess.longterm = longterm;
             Some(1)
-        })
-        .await;
+        });
     }
 
     /// Sets the Current Session to be storable.
@@ -131,8 +123,7 @@ impl AxumSession {
         self.tap(|sess| {
             sess.storable = storable;
             Some(1)
-        })
-        .await;
+        });
     }
 
     /// Gets data from the Session's HashMap
@@ -151,7 +142,6 @@ impl AxumSession {
             let string = sess.data.get(key)?;
             serde_json::from_str(string).ok()
         })
-        .await
     }
 
     /// Sets data to the Current Session's HashMap.
@@ -169,8 +159,7 @@ impl AxumSession {
                 sess.data.insert(key.to_string(), value);
             }
             Some(1)
-        })
-        .await;
+        });
     }
 
     /// Removes a Key from the Current Session's HashMap.
@@ -181,7 +170,7 @@ impl AxumSession {
     /// ```
     ///
     pub async fn remove(&self, key: &str) {
-        self.tap(|sess| sess.data.remove(key)).await;
+        self.tap(|sess| sess.data.remove(key));
     }
 
     /// Clears all data from the Current Session's HashMap.
@@ -192,11 +181,7 @@ impl AxumSession {
     /// ```
     ///
     pub async fn clear_all(&self) {
-        let store_rg = self.store.inner.read().await;
-
-        if let Some(v) = store_rg.get(&self.id.0.to_string()) {
-            let mut instance = v.lock().await;
-
+        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
             instance.data.clear();
         }
 
@@ -219,7 +204,7 @@ impl AxumSession {
         if self.store.is_persistent() {
             self.store.count().await.unwrap_or(0i64)
         } else {
-            self.store.inner.read().await.len() as i64
+            self.store.inner.len() as i64
         }
     }
 }

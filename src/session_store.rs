@@ -3,9 +3,9 @@ use crate::{
     AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionTimers, SessionError,
 };
 use chrono::{Duration, Utc};
-use std::{collections::HashMap, sync::Arc};
-use tokio::sync::{Mutex, RwLock};
-
+use dashmap::DashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 /// Contains the main Services storage for all session's and database access for persistant Sessions.
 ///
 /// # Examples
@@ -21,7 +21,7 @@ pub struct AxumSessionStore {
     //Sqlx Pool Holder for (Sqlite, Postgres, Mysql)
     pub client: Option<AxumDatabasePool>,
     /// locked Hashmap containing UserID and their session data
-    pub(crate) inner: Arc<RwLock<HashMap<String, Mutex<AxumSessionData>>>>,
+    pub(crate) inner: Arc<DashMap<String, AxumSessionData>>,
     //move this to creation upon layer
     pub config: AxumSessionConfig,
     //move this to creation on layer.
@@ -311,10 +311,8 @@ impl AxumSessionStore {
     /// Attempts to load check and clear Data.
     ///
     /// If no session is found returns false.
-    pub(crate) async fn service_session_data(&self, session: &AxumSession) -> bool {
-        if let Some(m) = self.inner.read().await.get(&session.id.inner()) {
-            let mut inner = m.lock().await;
-
+    pub(crate) fn service_session_data(&self, session: &AxumSession) -> bool {
+        if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
             if inner.expires < Utc::now() || inner.destroy {
                 inner.destroy = false;
                 inner.longterm = false;
