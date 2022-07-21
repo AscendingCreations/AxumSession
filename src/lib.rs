@@ -24,7 +24,7 @@ mod session_store;
 mod session_timers;
 
 pub use config::{AxumSessionConfig, AxumSessionMode, Key, SameSite};
-pub use databases::AxumDatabasePool;
+pub use databases::database::AxumDatabasePool;
 pub use errors::SessionError;
 pub use layer::AxumSessionLayer;
 pub use session::AxumSession;

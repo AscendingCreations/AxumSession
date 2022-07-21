@@ -1,50 +1,113 @@
+use crate::{AxumDatabasePool, SessionError};
+use async_trait::async_trait;
+use chrono::Utc;
 use sqlx::{pool::Pool, MySql, MySqlPool};
-
+use std::borrow::Cow;
 /// Mysql's Pool type for AxumDatabasePool
 #[derive(Debug, Clone)]
-pub struct AxumDatabasePool(MySqlPool);
-
-impl AxumDatabasePool {
-    /// Grabs the Pool for direct usage
-    pub fn inner(&self) -> &MySqlPool {
-        &self.0
-    }
+pub struct AxumMySqlPool {
+    pool: Pool<MySql>,
 }
-
-impl From<Pool<MySql>> for AxumDatabasePool {
+impl From<Pool<MySql>> for AxumMySqlPool {
     fn from(conn: MySqlPool) -> Self {
-        AxumDatabasePool(conn)
+        AxumMySqlPool { pool: conn }
     }
 }
-
-pub const MIGRATE_QUERY: &str = r#"
-        CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
-            `id` VARCHAR(128) NOT NULL,
-            `expires` INTEGER NULL,
-            `session` TEXT NOT NULL,
-            PRIMARY KEY (`id`),
-            KEY `expires` (`expires`)
+#[async_trait]
+impl AxumDatabasePool for AxumMySqlPool {
+    async fn migrate(&self, table_name: &Cow<'static, str>) -> Result<(), SessionError> {
+        sqlx::query(
+            &r#"
+            CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
+                "id" VARCHAR(128) NOT NULL PRIMARY KEY,
+                "expires" INTEGER NULL,
+                "session" TEXT NOT NULL
+            )
+        "#
+            .replace("%%TABLE_NAME%%", &table_name),
         )
-        ENGINE=InnoDB
-        DEFAULT CHARSET=utf8mb4
-    "#;
+        .execute(&self.pool)
+        .await?;
 
-pub const CLEANUP_QUERY: &str = r#"DELETE FROM %%TABLE_NAME%% WHERE expires < ?"#;
+        Ok(())
+    }
+    async fn delete_by_expiry(&self, table_name: &Cow<'static, str>) -> Result<(), SessionError> {
+        sqlx::query(
+            &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < $1"#
+                .replace("%%TABLE_NAME%%", table_name),
+        )
+        .bind(Utc::now().timestamp())
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+    async fn count(&self, table_name: &Cow<'static, str>) -> Result<i64, SessionError> {
+        let (count,) = sqlx::query_as(
+            &r#"SELECT COUNT(*) FROM %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
+        )
+        .fetch_one(&self.pool)
+        .await?;
 
-pub const COUNT_QUERY: &str = r#"SELECT COUNT(*) FROM %%TABLE_NAME%%"#;
-
-pub const LOAD_QUERY: &str = r#"
-        SELECT session FROM %%TABLE_NAME%%
-        WHERE id = ? AND (expires IS NULL OR expires > ?)
-    "#;
-
-pub const STORE_QUERY: &str = r#"
+        return Ok(count);
+    }
+    async fn store(
+        &self,
+        id: &str,
+        session: &str,
+        expires: i64,
+        table_name: &Cow<'static, str>,
+    ) -> Result<(), SessionError> {
+        sqlx::query(
+            &r#"
         INSERT INTO %%TABLE_NAME%%
-            (id, session, expires) VALUES(?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            expires = VALUES(expires),
-            session = VALUES(session)
-    "#;
-pub const DESTROY_QUERY: &str = r#"DELETE FROM %%TABLE_NAME%% WHERE id = ?"#;
-
-pub const CLEAR_QUERY: &str = r#"TRUNCATE %%TABLE_NAME%%"#;
+            (id, session, expires) SELECT $1, $2, $3
+        ON CONFLICT(id) DO UPDATE SET
+            expires = EXCLUDED.expires,
+            session = EXCLUDED.session
+    "#
+            .replace("%%TABLE_NAME%%", table_name),
+        )
+        .bind(&id)
+        .bind(&session)
+        .bind(&expires)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+    async fn load(&self, id: &str, table_name: &Cow<'static, str>) -> Result<String, SessionError> {
+        let result: Result<Option<(String,)>, sqlx::Error> = sqlx::query_as(
+            &r#"
+            SELECT session FROM %%TABLE_NAME%%
+            WHERE id = $1 AND (expires IS NULL OR expires > $2)
+        "#
+            .replace("%%TABLE_NAME%%", table_name),
+        )
+        .bind(&id)
+        .bind(Utc::now().timestamp())
+        .fetch_optional(&self.pool)
+        .await;
+        match result {
+            Ok(val) => Ok(val.unwrap().0),
+            Err(err) => Err(SessionError::Sqlx(err)),
+        }
+    }
+    async fn delete_one_by_id(
+        &self,
+        id: &str,
+        table_name: &Cow<'static, str>,
+    ) -> Result<(), SessionError> {
+        sqlx::query(
+            &r#"DELETE FROM %%TABLE_NAME%% WHERE id = $1"#.replace("%%TABLE_NAME%%", table_name),
+        )
+        .bind(&id)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+    async fn delete_all(&self, table_name: &Cow<'static, str>) -> Result<(), SessionError> {
+        sqlx::query(&r#"TRUNCATE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name))
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+}

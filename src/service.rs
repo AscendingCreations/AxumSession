@@ -1,9 +1,10 @@
-use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionStore};
+use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionStore, databases::database::AxumDatabasePool};
 use axum_core::{
     body::{self, BoxBody},
     response::Response,
     BoxError,
 };
+use core::fmt;
 use bytes::Bytes;
 use chrono::Utc;
 use cookie::{Cookie, CookieJar, Key};
@@ -17,7 +18,6 @@ use http_body::Body as HttpBody;
 use std::{
     boxed::Box,
     convert::Infallible,
-    fmt,
     task::{Context, Poll},
 };
 use tower_service::Service;
@@ -44,12 +44,12 @@ impl CookieType {
 }
 
 #[derive(Clone)]
-pub struct AxumSessionService<S> {
-    pub(crate) session_store: AxumSessionStore,
+pub struct AxumSessionService<S,T>where T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static   {
+    pub(crate) session_store: AxumSessionStore<T>,
     pub(crate) inner: S,
 }
 
-impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for AxumSessionService<S>
+impl<S, T,ReqBody, ResBody> Service<Request<ReqBody>> for AxumSessionService<S,T>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>, Error = Infallible>
         + Clone
@@ -60,6 +60,7 @@ where
     Infallible: From<<S as Service<Request<ReqBody>>>::Error>,
     ResBody: HttpBody<Data = Bytes> + Send + 'static,
     ResBody::Error: Into<BoxError>,
+    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static
 {
     type Response = Response<BoxBody>;
     type Error = Infallible;
@@ -189,9 +190,10 @@ where
     }
 }
 
-impl<S> fmt::Debug for AxumSessionService<S>
+impl<S, T> fmt::Debug for AxumSessionService<S, T>
 where
     S: fmt::Debug,
+    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AxumSessionService")

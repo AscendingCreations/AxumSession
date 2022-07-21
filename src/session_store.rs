@@ -1,9 +1,10 @@
 use crate::{
-    databases::{self, AxumDatabasePool},
     AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionTimers, SessionError,
 };
+use crate::databases::database::AxumDatabasePool;
 use chrono::{Duration, Utc};
 use dashmap::DashMap;
+use core::fmt;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 /// Contains the main Services storage for all session's and database access for persistant Sessions.
@@ -17,9 +18,9 @@ use tokio::sync::RwLock;
 /// ```
 ///
 #[derive(Clone, Debug)]
-pub struct AxumSessionStore {
-    //Sqlx Pool Holder for (Sqlite, Postgres, Mysql)
-    pub client: Option<AxumDatabasePool>,
+pub struct AxumSessionStore<T> where T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static {
+    // Client for the database
+    pub client: Option<T>,
     /// locked Hashmap containing UserID and their session data
     pub(crate) inner: Arc<DashMap<String, AxumSessionData>>,
     //move this to creation upon layer
@@ -28,7 +29,7 @@ pub struct AxumSessionStore {
     pub(crate) timers: Arc<RwLock<AxumSessionTimers>>,
 }
 
-impl AxumSessionStore {
+impl<T> AxumSessionStore<T> where T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static {
     /// Constructs a New AxumSessionStore.
     ///
     /// # Examples
@@ -39,7 +40,7 @@ impl AxumSessionStore {
     /// let session_store = AxumSessionStore::new(None, config);
     /// ```
     ///
-    pub fn new(client: Option<AxumDatabasePool>, config: AxumSessionConfig) -> Self {
+    pub fn new(client: Option<T>, config: AxumSessionConfig) -> Self {
         Self {
             client,
             inner: Default::default(),
@@ -90,11 +91,7 @@ impl AxumSessionStore {
     ///
     pub async fn migrate(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(
-                &databases::MIGRATE_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
-            )
-            .execute(client.inner())
-            .await?;
+            client.migrate(&self.config.table_name).await?
         }
 
         Ok(())
@@ -120,12 +117,7 @@ impl AxumSessionStore {
     ///
     pub async fn cleanup(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(
-                &databases::CLEANUP_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
-            )
-            .bind(Utc::now().timestamp())
-            .execute(client.inner())
-            .await?;
+            client.delete_by_expiry(&self.config.table_name).await?;
         }
 
         Ok(())
@@ -151,13 +143,8 @@ impl AxumSessionStore {
     ///
     pub async fn count(&self) -> Result<i64, SessionError> {
         if let Some(client) = &self.client {
-            let (count,) = sqlx::query_as(
-                &databases::COUNT_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
-            )
-            .fetch_one(client.inner())
-            .await?;
-
-            return Ok(count);
+            let count = client.count(&self.config.table_name).await?;
+            return Ok(count)
         }
 
         Ok(0)
@@ -189,17 +176,9 @@ impl AxumSessionStore {
         cookie_value: String,
     ) -> Result<Option<AxumSessionData>, SessionError> {
         if let Some(client) = &self.client {
-            let result: Option<(String,)> = sqlx::query_as(
-                &databases::LOAD_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
-            )
-            .bind(&cookie_value)
-            .bind(Utc::now().timestamp())
-            .fetch_optional(client.inner())
-            .await?;
+            let result: String = client.load(&cookie_value, &self.config.table_name).await?;
 
-            Ok(result
-                .map(|(session,)| serde_json::from_str(&session))
-                .transpose()?)
+            Ok(serde_json::from_str(&result).unwrap())
         } else {
             Ok(None)
         }
@@ -233,12 +212,7 @@ impl AxumSessionStore {
         session: &AxumSessionData,
     ) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(&databases::STORE_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name))
-                .bind(session.id.to_string())
-                .bind(&serde_json::to_string(session)?)
-                .bind(&session.expires.timestamp())
-                .execute(client.inner())
-                .await?;
+            client.store(&session.id.to_string(), &serde_json::to_string(session)?, session.expires.timestamp(), &self.config.table_name).await?;
         }
 
         Ok(())
@@ -267,12 +241,7 @@ impl AxumSessionStore {
     ///
     pub async fn destroy_session(&self, id: &str) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(
-                &databases::DESTROY_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name),
-            )
-            .bind(&id)
-            .execute(client.inner())
-            .await?;
+            client.delete_one_by_id(&id, &self.config.table_name).await?;
         }
 
         Ok(())
@@ -300,9 +269,7 @@ impl AxumSessionStore {
     ///
     pub async fn clear_store(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            sqlx::query(&databases::CLEAR_QUERY.replace("%%TABLE_NAME%%", &self.config.table_name))
-                .execute(client.inner())
-                .await?;
+            client.delete_all(&self.config.table_name).await?;
         }
 
         Ok(())
@@ -311,7 +278,7 @@ impl AxumSessionStore {
     /// Attempts to load check and clear Data.
     ///
     /// If no session is found returns false.
-    pub(crate) fn service_session_data(&self, session: &AxumSession) -> bool {
+    pub(crate) fn service_session_data(&self, session: &AxumSession<T>) -> bool {
         if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
             if inner.expires < Utc::now() || inner.destroy {
                 inner.destroy = false;
