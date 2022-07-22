@@ -17,7 +17,6 @@ postgres = ["sqlx/postgres"]
 mysql = ["sqlx/mysql"]
 rustls = ["sqlx/runtime-tokio-rustls"]
 native-tls = ["sqlx/runtime-tokio-native-tls"]
-DatabaseTrait = []
 [dependencies]
 axum-core = "0.2.7"
 serde = "1.0.139"
