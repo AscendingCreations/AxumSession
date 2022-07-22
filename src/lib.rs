@@ -33,8 +33,14 @@ mod session_store;
 mod session_timers;
 
 pub use config::{AxumSessionConfig, AxumSessionMode, Key, SameSite};
-#[cfg(features = "DatabaseTrait")]
+#[cfg(feature = "DatabaseTrait")]
 pub use databases::AxumDatabasePool;
+#[cfg(feature = "postgres")]
+pub use databases::AxumPgPool;
+#[cfg(feature = "mysql")]
+pub use databases::AxumMySqlPool;
+#[cfg(feature = "sqlite")]
+pub use databases::AxumSqlitePool;
 pub use errors::SessionError;
 pub use layer::AxumSessionLayer;
 pub use session::AxumSession;
