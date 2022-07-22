@@ -1,9 +1,12 @@
 use crate::databases::databases::AxumDatabasePool;
 use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionTimers, SessionError};
 use chrono::{Duration, Utc};
-use core::fmt;
 use dashmap::DashMap;
-use std::sync::Arc;
+use std::{
+    fmt::Debug,
+    marker::{Send, Sync},
+    sync::Arc,
+};
 use tokio::sync::RwLock;
 /// Contains the main Services storage for all session's and database access for persistant Sessions.
 ///
@@ -18,7 +21,7 @@ use tokio::sync::RwLock;
 #[derive(Clone, Debug)]
 pub struct AxumSessionStore<T>
 where
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     // Client for the database
     pub client: Option<T>,
@@ -32,7 +35,7 @@ where
 
 impl<T> AxumSessionStore<T>
 where
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     /// Constructs a New AxumSessionStore.
     ///
@@ -252,9 +255,7 @@ where
     ///
     pub async fn destroy_session(&self, id: &str) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            client
-                .delete_one_by_id(&id, &self.config.table_name)
-                .await?;
+            client.delete_one_by_id(id, &self.config.table_name).await?;
         }
 
         Ok(())
