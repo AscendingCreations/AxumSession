@@ -11,13 +11,14 @@ keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
-default = ["postgres", "sqlite", "mysql", "rustls"]
-sqlite = ["sqlx/sqlite"]
-postgres = ["sqlx/postgres"]
-mysql = ["sqlx/mysql"]
-rustls = ["sqlx/runtime-tokio-rustls"]
-native-tls = ["sqlx/runtime-tokio-native-tls"]
-DatabaseTrait = []
+default = ["postgres-rustls"]
+sqlite-rustls = ["sqlx/sqlite", "sqlx/runtime-tokio-rustls"]
+sqlite-native = ["sqlx/sqlite", "sqlx/runtime-tokio-native-tls"]
+postgres-rustls = ["sqlx/postgres", "sqlx/runtime-tokio-rustls"]
+postgres-native = ["sqlx/postgres", "sqlx/runtime-tokio-native-tls"]
+mysql-rustls = ["sqlx/mysql", "sqlx/runtime-tokio-rustls"]
+mysql-native = ["sqlx/mysql", "sqlx/runtime-tokio-native-tls"]
+
 [dependencies]
 axum-core = "0.2.7"
 serde = "1.0.139"
@@ -35,7 +36,7 @@ tower-service = "0.3.2"
 sqlx = { version = "0.6.0", default-features = false, features = [
     "chrono",
     "uuid",
-] }
+], optional = true }
 cookie = { version = "0.16.0", features = ["percent-encode", "private"] }
 futures = "0.3.21"
 bytes = "1.2.0"

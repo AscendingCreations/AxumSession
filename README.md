@@ -9,7 +9,7 @@ You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this
 
 ## Install
 
-Axum Database Sessions uses [`tokio`] runtime along with [`sqlx`]; it supports [`native-tls`] and [`rustls`] TLS backends. When adding the dependency, you must chose a database feature that is `DatabaseType` and a `tls` backend. You can only choose one database type and one TLS Backend.
+Axum Database Sessions uses [`tokio`] runtime along with [`sqlx`]; it supports [`native-tls`] and [`rustls`] TLS backends.
 
 [`sqlx`] current version used is 0.6.0
 
@@ -26,11 +26,13 @@ axum_database_sessions = { version = "4.0.0-beta.0", features = [ "postgres", "r
 ```
 
 #### Cargo Feature Flags
-`sqlite`: `Sqlx` support for the self-contained [SQLite](https://sqlite.org/) database engine.
-`postgres`: `Sqlx` support for the Postgres database server.
-`mysql`: `Sqlx` support for the MySQL/MariaDB database server.
-`native-tls`: Use the `tokio` runtime and `native-tls` TLS backend.
-`rustls`: Use the `tokio` runtime and `rustls` TLS backend.
+`default`: [`postgres-rustls`]
+`sqlite-rustls`: `Sqlx` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
+`sqlite-native`: `Sqlx` support for the self-contained [SQLite](https://sqlite.org/) database engine and `native-tls`.
+`postgres-rustls`: `Sqlx` support for the Postgres database server and `rustls`.
+`postgres-native`: `Sqlx` support for the Postgres database server and `native-tls`.
+`mysql-rustls`: `Sqlx` support for the MySQL/MariaDB database server and `rustls`.
+`mysql-native`: `Sqlx` support for the MySQL/MariaDB database server and `native-tls`.
 
 # Example
 
