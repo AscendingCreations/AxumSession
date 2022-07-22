@@ -16,6 +16,7 @@ impl From<Pool<Postgres>> for AxumPgPool {
         AxumPgPool { pool: conn }
     }
 }
+
 #[async_trait]
 impl AxumDatabasePool for AxumPgPool {
     async fn migrate(&self, table_name: &str) -> Result<(), SessionError> {

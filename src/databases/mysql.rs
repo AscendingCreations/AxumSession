@@ -9,11 +9,13 @@ use sqlx::{pool::Pool, MySql, MySqlPool};
 pub struct AxumMySqlPool {
     pool: Pool<MySql>,
 }
+
 impl From<Pool<MySql>> for AxumMySqlPool {
     fn from(conn: MySqlPool) -> Self {
         AxumMySqlPool { pool: conn }
     }
 }
+
 #[async_trait]
 impl AxumDatabasePool for AxumMySqlPool {
     async fn migrate(&self, table_name: &str) -> Result<(), SessionError> {
