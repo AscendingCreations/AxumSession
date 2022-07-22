@@ -1,7 +1,4 @@
-use crate::{
-    databases::databases::AxumDatabasePool, AxumSessionData, AxumSessionID, AxumSessionStore,
-    CookiesExt,
-};
+use crate::{AxumDatabasePool, AxumSessionData, AxumSessionID, AxumSessionStore, CookiesExt};
 use async_trait::async_trait;
 use axum_core::extract::{FromRequest, RequestParts};
 use cookie::CookieJar;
