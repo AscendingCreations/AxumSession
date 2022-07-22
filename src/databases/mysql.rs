@@ -76,8 +76,8 @@ impl AxumDatabasePool for AxumMySqlPool {
         .await?;
         Ok(())
     }
-    async fn load(&self, id: &str, table_name: &str) -> Result<String, SessionError> {
-        let result: Result<Option<(String,)>, sqlx::Error> = sqlx::query_as(
+    async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, SessionError> {
+        let result: Option<(String,)> = sqlx::query_as(
             &r#"
             SELECT session FROM %%TABLE_NAME%%
             WHERE id = $1 AND (expires IS NULL OR expires > $2)
@@ -87,11 +87,9 @@ impl AxumDatabasePool for AxumMySqlPool {
         .bind(&id)
         .bind(Utc::now().timestamp())
         .fetch_optional(&self.pool)
-        .await;
+        .await?;
 
-        Ok(result
-            .map(|(session,)| serde_json::from_str(&session))
-            .transpose()?)
+        Ok(result.map(|(session,)| session))
     }
     async fn delete_one_by_id(
         &self,

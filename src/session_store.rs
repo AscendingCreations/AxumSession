@@ -185,9 +185,12 @@ where
         cookie_value: String,
     ) -> Result<Option<AxumSessionData>, SessionError> {
         if let Some(client) = &self.client {
-            let result: String = client.load(&cookie_value, &self.config.table_name).await?;
+            let result: Option<String> =
+                client.load(&cookie_value, &self.config.table_name).await?;
 
-            Ok(serde_json::from_str(&result).unwrap())
+            Ok(result
+                .map(|session| serde_json::from_str(&session))
+                .transpose()?)
         } else {
             Ok(None)
         }
