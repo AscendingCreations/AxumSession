@@ -12,4 +12,12 @@ pub enum SessionError {
     HTTP(#[from] http::Error),
     #[error("unknown Session store error")]
     Unknown,
+    #[error("Generic Database insert error {0}")]
+    GenericInsertError(String),
+    #[error("Generic Database select error {0}")]
+    GenericSelectError(String),
+    #[error("Generic Database create error {0}")]
+    GenericCreateError(String),
+    #[error("Generic Database delete error {0}")]
+    GenericDeleteError(String),
 }

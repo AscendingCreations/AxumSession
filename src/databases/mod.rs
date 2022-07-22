@@ -18,3 +18,6 @@ mod sqlite;
 #[cfg(feature = "sqlite")]
 #[cfg_attr(docsrs, doc(cfg(feature = "sqlite")))]
 pub use sqlite::*;
+
+pub mod databases;
+pub use databases::AxumDatabasePool;

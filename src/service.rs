@@ -1,4 +1,7 @@
-use crate::{AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionStore};
+use crate::{
+    databases::databases::AxumDatabasePool, AxumSession, AxumSessionConfig, AxumSessionData,
+    AxumSessionStore,
+};
 use axum_core::{
     body::{self, BoxBody},
     response::Response,
@@ -17,7 +20,8 @@ use http_body::Body as HttpBody;
 use std::{
     boxed::Box,
     convert::Infallible,
-    fmt,
+    fmt::{self, Debug, Formatter},
+    marker::{Send, Sync},
     task::{Context, Poll},
 };
 use tower_service::Service;
@@ -44,12 +48,15 @@ impl CookieType {
 }
 
 #[derive(Clone)]
-pub struct AxumSessionService<S> {
-    pub(crate) session_store: AxumSessionStore,
+pub struct AxumSessionService<S, T>
+where
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+{
+    pub(crate) session_store: AxumSessionStore<T>,
     pub(crate) inner: S,
 }
 
-impl<S, ReqBody, ResBody> Service<Request<ReqBody>> for AxumSessionService<S>
+impl<S, T, ReqBody, ResBody> Service<Request<ReqBody>> for AxumSessionService<S, T>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>, Error = Infallible>
         + Clone
@@ -60,6 +67,7 @@ where
     Infallible: From<<S as Service<Request<ReqBody>>>::Error>,
     ResBody: HttpBody<Data = Bytes> + Send + 'static,
     ResBody::Error: Into<BoxError>,
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     type Response = Response<BoxBody>;
     type Error = Infallible;
@@ -150,18 +158,18 @@ where
             if !store.config.session_mode.is_storable() || accepted {
                 // run this After a response has returned so we save the most updated data to sql.
                 if store.is_persistent() {
-                    let sess = if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner())
-                    {
-                        if sess.longterm {
-                            sess.expires = Utc::now() + store.config.max_lifespan;
-                        } else {
-                            sess.expires = Utc::now() + store.config.lifespan;
-                        }
+                    let sess =
+                        if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner()) {
+                            if sess.longterm {
+                                sess.expires = Utc::now() + store.config.max_lifespan;
+                            } else {
+                                sess.expires = Utc::now() + store.config.lifespan;
+                            }
 
-                        Some(sess.clone())
-                    } else {
-                        None
-                    };
+                            Some(sess.clone())
+                        } else {
+                            None
+                        };
 
                     if let Some(sess) = sess {
                         session.store.store_session(&sess).await.unwrap()
@@ -189,11 +197,12 @@ where
     }
 }
 
-impl<S> fmt::Debug for AxumSessionService<S>
+impl<S, T> Debug for AxumSessionService<S, T>
 where
-    S: fmt::Debug,
+    S: Debug,
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("AxumSessionService")
             .field("session_store", &self.session_store)
             .field("inner", &self.inner)
