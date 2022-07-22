@@ -15,11 +15,11 @@ mod session_timers;
 
 pub use config::{AxumSessionConfig, AxumSessionMode, Key, SameSite};
 pub use databases::AxumDatabasePool;
-#[cfg(feature = "mysql")]
+#[cfg(any(feature = "mysql-rustls", feature = "mysql-native"))]
 pub use databases::AxumMySqlPool;
-#[cfg(feature = "postgres")]
+#[cfg(any(feature = "postgres-rustls", feature = "postgres-native"))]
 pub use databases::AxumPgPool;
-#[cfg(feature = "sqlite")]
+#[cfg(any(feature = "sqlite-rustls", feature = "sqlite-native"))]
 pub use databases::AxumSqlitePool;
 pub use errors::SessionError;
 pub use layer::AxumSessionLayer;

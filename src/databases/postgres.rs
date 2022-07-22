@@ -1,9 +1,7 @@
 use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, PgPool, Postgres};
-
-use super::databases::AxumDatabasePool;
-use crate::SessionError;
+use crate::{AxumDatabasePool, SessionError};
 
 ///Mysql's Pool type for AxumDatabasePool
 #[derive(Debug, Clone)]
