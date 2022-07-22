@@ -1,5 +1,5 @@
 use crate::{
-    databases::database::AxumDatabasePool, AxumSession, AxumSessionConfig, AxumSessionData,
+    databases::databases::AxumDatabasePool, AxumSession, AxumSessionConfig, AxumSessionData,
     AxumSessionStore,
 };
 use axum_core::{

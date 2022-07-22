@@ -2,15 +2,24 @@
 #![allow(dead_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(not(any(feature = "postgres", feature = "mysql", feature = "sqlite",)))]
-compile_error!("one of the features ['postgres', 'mysql', 'sqlite'] must be enabled");
+#[cfg(not(any(
+    feature = "postgres",
+    feature = "mysql",
+    feature = "sqlite",
+    features = "DatabaseTrait"
+)))]
+compile_error!(
+    "one of the features ['postgres', 'mysql', 'sqlite','DatabaseTrait'] must be enabled"
+);
 
 #[cfg(any(
     all(feature = "postgres", feature = "mysql"),
     all(feature = "postgres", feature = "sqlite"),
+    all(feature = "postgres", feature = "DatabaseTrait"),
+    all(feature = "mysql", feature = "DatabaseTrait"),
     all(feature = "mysql", feature = "sqlite"),
 ))]
-compile_error!("only one of ['postgres', 'mysql', 'sqlite'] can be enabled");
+compile_error!("only one of ['postgres', 'mysql', 'sqlite', 'DatabaseTrait'] can be enabled");
 
 mod config;
 mod databases;
@@ -24,7 +33,8 @@ mod session_store;
 mod session_timers;
 
 pub use config::{AxumSessionConfig, AxumSessionMode, Key, SameSite};
-pub use databases::database::AxumDatabasePool;
+#[cfg(features = "DatabaseTrait")]
+pub use databases::AxumDatabasePool;
 pub use errors::SessionError;
 pub use layer::AxumSessionLayer;
 pub use session::AxumSession;

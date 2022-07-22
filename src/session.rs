@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    databases::database::AxumDatabasePool, AxumSessionData, AxumSessionID, AxumSessionStore,
+    databases::databases::AxumDatabasePool, AxumSessionData, AxumSessionID, AxumSessionStore,
     CookiesExt,
 };
 use async_trait::async_trait;

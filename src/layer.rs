@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{databases::database::AxumDatabasePool, AxumSessionService, AxumSessionStore};
+use crate::{databases::databases::AxumDatabasePool, AxumSessionService, AxumSessionStore};
 use tower_layer::Layer;
 
 /// Sessions Layer used with Axum to activate the Service.
