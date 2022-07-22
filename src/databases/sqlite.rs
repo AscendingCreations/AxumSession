@@ -3,7 +3,7 @@ use crate::SessionError;
 use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, Sqlite};
-use std::borrow::Cow;
+
 ///Mysql's Pool type for AxumDatabasePool
 #[derive(Debug, Clone)]
 pub struct AxumSqlitePool {
@@ -18,7 +18,7 @@ impl From<Pool<Sqlite>> for AxumSqlitePool {
 
 #[async_trait]
 impl AxumDatabasePool for AxumSqlitePool {
-    async fn migrate(&self, table_name: &Cow<'static, str>) -> Result<(), SessionError> {
+    async fn migrate(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
             &r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
@@ -27,14 +27,14 @@ impl AxumDatabasePool for AxumSqlitePool {
                 "session" TEXT NOT NULL
             )
         "#
-            .replace("%%TABLE_NAME%%", &table_name),
+            .replace("%%TABLE_NAME%%", table_name),
         )
         .execute(&self.pool)
         .await?;
 
         Ok(())
     }
-    async fn delete_by_expiry(&self, table_name: &Cow<'static, str>) -> Result<(), SessionError> {
+    async fn delete_by_expiry(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
             &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < $1"#
                 .replace("%%TABLE_NAME%%", table_name),
@@ -44,7 +44,7 @@ impl AxumDatabasePool for AxumSqlitePool {
         .await?;
         Ok(())
     }
-    async fn count(&self, table_name: &Cow<'static, str>) -> Result<i64, SessionError> {
+    async fn count(&self, table_name: &str) -> Result<i64, SessionError> {
         let (count,) = sqlx::query_as(
             &r#"SELECT COUNT(*) FROM %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
         )
@@ -58,7 +58,7 @@ impl AxumDatabasePool for AxumSqlitePool {
         id: &str,
         session: &str,
         expires: i64,
-        table_name: &Cow<'static, str>,
+        table_name: &str,
     ) -> Result<(), SessionError> {
         sqlx::query(
             &r#"
@@ -77,7 +77,7 @@ impl AxumDatabasePool for AxumSqlitePool {
         .await?;
         Ok(())
     }
-    async fn load(&self, id: &str, table_name: &Cow<'static, str>) -> Result<String, SessionError> {
+    async fn load(&self, id: &str, table_name: &str) -> Result<String, SessionError> {
         let result: Result<Option<(String,)>, sqlx::Error> = sqlx::query_as(
             &r#"
             SELECT session FROM %%TABLE_NAME%%
@@ -94,11 +94,7 @@ impl AxumDatabasePool for AxumSqlitePool {
             Err(err) => Err(SessionError::Sqlx(err)),
         }
     }
-    async fn delete_one_by_id(
-        &self,
-        id: &str,
-        table_name: &Cow<'static, str>,
-    ) -> Result<(), SessionError> {
+    async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
             &r#"DELETE FROM %%TABLE_NAME%% WHERE id = $1"#.replace("%%TABLE_NAME%%", table_name),
         )
@@ -107,7 +103,7 @@ impl AxumDatabasePool for AxumSqlitePool {
         .await?;
         Ok(())
     }
-    async fn delete_all(&self, table_name: &Cow<'static, str>) -> Result<(), SessionError> {
+    async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(&r#"TRUNCATE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name))
             .execute(&self.pool)
             .await?;

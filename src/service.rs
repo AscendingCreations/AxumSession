@@ -10,7 +10,6 @@ use axum_core::{
 use bytes::Bytes;
 use chrono::Utc;
 use cookie::{Cookie, CookieJar, Key};
-use core::fmt;
 use futures::future::BoxFuture;
 use http::{
     self,
@@ -21,6 +20,8 @@ use http_body::Body as HttpBody;
 use std::{
     boxed::Box,
     convert::Infallible,
+    fmt::{self, Debug, Formatter},
+    marker::{Send, Sync},
     task::{Context, Poll},
 };
 use tower_service::Service;
@@ -49,7 +50,7 @@ impl CookieType {
 #[derive(Clone)]
 pub struct AxumSessionService<S, T>
 where
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     pub(crate) session_store: AxumSessionStore<T>,
     pub(crate) inner: S,
@@ -66,7 +67,7 @@ where
     Infallible: From<<S as Service<Request<ReqBody>>>::Error>,
     ResBody: HttpBody<Data = Bytes> + Send + 'static,
     ResBody::Error: Into<BoxError>,
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     type Response = Response<BoxBody>;
     type Error = Infallible;
@@ -196,12 +197,12 @@ where
     }
 }
 
-impl<S, T> fmt::Debug for AxumSessionService<S, T>
+impl<S, T> Debug for AxumSessionService<S, T>
 where
-    S: fmt::Debug,
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    S: Debug,
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("AxumSessionService")
             .field("session_store", &self.session_store)
             .field("inner", &self.inner)

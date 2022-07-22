@@ -1,5 +1,3 @@
-use std::fmt;
-
 use crate::{
     databases::databases::AxumDatabasePool, AxumSessionData, AxumSessionID, AxumSessionStore,
     CookiesExt,
@@ -9,6 +7,10 @@ use axum_core::extract::{FromRequest, RequestParts};
 use cookie::CookieJar;
 use http::{self, StatusCode};
 use serde::{de::DeserializeOwned, Serialize};
+use std::{
+    fmt::Debug,
+    marker::{Send, Sync},
+};
 use uuid::Uuid;
 
 /// A Session Store.
@@ -19,7 +21,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone)]
 pub struct AxumSession<T>
 where
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     pub(crate) store: AxumSessionStore<T>,
     pub(crate) id: AxumSessionID,
@@ -32,7 +34,7 @@ where
 impl<B, T> FromRequest<B> for AxumSession<T>
 where
     B: Send,
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     type Rejection = (http::StatusCode, &'static str);
 
@@ -46,7 +48,7 @@ where
 
 impl<S> AxumSession<S>
 where
-    S: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    S: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     pub(crate) fn new(store: &AxumSessionStore<S>, cookies: &CookieJar) -> AxumSession<S> {
         let value = cookies
