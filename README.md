@@ -27,11 +27,17 @@ axum_database_sessions = { version = "4.0.0-beta.0", features = [ "postgres", "r
 
 #### Cargo Feature Flags
 `default`: [`postgres-rustls`]
+
 `sqlite-rustls`: `Sqlx` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
+
 `sqlite-native`: `Sqlx` support for the self-contained [SQLite](https://sqlite.org/) database engine and `native-tls`.
+
 `postgres-rustls`: `Sqlx` support for the Postgres database server and `rustls`.
+
 `postgres-native`: `Sqlx` support for the Postgres database server and `native-tls`.
+
 `mysql-rustls`: `Sqlx` support for the MySQL/MariaDB database server and `rustls`.
+
 `mysql-native`: `Sqlx` support for the MySQL/MariaDB database server and `native-tls`.
 
 # Example
