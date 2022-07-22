@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{AxumSessionService, AxumSessionStore, databases::database::AxumDatabasePool};
+use crate::{databases::database::AxumDatabasePool, AxumSessionService, AxumSessionStore};
 use tower_layer::Layer;
 
 /// Sessions Layer used with Axum to activate the Service.
@@ -16,11 +16,17 @@ use tower_layer::Layer;
 /// ```
 ///
 #[derive(Clone)]
-pub struct AxumSessionLayer<T> where T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static {
+pub struct AxumSessionLayer<T>
+where
+    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+{
     session_store: AxumSessionStore<T>,
 }
 
-impl<T> AxumSessionLayer<T>where T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static {
+impl<T> AxumSessionLayer<T>
+where
+    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+{
     /// Constructs a AxumSessionLayer used with Axum to activate the Service.
     ///
     /// # Examples
@@ -38,7 +44,10 @@ impl<T> AxumSessionLayer<T>where T: AxumDatabasePool + Clone + fmt::Debug + std:
     }
 }
 
-impl<S,T> Layer<S> for AxumSessionLayer<T>where T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static  {
+impl<S, T> Layer<S> for AxumSessionLayer<T>
+where
+    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+{
     type Service = AxumSessionService<S, T>;
 
     fn layer(&self, inner: S) -> Self::Service {
