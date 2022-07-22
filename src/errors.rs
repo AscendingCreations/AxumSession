@@ -18,4 +18,6 @@ pub enum SessionError {
     GenericSelectError,
     #[error("Generic Database create error")]
     GenericCreateError,
+    #[error("Generic Database delete error")]
+    GenericDeleteError,
 }
