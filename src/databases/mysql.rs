@@ -88,10 +88,10 @@ impl AxumDatabasePool for AxumMySqlPool {
         .bind(Utc::now().timestamp())
         .fetch_optional(&self.pool)
         .await;
-        match result {
-            Ok(val) => Ok(val.unwrap().0),
-            Err(err) => Err(SessionError::Sqlx(err)),
-        }
+
+        Ok(result
+            .map(|(session,)| serde_json::from_str(&session))
+            .transpose()?)
     }
     async fn delete_one_by_id(
         &self,
