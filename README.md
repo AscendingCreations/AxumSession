@@ -24,7 +24,7 @@ Axum Database Sessions uses [`tokio`] runtime along with [`sqlx`]; it supports [
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_database_sessions = { version = "4.0.0-beta.0", features = [ "postgres-rustls"] }
+axum_database_sessions = { version = "4.0.0-beta.1", features = [ "postgres-rustls"] }
 ```
 
 #### Cargo Feature Flags
