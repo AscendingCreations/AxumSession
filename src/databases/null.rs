@@ -7,7 +7,7 @@ use chrono::Utc;
 pub struct AxumNullPool;
 
 #[async_trait]
-impl AxumDatabasePool for AxumPgPool {
+impl AxumDatabasePool for AxumNullPool {
     async fn migrate(&self, table_name: &str) -> Result<(), SessionError> {
         Ok(())
     }
