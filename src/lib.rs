@@ -15,16 +15,17 @@ mod session_timers;
 
 pub use config::{AxumSessionConfig, AxumSessionMode, Key, SameSite};
 pub use databases::AxumDatabasePool;
+pub use errors::SessionError;
+pub use layer::AxumSessionLayer;
+pub use session::AxumSession;
+pub use session_store::AxumSessionStore;
+
 #[cfg(any(feature = "mysql-rustls", feature = "mysql-native"))]
 pub use databases::AxumMySqlPool;
 #[cfg(any(feature = "postgres-rustls", feature = "postgres-native"))]
 pub use databases::AxumPgPool;
 #[cfg(any(feature = "sqlite-rustls", feature = "sqlite-native"))]
 pub use databases::AxumSqlitePool;
-pub use errors::SessionError;
-pub use layer::AxumSessionLayer;
-pub use session::AxumSession;
-pub use session_store::AxumSessionStore;
 
 pub(crate) use service::{AxumSessionService, CookiesExt};
 pub(crate) use session_data::AxumSessionData;

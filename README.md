@@ -136,13 +136,14 @@ async fn main() {
 }
 ```
 
-To use Axum_database_session in non_persistant mode Set the client to None.
+To use Axum_database_session in non_persistant mode Set the client to None and import AxumNullPool.
+AxumNullPool is always loaded and can be used where you do not want to include any database within the build.
 # Example
 
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
+use axum_database_sessions::{AxumSession, AxumNullPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
 use axum::{
     Router,
     routing::get,
@@ -153,7 +154,7 @@ async fn main() {
     let session_config = AxumSessionConfig::default()
         .with_table_name("test_table");
 
-    let session_store = AxumSessionStore::<AxumPgPool>::new(None, session_config);
+    let session_store = AxumSessionStore::<AxumNullPool>::new(None, session_config);
 
     // build our application with some routes
     let app = Router::new()
@@ -169,7 +170,7 @@ async fn main() {
         .unwrap();
 }
 
-async fn greet(session: AxumSession<AxumPgPool>) -> String {
+async fn greet(session: AxumSession<AxumNullPool>) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
 
     count += 1;
