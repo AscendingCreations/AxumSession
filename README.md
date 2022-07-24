@@ -2,10 +2,12 @@
 
 Library to Provide a Sqlx Database Session management layer.
 
-You must choose only one of ['postgres', 'mysql', 'sqlite'] features to use this library.
-
 [![https://crates.io/crates/axum_database_sessions](https://img.shields.io/crates/v/axum_database_sessions?style=plastic)](https://crates.io/crates/axum_database_sessions)
 [![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
+
+## Help
+
+If you need help with this library or have suggestions please go to our [Discord Group](https://discord.gg/xKkm7UhM36)
 
 ## Install
 
@@ -22,7 +24,7 @@ Axum Database Sessions uses [`tokio`] runtime along with [`sqlx`]; it supports [
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_database_sessions = { version = "4.0.0-beta.0", features = [ "postgres", "rustls"] }
+axum_database_sessions = { version = "4.0.0-beta.0", features = [ "postgres-rustls"] }
 ```
 
 #### Cargo Feature Flags
@@ -45,7 +47,7 @@ axum_database_sessions = { version = "4.0.0-beta.0", features = [ "postgres", "r
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
+use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
 use axum::{
     Router,
     routing::get,
@@ -61,7 +63,7 @@ async fn main() {
     let session_config = AxumSessionConfig::default()
         .with_table_name("test_table");
 
-    let session_store = AxumSessionStore::new(Some(poll.clone().into()), session_config);
+    let session_store = AxumSessionStore::<AxumPgPool>::new(Some(poll.clone().into()), session_config);
     session_store.migrate().await.unwrap();
 
     // build our application with some routes
@@ -78,7 +80,7 @@ async fn main() {
         .unwrap();
 }
 
-async fn greet(session: AxumSession) -> String {
+async fn greet(session: AxumSession<AxumPgPool>) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
 
     count += 1;
@@ -101,7 +103,7 @@ both protects the cookies data from prying eye's it also ensures the authenticit
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode, Key};
+use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode, Key};
 use axum::{
     Router,
     routing::get,
@@ -116,7 +118,7 @@ async fn main() {
         // If with_key() is used it will set all cookies as private, which guarantees integrity, and authenticity.
         .with_key(Key::generate());
 
-    let session_store = AxumSessionStore::new(None, session_config);
+    let session_store = AxumSessionStore::<AxumPgPool>::new(None, session_config);
     session_store.migrate().await.unwrap();
 
     // build our application with some routes
@@ -140,7 +142,7 @@ To use Axum_database_session in non_persistant mode Set the client to None.
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
+use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
 use axum::{
     Router,
     routing::get,
@@ -151,7 +153,7 @@ async fn main() {
     let session_config = AxumSessionConfig::default()
         .with_table_name("test_table");
 
-    let session_store = AxumSessionStore::new(None, session_config);
+    let session_store = AxumSessionStore::<AxumPgPool>::new(None, session_config);
 
     // build our application with some routes
     let app = Router::new()
@@ -167,7 +169,7 @@ async fn main() {
         .unwrap();
 }
 
-async fn greet(session: AxumSession) -> String {
+async fn greet(session: AxumSession<AxumPgPool>) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
 
     count += 1;
@@ -185,7 +187,7 @@ To use Axum_database_session with session mode set as Storable.
 ```rust no_run
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{AxumSession, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode};
+use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode};
 use axum::{
     Router,
     routing::get,
@@ -196,7 +198,7 @@ async fn main() {
     let session_config = AxumSessionConfig::default()
         .with_table_name("test_table").with_mode(AxumSessionMode::AcceptedOnly);
 
-    let session_store = AxumSessionStore::new(None, session_config);
+    let session_store = AxumSessionStore::<AxumPgPool>::new(None, session_config);
     session_store.migrate().await.unwrap();
 
     // build our application with some routes
@@ -214,7 +216,7 @@ async fn main() {
 }
 
 //No need to set the sessions accepted or not with gdpr mode disabled
-async fn greet(session: AxumSession) -> String {
+async fn greet(session: AxumSession<AxumPgPool>) -> String {
     let mut count: usize = session.get("count").await.unwrap_or(0);
 
     // Allow the Session data to be keep in memory and the database for the lifetime.
@@ -226,6 +228,3 @@ async fn greet(session: AxumSession) -> String {
 }
 
 ```
-# Help
-
-If you need help with this library or have suggestions please go to our [Discord Group](https://discord.gg/xKkm7UhM36)
