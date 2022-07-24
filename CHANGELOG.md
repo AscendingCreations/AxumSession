@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## 4.0.0-beta.1 (24. July, 2022)
+### Added
+- (Breaking) AxumDatabasePool as a trait by @11Tuvork28 .
+- AxumNullPool to support no databases.
+
+### Changed
+- (Breaking) Everything is updated to use AxumDatabasePool by @11Tuvork28 .
+- Updated Documentation.
+
 ## 4.0.0-beta.0 (19. July, 2022)
 ### Changed
 - changed internal data structure to use dashmap and remove need for RWlock and Mutex lock.
