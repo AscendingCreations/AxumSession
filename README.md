@@ -30,17 +30,19 @@ axum_database_sessions = { version = "4.0.0-beta.1", features = [ "postgres-rust
 #### Cargo Feature Flags
 `default`: [`postgres-rustls`]
 
-`sqlite-rustls`: `Sqlx` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
+`sqlite-rustls`: `Sqlx 0.6.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
 
-`sqlite-native`: `Sqlx` support for the self-contained [SQLite](https://sqlite.org/) database engine and `native-tls`.
+`sqlite-native`: `Sqlx 0.6.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `native-tls`.
 
-`postgres-rustls`: `Sqlx` support for the Postgres database server and `rustls`.
+`postgres-rustls`: `Sqlx 0.6.0` support for the Postgres database server and `rustls`.
 
-`postgres-native`: `Sqlx` support for the Postgres database server and `native-tls`.
+`postgres-native`: `Sqlx 0.6.0` support for the Postgres database server and `native-tls`.
 
-`mysql-rustls`: `Sqlx` support for the MySQL/MariaDB database server and `rustls`.
+`mysql-rustls`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `rustls`.
 
-`mysql-native`: `Sqlx` support for the MySQL/MariaDB database server and `native-tls`.
+`mysql-native`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `native-tls`.
+
+`redis`:  `redis 0.21.5` session support.
 
 # Example
 
