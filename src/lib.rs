@@ -2,7 +2,7 @@
 #![allow(dead_code)]
 
 mod config;
-mod databases;
+pub mod databases;
 mod errors;
 mod layer;
 mod service;
