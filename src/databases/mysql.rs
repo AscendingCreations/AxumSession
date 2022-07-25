@@ -1,7 +1,10 @@
-use crate::{AxumDatabasePool, SessionError};
+use crate::{AxumSession, AxumSessionStore, AxumDatabasePool, SessionError};
 use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, MySql, MySqlPool};
+
+pub type AxumMysqlSession = AxumSession<AxumMySqlPool>;
+pub type AxumMysqlSessionStore = AxumSessionStore<AxumMySqlPool>;
 
 /// Mysql's Pool type for AxumDatabasePool
 #[derive(Debug, Clone)]

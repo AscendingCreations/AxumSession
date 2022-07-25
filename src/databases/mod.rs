@@ -32,4 +32,4 @@ mod database;
 mod null;
 
 pub use database::AxumDatabasePool;
-pub use null::AxumNullPool;
+pub use null::*;

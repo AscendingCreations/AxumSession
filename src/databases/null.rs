@@ -1,5 +1,8 @@
-use crate::{AxumDatabasePool, SessionError};
+use crate::{AxumDatabasePool, AxumSession, AxumSessionStore, SessionError};
 use async_trait::async_trait;
+
+pub type AxumNullSession = AxumSession<AxumNullPool>;
+pub type AxumNullSessionStore = AxumSessionStore<AxumNullPool>;
 
 /// Null Pool type for AxumDatabasePool.
 /// Use this when you do not want to load any database.
