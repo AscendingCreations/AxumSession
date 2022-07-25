@@ -3,8 +3,8 @@ use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, MySql, MySqlPool};
 
-pub type AxumMysqlSession = AxumSession<AxumMySqlPool>;
-pub type AxumMysqlSessionStore = AxumSessionStore<AxumMySqlPool>;
+pub type AxumMySqlSession = AxumSession<AxumMySqlPool>;
+pub type AxumMySqlSessionStore = AxumSessionStore<AxumMySqlPool>;
 
 /// Mysql's Pool type for AxumDatabasePool
 #[derive(Debug, Clone)]
@@ -20,7 +20,7 @@ impl From<Pool<MySql>> for AxumMySqlPool {
 
 #[async_trait]
 impl AxumDatabasePool for AxumMySqlPool {
-    async fn migrate(&self, table_name: &str) -> Result<(), SessionError> {
+    async fn initiate(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
             &r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (

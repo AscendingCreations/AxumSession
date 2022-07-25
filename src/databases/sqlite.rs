@@ -20,7 +20,7 @@ impl From<Pool<Sqlite>> for AxumSqlitePool {
 
 #[async_trait]
 impl AxumDatabasePool for AxumSqlitePool {
-    async fn migrate(&self, table_name: &str) -> Result<(), SessionError> {
+    async fn initiate(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
             &r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (

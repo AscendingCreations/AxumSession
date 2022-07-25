@@ -4,8 +4,19 @@ use thiserror::Error;
 pub enum SessionError {
     #[error(transparent)]
     IO(#[from] std::io::Error),
+    #[cfg(any(
+        feature = "postgres-rustls",
+        feature = "postgres-native",
+        feature = "sqlite-rustls",
+        feature = "sqlite-native",
+        feature = "mysql-rustls",
+        feature = "mysql-native"
+    ))]
     #[error(transparent)]
     Sqlx(#[from] sqlx::Error),
+    #[cfg(feature = "redis")]
+    #[error(transparent)]
+    Redis(#[from] redis::RedisError),
     #[error(transparent)]
     SerdeJson(#[from] serde_json::error::Error),
     #[error(transparent)]
@@ -20,4 +31,6 @@ pub enum SessionError {
     GenericCreateError(String),
     #[error("Generic Database delete error {0}")]
     GenericDeleteError(String),
+    #[error("{0}")]
+    GenericNotSupportedError(String),
 }

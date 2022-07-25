@@ -1,6 +1,5 @@
 #![doc = include_str!("../README.md")]
 #![allow(dead_code)]
-#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod config;
 mod databases;
@@ -14,18 +13,11 @@ mod session_store;
 mod session_timers;
 
 pub use config::{AxumSessionConfig, AxumSessionMode, Key, SameSite};
-pub use databases::AxumDatabasePool;
+pub use databases::*;
 pub use errors::SessionError;
 pub use layer::AxumSessionLayer;
 pub use session::AxumSession;
 pub use session_store::AxumSessionStore;
-
-#[cfg(any(feature = "mysql-rustls", feature = "mysql-native"))]
-pub use databases::AxumMySqlPool;
-#[cfg(any(feature = "postgres-rustls", feature = "postgres-native"))]
-pub use databases::AxumPgPool;
-#[cfg(any(feature = "sqlite-rustls", feature = "sqlite-native"))]
-pub use databases::AxumSqlitePool;
 
 pub(crate) use service::{AxumSessionService, CookiesExt};
 pub(crate) use session_data::AxumSessionData;

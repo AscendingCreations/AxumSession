@@ -8,13 +8,15 @@ use async_trait::async_trait;
 pub trait AxumDatabasePool {
     /// This a called to create the table in the database using the given table name.
     /// if an error occurs it should be propagated to the caller.
-    async fn migrate(&self, table_name: &str) -> Result<(), SessionError>;
+    async fn initiate(&self, table_name: &str) -> Result<(), SessionError>;
     /// This a called to receive the session count in the database using the given table name.
     /// if an error occurs it should be propagated to the caller.
     async fn count(&self, table_name: &str) -> Result<i64, SessionError>;
     /// This a called to store a session in the database using the given table name.
     /// The session is a string and should be stored in its own field.
     /// if an error occurs it should be propagated to the caller.
+    /// expires is a unix timestamp(number of non-leap seconds since January 1, 1970 0:00:00 UTC)
+    /// which is set to UTC::now() + the expiration time.
     async fn store(
         &self,
         id: &str,

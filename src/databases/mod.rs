@@ -1,35 +1,25 @@
 #[cfg(any(feature = "mysql-rustls", feature = "mysql-native"))]
-#[doc(hidden)]
 mod mysql;
 #[cfg(any(feature = "mysql-rustls", feature = "mysql-native"))]
-#[cfg_attr(
-    docsrs,
-    doc(cfg(any(feature = "mysql-rustls", feature = "mysql-native")))
-)]
-pub use mysql::*;
+pub use mysql::{AxumMySqlPool, AxumMySqlSession, AxumMySqlSessionStore};
 
 #[cfg(any(feature = "postgres-rustls", feature = "postgres-native"))]
-#[doc(hidden)]
 mod postgres;
 #[cfg(any(feature = "postgres-rustls", feature = "postgres-native"))]
-#[cfg_attr(
-    docsrs,
-    doc(cfg(any(feature = "postgres-rustls", feature = "postgres-native")))
-)]
-pub use postgres::*;
+pub use postgres::{AxumPgPool, AxumPgSession, AxumPgSessionStore};
 
 #[cfg(any(feature = "sqlite-rustls", feature = "sqlite-native"))]
-#[doc(hidden)]
 mod sqlite;
 #[cfg(any(feature = "sqlite-rustls", feature = "sqlite-native"))]
-#[cfg_attr(
-    docsrs,
-    doc(cfg(any(feature = "sqlite-rustls", feature = "sqlite-native")))
-)]
-pub use sqlite::*;
+pub use sqlite::{AxumSqlitePool, AxumSqliteSession, AxumSqliteSessionStore};
+
+#[cfg(feature = "redis")]
+mod redis_pool;
+#[cfg(feature = "redis")]
+pub use redis_pool::{AxumRedisPool, AxumRedisSession, AxumRedisSessionStore};
 
 mod database;
 mod null;
 
 pub use database::AxumDatabasePool;
-pub use null::*;
+pub use null::{AxumNullPool, AxumNullSession, AxumNullSessionStore};

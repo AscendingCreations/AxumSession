@@ -94,13 +94,13 @@ where
     /// let config = AxumSessionConfig::default();
     /// let session_store = AxumSessionStore::new(None, config);
     /// async {
-    ///     let _ = session_store.migrate().await.unwrap();
+    ///     let _ = session_store.initiate().await.unwrap();
     /// };
     /// ```
     ///
-    pub async fn migrate(&self) -> Result<(), SessionError> {
+    pub async fn initiate(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            client.migrate(&self.config.table_name).await?
+            client.initiate(&self.config.table_name).await?
         }
 
         Ok(())

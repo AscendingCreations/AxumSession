@@ -10,7 +10,7 @@ pub struct AxumNullPool;
 
 #[async_trait]
 impl AxumDatabasePool for AxumNullPool {
-    async fn migrate(&self, _table_name: &str) -> Result<(), SessionError> {
+    async fn initiate(&self, _table_name: &str) -> Result<(), SessionError> {
         Ok(())
     }
 
