@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
+### Added
+- Redis via redis-rs. behind feature flag redis.
+
+### Changed
+- (Breaking) migrate to initiate.
+
+### Fixed
+- Added cfg for sqlx error type. fixes issue where wont build if sqlx not included.
 
 ## 4.0.0-beta.1 (24. July, 2022)
 ### Added
