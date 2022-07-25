@@ -9,9 +9,11 @@ pub trait AxumDatabasePool {
     /// This a called to create the table in the database using the given table name.
     /// if an error occurs it should be propagated to the caller.
     async fn initiate(&self, table_name: &str) -> Result<(), SessionError>;
+
     /// This a called to receive the session count in the database using the given table name.
     /// if an error occurs it should be propagated to the caller.
     async fn count(&self, table_name: &str) -> Result<i64, SessionError>;
+
     /// This a called to store a session in the database using the given table name.
     /// The session is a string and should be stored in its own field.
     /// if an error occurs it should be propagated to the caller.
@@ -24,15 +26,19 @@ pub trait AxumDatabasePool {
         expires: i64,
         table_name: &str,
     ) -> Result<(), SessionError>;
+
     /// This a called to receive the session from the database using the given table name.
     /// if an error occurs it should be propagated to the caller.
     async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, SessionError>;
+
     /// This a called to delete one session from the database using the given table name.
     /// if an error occurs it should be propagated to the caller.
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError>;
+
     /// This a called to delete all sessions that expired from the database using the given table name.
     /// if an error occurs it should be propagated to the caller.
     async fn delete_by_expiry(&self, table_name: &str) -> Result<(), SessionError>;
+
     /// This a called to delete all sessions from the database using the given table name.
     /// if an error occurs it should be propagated to the caller.
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError>;

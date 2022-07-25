@@ -36,6 +36,7 @@ impl AxumDatabasePool for AxumPgPool {
 
         Ok(())
     }
+
     async fn delete_by_expiry(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
             &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < $1"#
@@ -46,6 +47,7 @@ impl AxumDatabasePool for AxumPgPool {
         .await?;
         Ok(())
     }
+
     async fn count(&self, table_name: &str) -> Result<i64, SessionError> {
         let (count,) = sqlx::query_as(
             &r#"SELECT COUNT(*) FROM %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
@@ -55,6 +57,7 @@ impl AxumDatabasePool for AxumPgPool {
 
         return Ok(count);
     }
+
     async fn store(
         &self,
         id: &str,
@@ -79,6 +82,7 @@ impl AxumDatabasePool for AxumPgPool {
         .await?;
         Ok(())
     }
+
     async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, SessionError> {
         let result: Option<(String,)> = sqlx::query_as(
             &r#"
@@ -94,6 +98,7 @@ impl AxumDatabasePool for AxumPgPool {
 
         Ok(result.map(|(session,)| session))
     }
+
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
             &r#"DELETE FROM %%TABLE_NAME%% WHERE id = $1"#.replace("%%TABLE_NAME%%", table_name),
@@ -103,6 +108,7 @@ impl AxumDatabasePool for AxumPgPool {
         .await?;
         Ok(())
     }
+
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(&r#"TRUNCATE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name))
             .execute(&self.pool)
