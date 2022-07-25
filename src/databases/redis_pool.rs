@@ -56,9 +56,8 @@ impl AxumDatabasePool for AxumRedisPool {
 
     async fn load(&self, id: &str, _table_name: &str) -> Result<Option<String>, SessionError> {
         let mut con = self.client.get_async_connection().await?;
-        let result: String = redis::pipe().get(id).query_async(&mut con).await.unwrap();
-
-        Ok(Some(result))
+        let mut result: Vec<String> = redis::pipe().get(id).query_async(&mut con).await?;
+        Ok(result.pop())
     }
 
     async fn delete_one_by_id(&self, id: &str, _table_name: &str) -> Result<(), SessionError> {
