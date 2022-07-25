@@ -25,6 +25,7 @@ pub(crate) struct AxumSessionData {
     pub(crate) destroy: bool,
     pub(crate) longterm: bool,
     pub(crate) storable: bool,
+    pub(crate) update: bool,
 }
 
 impl AxumSessionData {
@@ -49,6 +50,7 @@ impl AxumSessionData {
             autoremove: Utc::now() + config.memory_lifespan,
             longterm: false,
             storable,
+            update: true,
         }
     }
 

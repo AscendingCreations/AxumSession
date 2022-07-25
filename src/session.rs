@@ -116,6 +116,7 @@ where
     pub async fn set_longterm(&self, longterm: bool) {
         self.tap(|sess| {
             sess.longterm = longterm;
+            sess.update = true;
             Some(1)
         });
     }
@@ -133,6 +134,7 @@ where
     pub async fn set_store(&self, storable: bool) {
         self.tap(|sess| {
             sess.storable = storable;
+            sess.update = true;
             Some(1)
         });
     }
@@ -168,6 +170,7 @@ where
         self.tap(|sess| {
             if sess.data.get(key) != Some(&value) {
                 sess.data.insert(key.to_string(), value);
+                sess.update = true;
             }
             Some(1)
         });
@@ -181,7 +184,10 @@ where
     /// ```
     ///
     pub async fn remove(&self, key: &str) {
-        self.tap(|sess| sess.data.remove(key));
+        self.tap(|sess| {
+            sess.update = true;
+            sess.data.remove(key)
+        });
     }
 
     /// Clears all data from the Current Session's HashMap.

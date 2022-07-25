@@ -163,7 +163,12 @@ where
                                 sess.expires = Utc::now() + store.config.lifespan;
                             }
 
-                            Some(sess.clone())
+                            if sess.update {
+                                sess.update = false;
+                                Some(sess.clone())
+                            } else {
+                                None
+                            }
                         } else {
                             None
                         };
