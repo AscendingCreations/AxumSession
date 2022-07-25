@@ -49,4 +49,4 @@ anyhow = "1.0.58"
 axum = "0.5.13"
 
 [package.metadata.docs.rs]
-features = ["postgres", "rustls"]
+features = ["postgres-rustls"]
