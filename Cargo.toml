@@ -1,6 +1,6 @@
 [package]
 name = "axum_database_sessions"
-version = "4.0.1"
+version = "4.0.2"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "Library to Provide Database Session management layer."
 edition = "2021"
