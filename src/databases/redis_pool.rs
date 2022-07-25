@@ -31,7 +31,7 @@ impl AxumDatabasePool for AxumRedisPool {
         let mut con = self.client.get_async_connection().await?;
         let count: i64 = redis::cmd("DBSIZE").query_async(&mut con).await?;
 
-        return Ok(count);
+        Ok(count)
     }
     async fn store(
         &self,

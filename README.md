@@ -37,7 +37,7 @@ axum_database_sessions = { version = "4.0.0-beta.2", features = [ "postgres-rust
 
 `mysql-native`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `native-tls`.
 
-`redis`:  `redis 0.21.5` session support.
+`redis-db`:  `redis 0.21.5` session support.
 
 # Example
 

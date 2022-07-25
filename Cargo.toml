@@ -2,7 +2,7 @@
 name = "axum_database_sessions"
 version = "4.0.0-beta.2"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
-description = "Library to Provide a SQLx Database Session management layer."
+description = "Library to Provide Database Session management layer."
 edition = "2021"
 license = "MIT"
 readme = "README.md"
@@ -11,13 +11,14 @@ keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
-default = ["redis"]
+default = ["redis-db"]
 sqlite-rustls = ["sqlx/sqlite", "sqlx/runtime-tokio-rustls"]
 sqlite-native = ["sqlx/sqlite", "sqlx/runtime-tokio-native-tls"]
 postgres-rustls = ["sqlx/postgres", "sqlx/runtime-tokio-rustls"]
 postgres-native = ["sqlx/postgres", "sqlx/runtime-tokio-native-tls"]
 mysql-rustls = ["sqlx/mysql", "sqlx/runtime-tokio-rustls"]
 mysql-native = ["sqlx/mysql", "sqlx/runtime-tokio-native-tls"]
+redis-db = ["redis"]
 
 [dependencies]
 axum-core = "0.2.7"
