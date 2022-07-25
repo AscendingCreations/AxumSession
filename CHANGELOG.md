@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## 4.0.2 (25. July, 2022)
+### Fixed
+- Fixed doc.rs features selection.
+
 ## 4.0.1 (25. July, 2022)
 ### Changed
 - default feature flag to be postgres-rustls.
