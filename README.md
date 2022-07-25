@@ -1,6 +1,6 @@
 # Axum_database_Sessions
 
-Library to Provide a Sqlx Database Session management layer.
+Library to Provide a Session management layer.
 
 [![https://crates.io/crates/axum_database_sessions](https://img.shields.io/crates/v/axum_database_sessions?style=plastic)](https://crates.io/crates/axum_database_sessions)
 [![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
@@ -11,14 +11,9 @@ If you need help with this library or have suggestions please go to our [Discord
 
 ## Install
 
-Axum Database Sessions uses [`tokio`] runtime along with [`sqlx`]; it supports [`native-tls`] and [`rustls`] TLS backends.
-
-[`sqlx`] current version used is 0.6.0
+Axum Database Sessions uses [`tokio`]
 
 [`tokio`]: https://github.com/tokio-rs/tokio
-[`native-tls`]: https://crates.io/crates/native-tls
-[`rustls`]: https://crates.io/crates/rustls
-[`sqlx`]: https://crates.io/crates/sqlx
 
 ```toml
 # Cargo.toml
@@ -121,7 +116,7 @@ async fn main() {
         .with_key(Key::generate());
 
     let session_store = AxumSessionStore::<AxumPgPool>::new(None, session_config);
-    session_store.migrate().await.unwrap();
+    session_store.initiate().await.unwrap();
 
     // build our application with some routes
     let app = Router::new()
@@ -202,7 +197,7 @@ async fn main() {
         .with_table_name("test_table").with_mode(AxumSessionMode::AcceptedOnly);
 
     let session_store = AxumSessionStore::<AxumPgPool>::new(None, session_config);
-    session_store.migrate().await.unwrap();
+    session_store.initiate().await.unwrap();
 
     // build our application with some routes
     let app = Router::new()
