@@ -48,5 +48,3 @@ redis = { version = "0.21.5", features = ["tokio-comp"], optional = true }
 anyhow = "1.0.58"
 axum = "0.5.13"
 
-[package.metadata.docs.rs]
-features = ["postgres-rustls"]
