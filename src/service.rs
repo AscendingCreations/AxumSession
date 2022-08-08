@@ -5,7 +5,7 @@ use axum_core::{
     BoxError,
 };
 use bytes::Bytes;
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use cookie::{Cookie, CookieJar, Key};
 use futures::future::BoxFuture;
 use http::{
@@ -29,6 +29,7 @@ enum CookieType {
 }
 
 impl CookieType {
+    #[inline]
     pub(crate) fn get_name(&self, config: &AxumSessionConfig) -> String {
         match self {
             CookieType::Data => config.cookie_name.to_string(),
@@ -36,6 +37,7 @@ impl CookieType {
         }
     }
 
+    #[inline]
     pub(crate) fn get_age(&self, config: &AxumSessionConfig) -> Option<chrono::Duration> {
         match self {
             CookieType::Data => config.cookie_max_age,
@@ -86,7 +88,7 @@ where
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
-            // check if the session id exists if not lets check if it exists in the database or generate a new session.
+            // Check if the session id exists if not lets check if it exists in the database or generate a new session.
             if !store.service_session_data(&session) {
                 let mut sess = store
                     .load_session(session.id.inner())
@@ -112,7 +114,7 @@ where
             // This branch runs less often, and we already have write access,
             // let's check if any sessions expired. We don't want to hog memory
             // forever by abandoned sessions (e.g. when a client lost their cookie)
-            // Throttle by memory lifespan - e.g. sweep every hour
+            // throttle by memory lifespan - e.g. sweep every hour
             if last_sweep <= Utc::now() {
                 store.inner.retain(|_k, v| v.autoremove > Utc::now());
                 store.timers.write().await.last_expiry_sweep =
@@ -126,7 +128,7 @@ where
                     Utc::now() + store.config.lifespan;
             }
 
-            //Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage
+            // Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage
             req.extensions_mut().insert(store.clone());
             req.extensions_mut().insert(session.clone());
 
@@ -140,7 +142,6 @@ where
             };
 
             // Add the Storable Cookie so we can keep track if they can store the session.
-            // Todo: Maybe add a way to store expiration times and such for accepted or not accept via json.
             cookies.add_cookie(
                 create_cookie(&store.config, storable.to_string(), CookieType::Storable),
                 &store.config.key,
@@ -153,17 +154,20 @@ where
             );
 
             if !store.config.session_mode.is_storable() || accepted {
-                // run this After a response has returned so we save the most updated data to sql.
+                // Run this after a response has returned so we save the most updated data to sql.
                 if store.is_persistent() {
                     let sess =
                         if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner()) {
-                            if sess.longterm {
-                                sess.expires = Utc::now() + store.config.max_lifespan;
-                            } else {
-                                sess.expires = Utc::now() + store.config.lifespan;
-                            }
+                            if store.config.always_save
+                                || sess.update
+                                || sess.expires - Utc::now() <= store.config.expiration_update
+                            {
+                                if sess.longterm {
+                                    sess.expires = Utc::now() + store.config.max_lifespan;
+                                } else {
+                                    sess.expires = Utc::now() + store.config.lifespan;
+                                };
 
-                            if sess.update {
                                 sess.update = false;
                                 Some(sess.clone())
                             } else {

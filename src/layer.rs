@@ -39,6 +39,7 @@ where
     /// let layer = AxumSessionLayer::new(session_store);
     /// ```
     ///
+    #[inline]
     pub fn new(session_store: AxumSessionStore<T>) -> Self {
         AxumSessionLayer { session_store }
     }

@@ -49,6 +49,7 @@ where
     /// let session_store = AxumSessionStore::new(None, config);
     /// ```
     ///
+    #[inline]
     pub fn new(client: Option<T>, config: AxumSessionConfig) -> Self {
         Self {
             client,
@@ -76,6 +77,7 @@ where
     /// let is_persistent = session_store.is_persistent();
     /// ```
     ///
+    #[inline]
     pub fn is_persistent(&self) -> bool {
         self.client.is_some()
     }
@@ -98,6 +100,7 @@ where
     /// };
     /// ```
     ///
+    #[inline]
     pub async fn initiate(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             client.initiate(&self.config.table_name).await?
@@ -124,6 +127,7 @@ where
     /// };
     /// ```
     ///
+    #[inline]
     pub async fn cleanup(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             client.delete_by_expiry(&self.config.table_name).await?;
@@ -150,6 +154,7 @@ where
     /// };
     /// ```
     ///
+    #[inline]
     pub async fn count(&self) -> Result<i64, SessionError> {
         if let Some(client) = &self.client {
             let count = client.count(&self.config.table_name).await?;
@@ -258,6 +263,7 @@ where
     /// };
     /// ```
     ///
+    #[inline]
     pub async fn destroy_session(&self, id: &str) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             client.delete_one_by_id(id, &self.config.table_name).await?;
@@ -286,6 +292,7 @@ where
     /// };
     /// ```
     ///
+    #[inline]
     pub async fn clear_store(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             client.delete_all(&self.config.table_name).await?;
@@ -299,7 +306,7 @@ where
     /// If no session is found returns false.
     pub(crate) fn service_session_data(&self, session: &AxumSession<T>) -> bool {
         if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
-            if inner.expires < Utc::now() || inner.destroy {
+            if !inner.validate() || inner.destroy {
                 inner.destroy = false;
                 inner.longterm = false;
                 inner.data.clear();

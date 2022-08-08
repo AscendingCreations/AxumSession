@@ -33,6 +33,7 @@ impl AxumSessionID {
     /// let id = AxumSessionID::new(token);
     /// ```
     ///
+    #[inline]
     pub(crate) fn new(uuid: Uuid) -> AxumSessionID {
         AxumSessionID(uuid)
     }
@@ -50,6 +51,7 @@ impl AxumSessionID {
     /// let str_id = id.inner();
     /// ```
     ///
+    #[inline]
     pub(crate) fn inner(&self) -> String {
         self.0.to_string()
     }

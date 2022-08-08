@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## 4.1.0 (8. August, 2022)
+### Added
+- expiration_update and always_save to config. used to deturmine how the session is saved to the database and for how often.
+
+### Changed
+- Checks for Expire to use Internal validate function.
+- Added Inline to Smaller functions.
+
+### Fixed
+- Fixed documentation.
+
 ## 4.0.2 (25. July, 2022)
 ### Fixed
 - Fixed doc.rs features selection.

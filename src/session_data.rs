@@ -41,6 +41,7 @@ impl AxumSessionData {
     /// let session_data = AxumSessionData::new(token, true, &config);
     /// ```
     ///
+    #[inline]
     pub(crate) fn new(id: Uuid, storable: bool, config: &AxumSessionConfig) -> Self {
         Self {
             id,
@@ -67,6 +68,7 @@ impl AxumSessionData {
     /// let expired = session_data.validate();
     /// ```
     ///
+    #[inline]
     pub(crate) fn validate(&self) -> bool {
         self.expires >= Utc::now()
     }

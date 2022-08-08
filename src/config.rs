@@ -66,6 +66,11 @@ pub struct AxumSessionConfig {
     /// This is the long term lifespan for things like Remember Me.
     /// Deturmines Database unload.
     pub(crate) max_lifespan: Duration,
+    /// This value represents the offset duration for how often session data gets updated in
+    /// the database regardless of getting changed or not.
+    pub(crate) expiration_update: Duration,
+    /// Will ignore the update checks and always save the session to the database if set to true.
+    pub(crate) always_save: bool,
     /// Session Memory lifespan, deturmines when to unload it from memory
     /// this works fine since the data can stay in the database till its needed
     /// if not yet expired.
@@ -102,7 +107,7 @@ impl std::fmt::Debug for AxumSessionConfig {
 impl AxumSessionConfig {
     /// Creates [`Default`] configuration of [`AxumSessionConfig`].
     /// This is equivalent to the [`AxumSessionConfig::default()`].
-    #[must_use]
+    #[inline]
     pub fn new() -> Self {
         Default::default()
     }
@@ -320,6 +325,40 @@ impl AxumSessionConfig {
         self
     }
 
+    /// This value represents the offset duration for how often session data gets updated in
+    /// the database regardless of getting changed or not.
+    /// This is leftover_expiration_duration <= expiration_update.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().with_expiration_update(Duration::days(320));
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_expiration_update(mut self, duration: Duration) -> Self {
+        self.expiration_update = duration;
+        self
+    }
+
+    /// This value represents if the database should check for updates to save or
+    /// to just save the data regardless of updates. When set to true it will disable the
+    /// update checks.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_database_sessions::AxumSessionConfig;
+    ///
+    /// let config = AxumSessionConfig::default().with_expiration_update(Duration::days(320));
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_always_save(mut self, always_save: bool) -> Self {
+        self.always_save = always_save;
+        self
+    }
+
     /// Set's the session's secure flag for if it gets sent over https.
     ///
     /// # Examples
@@ -392,6 +431,9 @@ impl Default for AxumSessionConfig {
             memory_lifespan: Duration::minutes(60),
             /// Unload long term session after 60 days if it has not been accessed.
             max_lifespan: Duration::days(60),
+            /// Default to update the database every hour if the session is still being requested.
+            expiration_update: Duration::hours(5),
+            always_save: false,
             session_mode: AxumSessionMode::Always,
             /// Makes a Random Key on each Boot if not set statically. Will affect long term cookies.
             key: None,

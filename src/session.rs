@@ -80,6 +80,7 @@ where
     /// }).await;
     /// ```
     ///
+    #[inline]
     pub(crate) fn tap<T: DeserializeOwned>(
         &self,
         func: impl FnOnce(&mut AxumSessionData) -> Option<T>,
@@ -99,6 +100,7 @@ where
     /// session.destroy().await;
     /// ```
     ///
+    #[inline]
     pub async fn destroy(&self) {
         self.tap(|sess| {
             sess.destroy = true;
@@ -113,6 +115,7 @@ where
     /// session.set_longterm(true).await;
     /// ```
     ///
+    #[inline]
     pub async fn set_longterm(&self, longterm: bool) {
         self.tap(|sess| {
             sess.longterm = longterm;
@@ -131,6 +134,7 @@ where
     /// session.set_store(true).await;
     /// ```
     ///
+    #[inline]
     pub async fn set_store(&self, storable: bool) {
         self.tap(|sess| {
             sess.storable = storable;
@@ -150,6 +154,8 @@ where
     /// ```
     ///
     ///Used to get data stored within SessionDatas hashmap from a key value.
+    /// 
+    #[inline]
     pub async fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         self.tap(|sess| {
             let string = sess.data.get(key)?;
@@ -164,6 +170,7 @@ where
     /// session.set("user-id", 1).await;
     /// ```
     ///
+    #[inline]
     pub async fn set(&self, key: &str, value: impl Serialize) {
         let value = serde_json::to_string(&value).unwrap_or_else(|_| "".to_string());
 
@@ -183,6 +190,7 @@ where
     /// session.remove("user-id").await;
     /// ```
     ///
+    #[inline]
     pub async fn remove(&self, key: &str) {
         self.tap(|sess| {
             sess.update = true;
@@ -197,6 +205,7 @@ where
     /// session.clear_all().await;
     /// ```
     ///
+    #[inline]
     pub async fn clear_all(&self) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
             instance.data.clear();
@@ -217,6 +226,7 @@ where
     /// let count = session.count().await;
     /// ```
     ///
+    #[inline]
     pub async fn count(&self) -> i64 {
         if self.store.is_persistent() {
             self.store.count().await.unwrap_or(0i64)

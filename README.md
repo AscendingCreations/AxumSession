@@ -61,7 +61,9 @@ async fn main() {
         .with_table_name("test_table");
 
     let session_store = AxumSessionStore::<AxumPgPool>::new(Some(poll.clone().into()), session_config);
-    session_store.migrate().await.unwrap();
+
+    //Create the Database table for storing our Session Data.
+    session_store.initiate().await.unwrap();
 
     // build our application with some routes
     let app = Router::new()
