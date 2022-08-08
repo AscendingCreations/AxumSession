@@ -154,7 +154,7 @@ where
     /// ```
     ///
     ///Used to get data stored within SessionDatas hashmap from a key value.
-    /// 
+    ///
     #[inline]
     pub async fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         self.tap(|sess| {
