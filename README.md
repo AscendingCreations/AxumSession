@@ -19,7 +19,7 @@ Axum Database Sessions uses [`tokio`]
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_database_sessions = { version = "4.0.2", features = [ "postgres-rustls"] }
+axum_database_sessions = { version = "4.1.0", features = [ "postgres-rustls"] }
 ```
 
 #### Cargo Feature Flags
