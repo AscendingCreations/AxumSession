@@ -1,8 +1,8 @@
 use crate::{AxumDatabasePool, AxumSessionData, AxumSessionID, AxumSessionStore, CookiesExt};
 use async_trait::async_trait;
-use axum_core::extract::{FromRequest, RequestParts};
+use axum_core::extract::FromRequestParts;
 use cookie::CookieJar;
-use http::{self, StatusCode};
+use http::{self, request::Parts, StatusCode};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
     fmt::Debug,
@@ -24,19 +24,19 @@ where
     pub(crate) id: AxumSessionID,
 }
 
-/// Adds FromRequest<B> for AxumSession
+/// Adds FromRequestParts<B> for AxumSession
 ///
-/// Returns the AxumSession from Axums request extensions.
+/// Returns the AxumSession from Axums request extensions state.
 #[async_trait]
-impl<B, T> FromRequest<B> for AxumSession<T>
+impl<T, S> FromRequestParts<S> for AxumSession<T>
 where
-    B: Send,
     T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+    S: Send + Sync,
 {
     type Rejection = (http::StatusCode, &'static str);
 
-    async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
-        req.extensions().get::<AxumSession<T>>().cloned().ok_or((
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        parts.extensions.get::<AxumSession<T>>().cloned().ok_or((
             StatusCode::INTERNAL_SERVER_ERROR,
             "Can't extract AxumSession. Is `AxumSessionLayer` enabled?",
         ))

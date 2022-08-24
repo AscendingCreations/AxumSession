@@ -2,14 +2,18 @@ use crate::{
     AxumDatabasePool, AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionTimers,
     SessionError,
 };
+use async_trait::async_trait;
+use axum_core::extract::FromRequestParts;
 use chrono::{Duration, Utc};
 use dashmap::DashMap;
+use http::{self, request::Parts, StatusCode};
 use std::{
     fmt::Debug,
     marker::{Send, Sync},
     sync::Arc,
 };
 use tokio::sync::RwLock;
+
 /// Contains the main Services storage for all session's and database access for persistant Sessions.
 ///
 /// # Examples
@@ -33,6 +37,26 @@ where
     pub config: AxumSessionConfig,
     //move this to creation on layer.
     pub(crate) timers: Arc<RwLock<AxumSessionTimers>>,
+}
+
+#[async_trait]
+impl<T, S> FromRequestParts<S> for AxumSessionStore<T>
+where
+    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+    S: Send + Sync,
+{
+    type Rejection = (http::StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<AxumSessionStore<T>>()
+            .cloned()
+            .ok_or((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Can't extract AxumSession. Is `AxumSessionLayer` enabled?",
+            ))
+    }
 }
 
 impl<T> AxumSessionStore<T>
