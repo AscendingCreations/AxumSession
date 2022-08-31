@@ -24,9 +24,9 @@ impl AxumDatabasePool for AxumMySqlPool {
         sqlx::query(
             &r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
-                "id" VARCHAR(128) NOT NULL PRIMARY KEY,
-                "expires" INTEGER NULL,
-                "session" TEXT NOT NULL
+                id VARCHAR(128) NOT NULL PRIMARY KEY,
+                expires INTEGER NULL,
+                session TEXT NOT NULL
             )
         "#
             .replace("%%TABLE_NAME%%", table_name),
