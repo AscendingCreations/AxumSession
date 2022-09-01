@@ -6,6 +6,7 @@ pub type AxumNullSessionStore = AxumSessionStore<AxumNullPool>;
 
 /// Null Pool type for AxumDatabasePool.
 /// Use this when you do not want to load any database.
+#[derive(Debug, Clone)]
 pub struct AxumNullPool;
 
 #[async_trait]
