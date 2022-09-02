@@ -39,7 +39,7 @@ impl AxumDatabasePool for AxumMySqlPool {
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
-            &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < $1"#
+            &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < ?"#
                 .replace("%%TABLE_NAME%%", table_name),
         )
         .bind(Utc::now().timestamp())
@@ -68,10 +68,10 @@ impl AxumDatabasePool for AxumMySqlPool {
         sqlx::query(
             &r#"
         INSERT INTO %%TABLE_NAME%%
-            (id, session, expires) SELECT $1, $2, $3
-        ON CONFLICT(id) DO UPDATE SET
-            expires = EXCLUDED.expires,
-            session = EXCLUDED.session
+            (id, session, expires) SELECT ?, ?, ?
+        ON DUPLICATE KEY UPDATE
+            expires = VALUES(expires),
+            session = VALUES(session)
     "#
             .replace("%%TABLE_NAME%%", table_name),
         )
@@ -87,7 +87,7 @@ impl AxumDatabasePool for AxumMySqlPool {
         let result: Option<(String,)> = sqlx::query_as(
             &r#"
             SELECT session FROM %%TABLE_NAME%%
-            WHERE id = $1 AND (expires IS NULL OR expires > $2)
+            WHERE id = ? AND (expires IS NULL OR expires > ?)
         "#
             .replace("%%TABLE_NAME%%", table_name),
         )
@@ -105,7 +105,7 @@ impl AxumDatabasePool for AxumMySqlPool {
         table_name: &str,
     ) -> Result<(), SessionError> {
         sqlx::query(
-            &r#"DELETE FROM %%TABLE_NAME%% WHERE id = $1"#.replace("%%TABLE_NAME%%", table_name),
+            &r#"DELETE FROM %%TABLE_NAME%% WHERE id = ?"#.replace("%%TABLE_NAME%%", table_name),
         )
         .bind(&id)
         .execute(&self.pool)
