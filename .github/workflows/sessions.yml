@@ -79,5 +79,5 @@ jobs:
           sudo apt-get install libpq-dev -y
       - uses: actions-rs/cargo@v1
         with:
-          command: test --features postgres-rustls
+          command: test --features=postgres-rustls
 
