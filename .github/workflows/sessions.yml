@@ -33,19 +33,25 @@ jobs:
 
   check:
       runs-on: ubuntu-latest
+      strategy:
+      matrix:
+        databases: [sqlite-rustls, sqlite-native, postgres-rustls, postgres-native, mysql-rustls, mysql-native, redis-db]
       steps:
         - uses: actions/checkout@v3
         - uses: actions-rs/toolchain@v1
           with:
             components: clippy
-            toolchain: stable
+            toolchain: nightly
             override: true
         - uses: Swatinem/rust-cache@v1
+          with:
+          key: ${{ runner.os }}-check-${{ matrix.databases }}
         - name: Check
           uses: actions-rs/cargo@v1
           with:
             command: clippy
-            args: --all --all-targets --all-features
+            args: --all --features ${{ matrix.databases }}
+
 
   build:
       name: Build
