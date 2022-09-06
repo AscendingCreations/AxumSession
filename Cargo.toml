@@ -45,6 +45,14 @@ dashmap = "5.3.4"
 redis = { version = "0.21.6", features = ["tokio-comp"], optional = true }
 
 [dev-dependencies]
-anyhow = "1.0.60"
-axum = "0.6.0-rc.1"
-
+axum = { version = "0.6.0-rc.1", features = ["macros"] }
+hyper = "0.14"
+tower = "0.4"
+serde = { version = "1.0.144", features = ["derive"] }
+sqlx = { version = "0.6.1", features = [
+    "chrono",
+    "uuid",
+    "postgres", 
+    "runtime-tokio-rustls"
+]}
+log = { version = "0.4", default-features = false }
