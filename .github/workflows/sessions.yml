@@ -72,12 +72,12 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
       - uses: actions-rs/cargo@v1
         with:
-          command: test --features=postgres-rustls
+          command: test -- --features "postgres-rustls"
 
