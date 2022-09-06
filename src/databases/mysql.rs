@@ -1,4 +1,4 @@
-use crate::{AxumSession, AxumSessionStore, AxumDatabasePool, SessionError};
+use crate::{AxumDatabasePool, AxumSession, AxumSessionStore, SessionError};
 use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, MySql, MySqlPool};
@@ -99,11 +99,7 @@ impl AxumDatabasePool for AxumMySqlPool {
         Ok(result.map(|(session,)| session))
     }
 
-    async fn delete_one_by_id(
-        &self,
-        id: &str,
-        table_name: &str,
-    ) -> Result<(), SessionError> {
+    async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
             &r#"DELETE FROM %%TABLE_NAME%% WHERE id = ?"#.replace("%%TABLE_NAME%%", table_name),
         )

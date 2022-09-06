@@ -1,4 +1,4 @@
-use crate::{AxumSession, AxumSessionStore, AxumDatabasePool, SessionError};
+use crate::{AxumDatabasePool, AxumSession, AxumSessionStore, SessionError};
 use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, Sqlite};
