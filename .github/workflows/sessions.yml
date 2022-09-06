@@ -45,7 +45,7 @@ jobs:
             override: true
         - uses: Swatinem/rust-cache@v1
           with:
-          key: ${{ runner.os }}-check-${{ matrix.databases }}
+            key: check-${{ matrix.databases }}
         - name: Check
           uses: actions-rs/cargo@v1
           with:
