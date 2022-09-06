@@ -32,9 +32,7 @@ jobs:
           args: --all -- --check
 
   check:
-      name: Check
       runs-on: ubuntu-latest
-
       steps:
         - uses: actions/checkout@v3
         - uses: actions-rs/toolchain@v1
@@ -42,14 +40,16 @@ jobs:
             components: clippy
             toolchain: stable
             override: true
-      - uses: actions-rs/clippy-check@v1
+        - uses: Swatinem/rust-cache@v1
+        - name: Check
+          uses: actions-rs/cargo@v1
           with:
-            token: ${{ secrets.GITHUB_TOKEN }} 
+            command: clippy
+            args: --all --all-targets --all-features
 
   build:
       name: Build
       runs-on: ubuntu-latest
-
       steps:
       - uses: actions/checkout@v3
       - name: Build
