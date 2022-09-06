@@ -52,7 +52,5 @@ serde = { version = "1.0.144", features = ["derive"] }
 sqlx = { version = "0.6.1", default-features = false, features = [
     "chrono",
     "uuid",
-    "postgres", 
-    "runtime-tokio-rustls"
 ]}
 log = { version = "0.4", default-features = false }
