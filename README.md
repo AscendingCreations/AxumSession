@@ -41,7 +41,7 @@ axum_database_sessions = { version = "4.1.0", features = [ "postgres-rustls"] }
 
 # Example
 
-```rust no_run
+```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
@@ -99,7 +99,7 @@ When a Key is set it will automatically set the Cookie into an encypted Private 
 both protects the cookies data from prying eye's it also ensures the authenticity of the cookie.
 # Example
 
-```rust no_run
+```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode, Key};
@@ -139,7 +139,7 @@ To use Axum_database_session in non_persistant mode Set the client to None and i
 AxumNullPool is always loaded and can be used where you do not want to include any database within the build.
 # Example
 
-```rust no_run
+```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumNullPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
@@ -184,7 +184,7 @@ async fn greet(session: AxumSession<AxumNullPool>) -> String {
 To use Axum_database_session with session mode set as Storable.
 # Example
 
-```rust no_run
+```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode};
@@ -196,7 +196,7 @@ use axum::{
 #[tokio::main]
 async fn main() {
     let session_config = AxumSessionConfig::default()
-        .with_table_name("test_table").with_mode(AxumSessionMode::AcceptedOnly);
+        .with_table_name("test_table").with_mode(AxumSessionMode::Storable);
 
     let session_store = AxumSessionStore::<AxumPgPool>::new(None, session_config);
     session_store.initiate().await.unwrap();
