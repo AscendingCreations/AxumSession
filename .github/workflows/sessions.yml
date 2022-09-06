@@ -36,6 +36,7 @@ jobs:
       strategy:
         matrix:
           databases: [sqlite-rustls, sqlite-native, postgres-rustls, postgres-native, mysql-rustls, mysql-native, redis-db]
+
       steps:
         - uses: actions/checkout@v3
         - uses: actions-rs/toolchain@v1
@@ -43,15 +44,16 @@ jobs:
             components: clippy
             toolchain: nightly
             override: true
+
         - uses: Swatinem/rust-cache@v1
           with:
-            key: check-${{ matrix.databases }}
+            key: ${{ matrix.databases }}
+
         - name: Check
           uses: actions-rs/cargo@v1
           with:
             command: clippy
             args: --all --features ${{ matrix.databases }}
-
 
   build:
       name: Build
