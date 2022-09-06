@@ -110,13 +110,23 @@ mod tests {
         assert!(response.status().is_redirection());
 
         //get the session acceptance cookie first.
-        let cookie = response.headers_mut().remove(header::SET_COOKIE).unwrap();
+        let entries = response.headers_mut().get_all(header::SET_COOKIE);
+        let mut cookies = Vec::with_capacity(3);
 
-        let request = Request::builder()
+        for entry in entries {
+            cookies.push(entry.clone());
+        }
+
+        let mut request = Request::builder()
             .uri("/test_session")
-            .header(header::COOKIE, cookie)
+            //.header(header::COOKIE, cookie)
             .body(Body::empty())
             .unwrap();
+
+        for cookie in cookies {
+            request.headers_mut().append(header::COOKIE, cookie);
+        }
+
         let response = app.clone().oneshot(request).await.unwrap();
 
         let bytes = hyper::body::to_bytes(response.into_body()).await.unwrap();
