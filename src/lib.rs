@@ -54,7 +54,7 @@ mod tests {
         connect_opts = connect_opts.database("postgres");
         connect_opts = connect_opts.username("postgres");
         connect_opts = connect_opts.password("password");
-        connect_opts = connect_opts.host("local");
+        connect_opts = connect_opts.host("localhost");
         connect_opts = connect_opts.port(5432);
 
         let pool = PgPoolOptions::new()
