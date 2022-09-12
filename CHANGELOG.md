@@ -8,10 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Changed
 - (Breaking) Updated to axum 0.6
 - (Breaking) Changed with_cookie_domain to take a Into<Cow<'static, str>> instead of Into<Option<Cow<'static, str>>>.
-- (Breaking) Updated Session::remove to return an Option<T> of the key removed.
 
 ### Added
 - Workflow actions for github.
+- get_remove, Used to remove and Process the String into its type and returning it.
 
 ### Fixed
 - Fixed document tests.
