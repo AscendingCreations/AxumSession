@@ -187,7 +187,7 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// session.remove("user-id").await;
+    /// let _ = session.remove("user-id").await;
     /// ```
     ///
     #[inline]
