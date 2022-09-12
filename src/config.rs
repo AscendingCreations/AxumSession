@@ -211,8 +211,6 @@ impl AxumSessionConfig {
 
     /// Set's the session's cookie's Same Site Setting for Cross-Site restrictions.
     ///
-    /// Only works if Domain is also set to restrict it to that domain only.
-    ///
     /// # Examples
     /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
@@ -424,7 +422,7 @@ impl Default for AxumSessionConfig {
             cookie_http_only: true,
             cookie_secure: false,
             cookie_domain: None,
-            cookie_same_site: SameSite::None,
+            cookie_same_site: SameSite::Lax,
             storable_cookie_name: "session_acceptance".into(),
             storable_cookie_max_age: Some(Duration::days(100)),
             table_name: "async_sessions".into(),
@@ -437,7 +435,7 @@ impl Default for AxumSessionConfig {
             expiration_update: Duration::hours(5),
             always_save: false,
             session_mode: AxumSessionMode::Always,
-            /// Makes a Random Key on each Boot if not set statically. Will affect long term cookies.
+            /// Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
             key: None,
         }
     }

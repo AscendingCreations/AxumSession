@@ -226,7 +226,7 @@ impl CookiesExt for CookieJar {
         if let Some(key) = key {
             self.private(key).get(name)
         } else {
-            self.get(name).cloned()
+            self.get(name).to_owned()
         }
     }
 
@@ -245,14 +245,13 @@ fn create_cookie<'a>(
     cookie_type: CookieType,
 ) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build(cookie_type.get_name(config), value)
-        .path(config.cookie_path.clone())
+        .path(config.cookie_path.to_owned())
         .secure(config.cookie_secure)
-        .http_only(config.cookie_http_only);
+        .http_only(config.cookie_http_only)
+        .same_site(config.cookie_same_site);
 
     if let Some(domain) = &config.cookie_domain {
-        cookie_builder = cookie_builder
-            .domain(domain.clone())
-            .same_site(config.cookie_same_site);
+        cookie_builder = cookie_builder.domain(domain.to_owned());
     }
 
     if let Some(max_age) = cookie_type.get_age(config) {
