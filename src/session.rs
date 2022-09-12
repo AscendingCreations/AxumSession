@@ -183,7 +183,7 @@ where
         });
     }
 
-    /// Removes a Key from the Current Session's HashMap.
+    /// Removes a Key from the Current Session's HashMap returning it.
     ///
     /// # Examples
     /// ```rust ignore
@@ -191,11 +191,12 @@ where
     /// ```
     ///
     #[inline]
-    pub async fn remove(&self, key: &str) {
+    pub async fn remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         self.tap(|sess| {
             sess.update = true;
-            sess.data.remove(key)
-        });
+            let string = sess.data.remove(key)?;
+            serde_json::from_str(&string).ok()
+        })
     }
 
     /// Clears all data from the Current Session's HashMap.
