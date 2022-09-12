@@ -226,7 +226,7 @@ impl CookiesExt for CookieJar {
         if let Some(key) = key {
             self.private(key).get(name)
         } else {
-            self.get(name).to_owned()
+            self.get(name).cloned()
         }
     }
 
