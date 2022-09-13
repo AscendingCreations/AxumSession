@@ -52,8 +52,7 @@ pub struct AxumSessionConfig {
     pub(crate) cookie_name: Cow<'static, str>,
     /// Session cookie path
     pub(crate) cookie_path: Cow<'static, str>,
-    /// Resticts how Cookies are sent cross-site. Default is `SameSite::None`
-    /// Only works if domain is also set.
+    /// Resticts how Cookies are sent cross-site. Default is `SameSite::Lax`
     pub(crate) cookie_same_site: SameSite,
     /// Session cookie secure flag
     pub(crate) cookie_secure: bool,
@@ -422,7 +421,7 @@ impl Default for AxumSessionConfig {
             cookie_http_only: true,
             cookie_secure: false,
             cookie_domain: None,
-            cookie_same_site: SameSite::None,
+            cookie_same_site: SameSite::Lax,
             storable_cookie_name: "session_acceptance".into(),
             storable_cookie_max_age: Some(Duration::days(100)),
             table_name: "async_sessions".into(),
