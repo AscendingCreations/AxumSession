@@ -1,4 +1,4 @@
-use crate::{AxumSession, AxumSessionStore, AxumDatabasePool, SessionError};
+use crate::{AxumDatabasePool, AxumSession, AxumSessionStore, SessionError};
 use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, MySql, MySqlPool};
@@ -24,9 +24,9 @@ impl AxumDatabasePool for AxumMySqlPool {
         sqlx::query(
             &r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
-                "id" VARCHAR(128) NOT NULL PRIMARY KEY,
-                "expires" INTEGER NULL,
-                "session" TEXT NOT NULL
+                id VARCHAR(128) NOT NULL PRIMARY KEY,
+                expires INTEGER NULL,
+                session TEXT NOT NULL
             )
         "#
             .replace("%%TABLE_NAME%%", table_name),
@@ -39,7 +39,7 @@ impl AxumDatabasePool for AxumMySqlPool {
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
-            &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < $1"#
+            &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < ?"#
                 .replace("%%TABLE_NAME%%", table_name),
         )
         .bind(Utc::now().timestamp())
@@ -68,16 +68,16 @@ impl AxumDatabasePool for AxumMySqlPool {
         sqlx::query(
             &r#"
         INSERT INTO %%TABLE_NAME%%
-            (id, session, expires) SELECT $1, $2, $3
-        ON CONFLICT(id) DO UPDATE SET
-            expires = EXCLUDED.expires,
-            session = EXCLUDED.session
+            (id, session, expires) SELECT ?, ?, ?
+        ON DUPLICATE KEY UPDATE
+            expires = VALUES(expires),
+            session = VALUES(session)
     "#
             .replace("%%TABLE_NAME%%", table_name),
         )
-        .bind(&id)
-        .bind(&session)
-        .bind(&expires)
+        .bind(id)
+        .bind(session)
+        .bind(expires)
         .execute(&self.pool)
         .await?;
         Ok(())
@@ -87,11 +87,11 @@ impl AxumDatabasePool for AxumMySqlPool {
         let result: Option<(String,)> = sqlx::query_as(
             &r#"
             SELECT session FROM %%TABLE_NAME%%
-            WHERE id = $1 AND (expires IS NULL OR expires > $2)
+            WHERE id = ? AND (expires IS NULL OR expires > ?)
         "#
             .replace("%%TABLE_NAME%%", table_name),
         )
-        .bind(&id)
+        .bind(id)
         .bind(Utc::now().timestamp())
         .fetch_optional(&self.pool)
         .await?;
@@ -99,15 +99,11 @@ impl AxumDatabasePool for AxumMySqlPool {
         Ok(result.map(|(session,)| session))
     }
 
-    async fn delete_one_by_id(
-        &self,
-        id: &str,
-        table_name: &str,
-    ) -> Result<(), SessionError> {
+    async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
-            &r#"DELETE FROM %%TABLE_NAME%% WHERE id = $1"#.replace("%%TABLE_NAME%%", table_name),
+            &r#"DELETE FROM %%TABLE_NAME%% WHERE id = ?"#.replace("%%TABLE_NAME%%", table_name),
         )
-        .bind(&id)
+        .bind(id)
         .execute(&self.pool)
         .await?;
         Ok(())

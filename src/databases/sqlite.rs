@@ -1,4 +1,4 @@
-use crate::{AxumSession, AxumSessionStore, AxumDatabasePool, SessionError};
+use crate::{AxumDatabasePool, AxumSession, AxumSessionStore, SessionError};
 use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, Sqlite};
@@ -75,9 +75,9 @@ impl AxumDatabasePool for AxumSqlitePool {
     "#
             .replace("%%TABLE_NAME%%", table_name),
         )
-        .bind(&id)
-        .bind(&session)
-        .bind(&expires)
+        .bind(id)
+        .bind(session)
+        .bind(expires)
         .execute(&self.pool)
         .await?;
         Ok(())
@@ -91,7 +91,7 @@ impl AxumDatabasePool for AxumSqlitePool {
         "#
             .replace("%%TABLE_NAME%%", table_name),
         )
-        .bind(&id)
+        .bind(id)
         .bind(Utc::now().timestamp())
         .fetch_optional(&self.pool)
         .await?;
@@ -103,7 +103,7 @@ impl AxumDatabasePool for AxumSqlitePool {
         sqlx::query(
             &r#"DELETE FROM %%TABLE_NAME%% WHERE id = $1"#.replace("%%TABLE_NAME%%", table_name),
         )
-        .bind(&id)
+        .bind(id)
         .execute(&self.pool)
         .await?;
         Ok(())

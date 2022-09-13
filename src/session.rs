@@ -1,8 +1,8 @@
 use crate::{AxumDatabasePool, AxumSessionData, AxumSessionID, AxumSessionStore, CookiesExt};
 use async_trait::async_trait;
-use axum_core::extract::{FromRequest, RequestParts};
+use axum_core::extract::FromRequestParts;
 use cookie::CookieJar;
-use http::{self, StatusCode};
+use http::{self, request::Parts, StatusCode};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{
     fmt::Debug,
@@ -24,19 +24,19 @@ where
     pub(crate) id: AxumSessionID,
 }
 
-/// Adds FromRequest<B> for AxumSession
+/// Adds FromRequestParts<B> for AxumSession
 ///
-/// Returns the AxumSession from Axums request extensions.
+/// Returns the AxumSession from Axums request extensions state.
 #[async_trait]
-impl<B, T> FromRequest<B> for AxumSession<T>
+impl<T, S> FromRequestParts<S> for AxumSession<T>
 where
-    B: Send,
     T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+    S: Send + Sync,
 {
     type Rejection = (http::StatusCode, &'static str);
 
-    async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
-        req.extensions().get::<AxumSession<T>>().cloned().ok_or((
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        parts.extensions.get::<AxumSession<T>>().cloned().ok_or((
             StatusCode::INTERNAL_SERVER_ERROR,
             "Can't extract AxumSession. Is `AxumSessionLayer` enabled?",
         ))
@@ -73,7 +73,7 @@ where
     /// Provides an Option<T> that returns the requested data from the Sessions store.
     ///
     /// # Examples
-    /// ```rust no_run
+    /// ```rust ignore
     /// session.tap(|sess| {
     ///   let string = sess.data.get(key)?;
     ///   serde_json::from_str(string).ok()
@@ -96,7 +96,7 @@ where
     /// Sets the Current Session to be Destroyed on the next run.
     ///
     /// # Examples
-    /// ```rust no_run
+    /// ```rust ignore
     /// session.destroy().await;
     /// ```
     ///
@@ -111,7 +111,7 @@ where
     /// Sets the Current Session to a long term expiration. Useful for Remember Me setups.
     ///
     /// # Examples
-    /// ```rust no_run
+    /// ```rust ignore
     /// session.set_longterm(true).await;
     /// ```
     ///
@@ -130,7 +130,7 @@ where
     /// If this is set to false it will unload the stored session.
     ///
     /// # Examples
-    /// ```rust no_run
+    /// ```rust ignore
     /// session.set_store(true).await;
     /// ```
     ///
@@ -149,7 +149,7 @@ where
     /// Returns None if Key does not exist or if serdes_json failed to deserialize.
     ///
     /// # Examples
-    /// ```rust no_run
+    /// ```rust ignore
     /// let id = session.get("user-id").await.unwrap_or(0);
     /// ```
     ///
@@ -163,10 +163,30 @@ where
         })
     }
 
+    /// Removes a Key from the Current Session's HashMap returning it.
+    ///
+    /// Provides an Option<T> that returns the requested data from the Sessions store.
+    /// Returns None if Key does not exist or if serdes_json failed to deserialize.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// let id = session.get_remove("user-id").await.unwrap_or(0);
+    /// ```
+    ///
+    /// Used to get data stored within SessionDatas hashmap from a key value.
+    ///
+    #[inline]
+    pub async fn get_remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
+        self.tap(|sess| {
+            let string = sess.data.remove(key)?;
+            serde_json::from_str(&string).ok()
+        })
+    }
+
     /// Sets data to the Current Session's HashMap.
     ///
     /// # Examples
-    /// ```rust no_run
+    /// ```rust ignore
     /// session.set("user-id", 1).await;
     /// ```
     ///
@@ -184,10 +204,11 @@ where
     }
 
     /// Removes a Key from the Current Session's HashMap.
+    /// Does not process the String into a Type, Just removes it.
     ///
     /// # Examples
-    /// ```rust no_run
-    /// session.remove("user-id").await;
+    /// ```rust ignore
+    /// let _ = session.remove("user-id").await;
     /// ```
     ///
     #[inline]
@@ -201,7 +222,7 @@ where
     /// Clears all data from the Current Session's HashMap.
     ///
     /// # Examples
-    /// ```rust no_run
+    /// ```rust ignore
     /// session.clear_all().await;
     /// ```
     ///
@@ -222,7 +243,7 @@ where
     /// If the Session is not persistant it will return a count within AxumSessionStore.
     ///
     /// # Examples
-    /// ```rust no_run
+    /// ```rust ignore
     /// let count = session.count().await;
     /// ```
     ///

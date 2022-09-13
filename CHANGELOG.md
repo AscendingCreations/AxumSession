@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
+### Changed
+- (Breaking) Updated to axum 0.6
+- (Breaking) Changed with_cookie_domain to take a Into<Cow<'static, str>> instead of Into<Option<Cow<'static, str>>>.
+
+### Added
+- Workflow actions for github.
+- get_remove, Used to remove and Process the String into its type and returning it.
+
+### Fixed
+- Fixed document tests.
 
 ## 4.1.0 (8. August, 2022)
 ### Added

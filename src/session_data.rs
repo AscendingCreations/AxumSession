@@ -7,7 +7,7 @@ use uuid::Uuid;
 /// The Store and Configured Data for a Session.
 ///
 /// # Examples
-/// ```
+/// ```rust ignore
 /// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
 /// use uuid::Uuid;
 ///
@@ -32,7 +32,7 @@ impl AxumSessionData {
     /// Constructs a new AxumSessionData.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
     /// use uuid::Uuid;
     ///
@@ -58,7 +58,7 @@ impl AxumSessionData {
     /// Validates if the Session is to expire.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
     /// use uuid::Uuid;
     ///

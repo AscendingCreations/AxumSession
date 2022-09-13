@@ -1,0 +1,92 @@
+name: AxumDatabaseSessions
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+  MSRV: '1.60'
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          components: rustfmt
+          toolchain: stable
+          override: true
+
+      # this is cheaper than requesting the non-minimal profile
+      - run: rustup component add rustfmt
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  check:
+      runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          databases: [sqlite-rustls, postgres-rustls,  mysql-rustls, redis-db]
+
+      steps:
+        - uses: actions/checkout@v3
+        - uses: actions-rs/toolchain@v1
+          with:
+            components: clippy
+            toolchain: nightly
+            override: true
+
+        - uses: Swatinem/rust-cache@v1
+          with:
+            key: ${{ matrix.databases }}
+
+        - name: Check
+          uses: actions-rs/cargo@v1
+          with:
+            command: clippy
+            args: --features ${{ matrix.databases }}
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - run: |
+        
+        
+      - name: Migrate database
+        run: |
+          sudo apt-get install libpq-dev -y
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features "postgres-rustls"
+
