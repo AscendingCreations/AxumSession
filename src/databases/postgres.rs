@@ -122,7 +122,7 @@ impl AxumDatabasePool for AxumPgPool {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.unwrap_or(0) > 0)
+        Ok(result.map(|(o,)| o).unwrap_or(0) > 0)
     }
 
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
