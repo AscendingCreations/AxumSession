@@ -122,7 +122,7 @@ impl AxumDatabasePool for AxumMySqlPool {
         .fetch_optional(&self.pool)
         .await?;
 
-        Ok(result.map(|(count,)| count > 0))
+        result.map(|(count,)| count > 0).ok()
     }
 
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
