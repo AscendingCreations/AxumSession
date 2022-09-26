@@ -1,6 +1,7 @@
 # Axum_Database_Sessions
 
-Library to Provide a Session management layer.
+Library to Provide a Session management layer. This stores all session data within a MemoryStore internally. Usage of a database is Optional. We also offer the ability to add new 
+storage types by implementing them with our AxumDatabasePool trait.
 
 [![https://crates.io/crates/axum_database_sessions](https://img.shields.io/crates/v/axum_database_sessions?style=plastic)](https://crates.io/crates/axum_database_sessions)
 [![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
