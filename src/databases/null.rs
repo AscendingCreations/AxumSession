@@ -41,6 +41,10 @@ impl AxumDatabasePool for AxumNullPool {
         Ok(())
     }
 
+    async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
+        Ok(false)
+    }
+
     async fn delete_all(&self, _table_name: &str) -> Result<(), SessionError> {
         Ok(())
     }

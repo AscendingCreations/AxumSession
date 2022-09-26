@@ -109,6 +109,22 @@ impl AxumDatabasePool for AxumSqlitePool {
         Ok(())
     }
 
+    async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
+        let result: Option<(i32,)> = sqlx::query_as(
+            &r#"
+            SELECT COUNT(*) FROM %%TABLE_NAME%%
+            WHERE id = $1 AND (expires IS NULL OR expires > $2)
+        "#
+            .replace("%%TABLE_NAME%%", table_name),
+        )
+        .bind(id)
+        .bind(Utc::now().timestamp())
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.map(|(count,)| count > 0))
+    }
+
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(&r#"TRUNCATE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name))
             .execute(&self.pool)

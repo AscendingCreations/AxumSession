@@ -35,6 +35,10 @@ pub trait AxumDatabasePool {
     /// if an error occurs it should be propagated to the caller.
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError>;
 
+    /// This a called to check if the id exists in the database using the given table name.
+    /// if an error occurs it should be propagated to the caller.
+    async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError>;
+
     /// This a called to delete all sessions that expired from the database using the given table name.
     /// if an error occurs it should be propagated to the caller.
     async fn delete_by_expiry(&self, table_name: &str) -> Result<(), SessionError>;

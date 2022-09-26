@@ -58,7 +58,14 @@ where
                 let token = Uuid::new_v4();
 
                 if !store.inner.contains_key(&token.to_string()) {
-                    break token;
+                    //This fixes an already used but in database issue.
+                    if let Some(client) = store.client {
+                        if !client.exists(&token.to_string(), &store.config.table_name) {
+                            break token;
+                        }
+                    } else {
+                        break token;
+                    }
                 }
             },
         };
