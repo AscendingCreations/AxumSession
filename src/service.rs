@@ -83,7 +83,7 @@ where
 
         Box::pin(async move {
             let cookies = get_cookies(&req);
-            let session = AxumSession::new(&store, &cookies);
+            let session = AxumSession::new(&store, &cookies).await;
             let accepted = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));

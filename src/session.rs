@@ -47,7 +47,7 @@ impl<S> AxumSession<S>
 where
     S: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    pub(crate) fn new(store: &AxumSessionStore<S>, cookies: &CookieJar) -> AxumSession<S> {
+    pub(crate) async fn new(store: &AxumSessionStore<S>, cookies: &CookieJar) -> AxumSession<S> {
         let value = cookies
             .get_cookie(&store.config.cookie_name, &store.config.key)
             .and_then(|c| Uuid::parse_str(c.value()).ok());
