@@ -60,7 +60,13 @@ where
                 if !store.inner.contains_key(&token.to_string()) {
                     //This fixes an already used but in database issue.
                     if let Some(client) = store.client {
-                        if !client.exists(&token.to_string(), &store.config.table_name) {
+                        // Unwrap should be safe to use as we would want it to crash if there was a major database error.
+                        // This would mean the database no longer is online or the table missing etc.
+                        if !client
+                            .exists(&token.to_string(), &store.config.table_name)
+                            .await
+                            .unwrap()
+                        {
                             break token;
                         }
                     } else {
