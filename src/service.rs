@@ -158,6 +158,7 @@ where
                 if let Some((_, mut session_data)) = session.store.inner.remove(&session.id.inner())
                 {
                     session_data.id = session_id.0;
+                    session_data.renew = false;
                     session.id = session_id;
                     store.inner.insert(session.id.inner(), session_data);
                 }
