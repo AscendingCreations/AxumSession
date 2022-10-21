@@ -66,7 +66,8 @@ mod tests {
         let app = Router::new()
             .route("/set_session", get(set_session))
             .route("/test_session", get(test_session))
-            .layer(AxumSessionLayer::new(session_store));
+            .layer(AxumSessionLayer::new(session_store))
+            .into_service();
 
         #[derive(Default, Clone, Deserialize, Serialize, PartialEq, Eq)]
         pub struct Test {
@@ -98,7 +99,7 @@ mod tests {
             }
         }
 
-        let request = Request::builder()
+        let request = Request::<()>::builder()
             .uri("/set_session")
             .body(Body::empty())
             .unwrap();
