@@ -72,7 +72,7 @@ impl AxumDatabasePool for AxumRedisPool {
 
         Ok(exists)
     }
-    
+
     async fn delete_all(&self, _table_name: &str) -> Result<(), SessionError> {
         let mut con = self.client.get_async_connection().await?;
         redis::pipe().cmd("FLUSHDB").query_async(&mut con).await?;
