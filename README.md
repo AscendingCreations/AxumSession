@@ -81,10 +81,10 @@ async fn main() {
 }
 
 async fn greet(session: AxumSession<AxumPgPool>) -> String {
-    let mut count: usize = session.get("count").await.unwrap_or(0);
+    let mut count: usize = session.get("count").unwrap_or(0);
 
     count += 1;
-    session.set("count", count).await;
+    session.set("count", count);
 
     count.to_string()
 }
@@ -171,10 +171,10 @@ async fn main() {
 }
 
 async fn greet(session: AxumSession<AxumNullPool>) -> String {
-    let mut count: usize = session.get("count").await.unwrap_or(0);
+    let mut count: usize = session.get("count").unwrap_or(0);
 
     count += 1;
-    session.set("count", count).await;
+    session.set("count", count);
 
     count.to_string()
 }
@@ -218,12 +218,12 @@ async fn main() {
 
 //No need to set the sessions accepted or not with gdpr mode disabled
 async fn greet(session: AxumSession<AxumPgPool>) -> String {
-    let mut count: usize = session.get("count").await.unwrap_or(0);
+    let mut count: usize = session.get("count").unwrap_or(0);
 
     // Allow the Session data to be keep in memory and the database for the lifetime.
-    session.set_store(true).await;
+    session.set_store(true);
     count += 1;
-    session.set("count", count).await;
+    session.set("count", count);
 
     count.to_string()
 }

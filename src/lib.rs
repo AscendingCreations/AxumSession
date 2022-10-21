@@ -80,12 +80,12 @@ mod tests {
                 b: "Hello World".to_owned(),
             };
 
-            session.set("test", test).await;
+            session.set("test", test);
             Redirect::to("/")
         }
 
         async fn test_session(session: AxumSession<AxumPgPool>) -> String {
-            let test: Test = session.get("test").await.unwrap_or_default();
+            let test: Test = session.get("test").unwrap_or_default();
             let other = Test {
                 a: 2,
                 b: "Hello World".to_owned(),
