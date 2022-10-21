@@ -110,7 +110,7 @@ impl AxumDatabasePool for AxumPgPool {
     }
 
     async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
-        let result: Option<(i32,)> = sqlx::query_as(
+        let result: Option<(i64,)> = sqlx::query_as(
             &r#"
             SELECT COUNT(*) FROM %%TABLE_NAME%%
             WHERE id = $1 AND (expires IS NULL OR expires > $2)
