@@ -83,7 +83,7 @@ where
 
         Box::pin(async move {
             let cookies = get_cookies(&req);
-            let session = AxumSession::new(&store, &cookies).await;
+            let mut session = AxumSession::new(&store, &cookies).await;
             let accepted = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
@@ -134,12 +134,34 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let storable = if let Some(session_data) = session.store.inner.get(&session.id.inner())
-            {
-                session_data.storable
-            } else {
-                false
-            };
+            let (storable, renew) =
+                if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
+                    (session_data.storable, session_data.renew)
+                } else {
+                    (false, false)
+                };
+
+            if renew {
+                // Lets change the Session ID and destory the old Session from the database.
+                let session_id = AxumSession::generate_uuid(&store).await;
+
+                // Lets remove it from the database first.
+                if store.is_persistent() {
+                    session
+                        .store
+                        .destroy_session(&session.id.inner())
+                        .await
+                        .unwrap();
+                }
+
+                // Lets remove update and reinsert.
+                if let Some((_, mut session_data)) = session.store.inner.remove(&session.id.inner())
+                {
+                    session_data.id = session_id.0;
+                    session.id = session_id;
+                    store.inner.insert(session.id.inner(), session_data);
+                }
+            }
 
             // Lets make a new jar as we only want to add our cookies to the Response cookie header.
             let mut cookies = CookieJar::new();

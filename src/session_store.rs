@@ -325,6 +325,26 @@ where
         Ok(())
     }
 
+    /// Deletes all sessions in Memory.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+    /// use uuid::Uuid;
+    ///
+    /// let config = AxumSessionConfig::default();
+    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config.clone());
+    ///
+    /// async {
+    ///     let _ = session_store.clear_store().await.unwrap();
+    /// };
+    /// ```
+    ///
+    #[inline]
+    pub fn clear(&self) {
+        self.inner.clear();
+    }
+
     /// Attempts to load check and clear Data.
     ///
     /// If no session is found returns false.

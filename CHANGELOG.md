@@ -8,15 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Changed
 - (Breaking) Updated to axum 0.6
 - (Breaking) Changed with_cookie_domain to take a Into<Cow<'static, str>> instead of Into<Option<Cow<'static, str>>>.
+- (Breaking) Session destroy, set_longterm, set_store, get, get_remove, set, remove are no longer async.
+- (Breaking) Session clear_all changed to clear and is no longer async.
 -  Merged internal Structs AxumSessionTimers and AxumSessionId into session_data.rs
 
 ### Added
 - Workflow actions for github.
-- get_remove, Used to remove and Process the String into its type and returning it.
+- Session get_remove, Used to remove and Process the String into its type and returning it.
 - Added exists function to the AxumDatabasePool Trait.
+- Session renew, used to generate a new session ID. Clears old Database Session and resaves as new session.
+- Session_store clear, used to clear all Memory Stored Sessions.
 
 ### Fixed
 - Fixed document tests.
+- Session clear no longer clears the entire database.
 
 ## 4.1.0 (8. August, 2022)
 ### Added

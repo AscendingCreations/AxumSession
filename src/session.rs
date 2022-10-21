@@ -1,9 +1,9 @@
-use crate::{AxumDatabasePool, AxumSessionData, AxumSessionID, AxumSessionStore, CookiesExt};
+use crate::{AxumDatabasePool,  AxumSessionID, AxumSessionStore, CookiesExt};
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use cookie::CookieJar;
 use http::{self, request::Parts, StatusCode};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::Serialize;
 use std::{
     fmt::Debug,
     marker::{Send, Sync},
@@ -47,62 +47,61 @@ impl<S> AxumSession<S>
 where
     S: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    pub(crate) async fn new(store: &AxumSessionStore<S>, cookies: &CookieJar) -> AxumSession<S> {
+    pub(crate) async fn new(store: &AxumSessionStore<S>, cookies: &CookieJar) -> Self {
         let value = cookies
             .get_cookie(&store.config.cookie_name, &store.config.key)
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 
-        let uuid = match value {
-            Some(v) => v,
-            None => loop {
-                let token = Uuid::new_v4();
-
-                if !store.inner.contains_key(&token.to_string()) {
-                    //This fixes an already used but in database issue.
-                    if let Some(client) = &store.client {
-                        // Unwrap should be safe to use as we would want it to crash if there was a major database error.
-                        // This would mean the database no longer is online or the table missing etc.
-                        if !client
-                            .exists(&token.to_string(), &store.config.table_name)
-                            .await
-                            .unwrap()
-                        {
-                            break token;
-                        }
-                    } else {
-                        break token;
-                    }
-                }
-            },
+        let id = match value {
+            Some(v) => AxumSessionID(v),
+            None => Self::generate_uuid(store).await,
         };
 
-        AxumSession {
-            id: AxumSessionID(uuid),
+        Self {
+            id,
             store: store.clone(),
         }
     }
-    /// Runs a Closure upon the Current Sessions stored data to get or set session data.
-    ///
-    /// Provides an Option<T> that returns the requested data from the Sessions store.
+
+    pub(crate) async fn generate_uuid(store: &AxumSessionStore<S>) -> AxumSessionID {
+        loop {
+            let token = Uuid::new_v4();
+
+            if !store.inner.contains_key(&token.to_string()) {
+                //This fixes an already used but in database issue.
+                if let Some(client) = &store.client {
+                    // Unwrap should be safe to use as we would want it to crash if there was a major database error.
+                    // This would mean the database no longer is online or the table missing etc.
+                    if !client
+                        .exists(&token.to_string(), &store.config.table_name)
+                        .await
+                        .unwrap()
+                    {
+                        return AxumSessionID(token);
+                    }
+                } else {
+                    return AxumSessionID(token);
+                }
+            }
+        }
+    }
+
+    /// Sets the Session to renew its Session ID.
+    /// This Deletes Session data from the database
+    /// associated with the old key.
     ///
     /// # Examples
     /// ```rust ignore
-    /// session.tap(|sess| {
-    ///   let string = sess.data.get(key)?;
-    ///   serde_json::from_str(string).ok()
-    /// }).await;
+    /// session.destroy();
     /// ```
     ///
     #[inline]
-    pub(crate) fn tap<T: DeserializeOwned>(
-        &self,
-        func: impl FnOnce(&mut AxumSessionData) -> Option<T>,
-    ) -> Option<T> {
+    pub fn renew(&self) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            func(&mut instance)
+            instance.renew = true;
+            instance.update = true;
         } else {
             tracing::warn!("Session data unexpectedly missing");
-            None
         }
     }
 
@@ -110,31 +109,34 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// session.destroy().await;
+    /// session.destroy();
     /// ```
     ///
     #[inline]
-    pub async fn destroy(&self) {
-        self.tap(|sess| {
-            sess.destroy = true;
-            Some(1)
-        });
+    pub fn destroy(&self) {
+        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
+            instance.destroy = true;
+            instance.update = true;
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+        }
     }
 
     /// Sets the Current Session to a long term expiration. Useful for Remember Me setups.
     ///
     /// # Examples
     /// ```rust ignore
-    /// session.set_longterm(true).await;
+    /// session.set_longterm(true);
     /// ```
     ///
     #[inline]
-    pub async fn set_longterm(&self, longterm: bool) {
-        self.tap(|sess| {
-            sess.longterm = longterm;
-            sess.update = true;
-            Some(1)
-        });
+    pub fn set_longterm(&self, longterm: bool) {
+        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
+            instance.longterm = longterm;
+            instance.update = true;
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+        }
     }
 
     /// Sets the Current Session to be storable.
@@ -144,16 +146,17 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// session.set_store(true).await;
+    /// session.set_store(true);
     /// ```
     ///
     #[inline]
-    pub async fn set_store(&self, storable: bool) {
-        self.tap(|sess| {
-            sess.storable = storable;
-            sess.update = true;
-            Some(1)
-        });
+    pub fn set_store(&self, storable: bool) {
+        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
+            instance.storable = storable;
+            instance.update = true;
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+        }
     }
 
     /// Gets data from the Session's HashMap
@@ -163,17 +166,20 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// let id = session.get("user-id").await.unwrap_or(0);
+    /// let id = session.get("user-id").unwrap_or(0);
     /// ```
     ///
     ///Used to get data stored within SessionDatas hashmap from a key value.
     ///
     #[inline]
-    pub async fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
-        self.tap(|sess| {
-            let string = sess.data.get(key)?;
-            serde_json::from_str(string).ok()
-        })
+    pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
+        if let Some(instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
+            let string = instance.data.get(key)?;
+            serde_json::from_str(&string).ok()
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+            None
+        }
     }
 
     /// Removes a Key from the Current Session's HashMap returning it.
@@ -183,37 +189,40 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// let id = session.get_remove("user-id").await.unwrap_or(0);
+    /// let id = session.get_remove("user-id").unwrap_or(0);
     /// ```
     ///
     /// Used to get data stored within SessionDatas hashmap from a key value.
     ///
     #[inline]
-    pub async fn get_remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
-        self.tap(|sess| {
-            let string = sess.data.remove(key)?;
+    pub fn get_remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
+        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
+            let string = instance.data.remove(key)?;
+            instance.update = true;
             serde_json::from_str(&string).ok()
-        })
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+            None
+        }
     }
 
     /// Sets data to the Current Session's HashMap.
     ///
     /// # Examples
     /// ```rust ignore
-    /// session.set("user-id", 1).await;
+    /// session.set("user-id", 1);
     /// ```
     ///
     #[inline]
-    pub async fn set(&self, key: &str, value: impl Serialize) {
+    pub fn set(&self, key: &str, value: impl Serialize) {
         let value = serde_json::to_string(&value).unwrap_or_else(|_| "".to_string());
 
-        self.tap(|sess| {
-            if sess.data.get(key) != Some(&value) {
-                sess.data.insert(key.to_string(), value);
-                sess.update = true;
-            }
-            Some(1)
-        });
+        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
+            let _ = instance.data.insert(key.to_string(), value);
+            instance.update = true;
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+        }
     }
 
     /// Removes a Key from the Current Session's HashMap.
@@ -221,32 +230,33 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// let _ = session.remove("user-id").await;
+    /// let _ = session.remove("user-id");
     /// ```
     ///
     #[inline]
-    pub async fn remove(&self, key: &str) {
-        self.tap(|sess| {
-            sess.update = true;
-            sess.data.remove(key)
-        });
+    pub fn remove(&self, key: &str) {
+        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
+            let _ = instance.data.remove(key);
+            instance.update = true;
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+        }
     }
 
     /// Clears all data from the Current Session's HashMap.
     ///
     /// # Examples
     /// ```rust ignore
-    /// session.clear_all().await;
+    /// session.clear();
     /// ```
     ///
     #[inline]
-    pub async fn clear_all(&self) {
+    pub fn clear(&self) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
             instance.data.clear();
-        }
-
-        if self.store.is_persistent() {
-            self.store.clear_store().await.unwrap();
+            instance.update = true;
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
         }
     }
 
