@@ -68,9 +68,9 @@ impl AxumDatabasePool for AxumRedisPool {
 
     async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
         let mut con = self.client.get_async_connection().await?;
-        let exists: bool = redis::pipe().exists(id).query_async(&mut con).await?;
+        let exists: u32 = redis::pipe().exists(id).query_async(&mut con).await?;
 
-        Ok(exists)
+        Ok(exists > 1)
     }
 
     async fn delete_all(&self, _table_name: &str) -> Result<(), SessionError> {
