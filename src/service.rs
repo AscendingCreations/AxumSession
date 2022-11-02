@@ -82,8 +82,8 @@ where
         let mut ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
 
         Box::pin(async move {
-            let mut cookies = get_cookies(&req);
-            let session = AxumSession::new(&store, &cookies);
+            let cookies = get_cookies(&req);
+            let mut session = AxumSession::new(&store, &cookies).await;
             let accepted = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
@@ -134,12 +134,38 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let storable = if let Some(session_data) = session.store.inner.get(&session.id.inner())
-            {
-                session_data.storable
-            } else {
-                false
-            };
+            let (storable, renew) =
+                if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
+                    (session_data.storable, session_data.renew)
+                } else {
+                    (false, false)
+                };
+
+            if renew {
+                // Lets change the Session ID and destory the old Session from the database.
+                let session_id = AxumSession::generate_uuid(&store).await;
+
+                // Lets remove it from the database first.
+                if store.is_persistent() {
+                    session
+                        .store
+                        .destroy_session(&session.id.inner())
+                        .await
+                        .unwrap();
+                }
+
+                // Lets remove update and reinsert.
+                if let Some((_, mut session_data)) = session.store.inner.remove(&session.id.inner())
+                {
+                    session_data.id = session_id.0;
+                    session_data.renew = false;
+                    session.id = session_id;
+                    store.inner.insert(session.id.inner(), session_data);
+                }
+            }
+
+            // Lets make a new jar as we only want to add our cookies to the Response cookie header.
+            let mut cookies = CookieJar::new();
 
             // Add the Storable Cookie so we can keep track if they can store the session.
             cookies.add_cookie(
@@ -153,33 +179,30 @@ where
                 &store.config.key,
             );
 
-            if !store.config.session_mode.is_storable() || accepted {
-                // Run this after a response has returned so we save the most updated data to sql.
-                if store.is_persistent() {
-                    let sess =
-                        if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner()) {
-                            if store.config.always_save
-                                || sess.update
-                                || sess.expires - Utc::now() <= store.config.expiration_update
-                            {
-                                if sess.longterm {
-                                    sess.expires = Utc::now() + store.config.max_lifespan;
-                                } else {
-                                    sess.expires = Utc::now() + store.config.lifespan;
-                                };
-
-                                sess.update = false;
-                                Some(sess.clone())
-                            } else {
-                                None
-                            }
+            if (!store.config.session_mode.is_storable() || accepted) && store.is_persistent() {
+                let sess = if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner())
+                {
+                    if store.config.always_save
+                        || sess.update
+                        || sess.expires - Utc::now() <= store.config.expiration_update
+                    {
+                        if sess.longterm {
+                            sess.expires = Utc::now() + store.config.max_lifespan;
                         } else {
-                            None
+                            sess.expires = Utc::now() + store.config.lifespan;
                         };
 
-                    if let Some(sess) = sess {
-                        session.store.store_session(&sess).await.unwrap()
+                        sess.update = false;
+                        Some(sess.clone())
+                    } else {
+                        None
                     }
+                } else {
+                    None
+                };
+
+                if let Some(sess) = sess {
+                    session.store.store_session(&sess).await.unwrap()
                 }
             }
 
@@ -245,14 +268,13 @@ fn create_cookie<'a>(
     cookie_type: CookieType,
 ) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build(cookie_type.get_name(config), value)
-        .path(config.cookie_path.clone())
+        .path(config.cookie_path.to_owned())
         .secure(config.cookie_secure)
-        .http_only(config.cookie_http_only);
+        .http_only(config.cookie_http_only)
+        .same_site(config.cookie_same_site);
 
     if let Some(domain) = &config.cookie_domain {
-        cookie_builder = cookie_builder
-            .domain(domain.clone())
-            .same_site(config.cookie_same_site);
+        cookie_builder = cookie_builder.domain(domain.to_owned());
     }
 
     if let Some(max_age) = cookie_type.get_age(config) {

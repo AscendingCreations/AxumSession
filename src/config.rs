@@ -52,8 +52,7 @@ pub struct AxumSessionConfig {
     pub(crate) cookie_name: Cow<'static, str>,
     /// Session cookie path
     pub(crate) cookie_path: Cow<'static, str>,
-    /// Resticts how Cookies are sent cross-site. Default is `SameSite::None`
-    /// Only works if domain is also set.
+    /// Resticts how Cookies are sent cross-site. Default is `SameSite::Lax`
     pub(crate) cookie_same_site: SameSite,
     /// Session cookie secure flag
     pub(crate) cookie_secure: bool,
@@ -133,7 +132,7 @@ impl AxumSessionConfig {
     /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
-    /// let config = AxumSessionConfig::default().with_accepted_cookie_name("my_accepted_cookie");
+    /// let config = AxumSessionConfig::default().with_storable_cookie_name("my_stored_cookie".to_owned());
     /// ```
     ///
     #[must_use]
@@ -152,7 +151,7 @@ impl AxumSessionConfig {
     /// use axum_database_sessions::AxumSessionConfig;
     /// use chrono::Duration;
     ///
-    /// let config = AxumSessionConfig::default().with_accepted_max_age(Some(Duration::days(64)));
+    /// let config = AxumSessionConfig::default().with_storable_max_age(Some(Duration::days(64)));
     /// ```
     ///
     #[must_use]
@@ -167,12 +166,12 @@ impl AxumSessionConfig {
     /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
     ///
-    /// let config = AxumSessionConfig::default().with_cookie_domain(Some("www.helpme.com".to_string()));
+    /// let config = AxumSessionConfig::default().with_cookie_domain("www.helpme.com".to_string());
     /// ```
     ///
     #[must_use]
-    pub fn with_cookie_domain(mut self, name: impl Into<Option<Cow<'static, str>>>) -> Self {
-        self.cookie_domain = name.into();
+    pub fn with_cookie_domain(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+        self.cookie_domain = Some(name.into());
         self
     }
 
@@ -211,8 +210,6 @@ impl AxumSessionConfig {
 
     /// Set's the session's cookie's Same Site Setting for Cross-Site restrictions.
     ///
-    /// Only works if Domain is also set to restrict it to that domain only.
-    ///
     /// # Examples
     /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
@@ -231,7 +228,7 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_database_sessions::{AxumSessionMode, AxumSessionConfig};
     /// use cookie::SameSite;
     ///
     /// let config = AxumSessionConfig::default().with_mode(AxumSessionMode::Always);
@@ -332,6 +329,7 @@ impl AxumSessionConfig {
     /// # Examples
     /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
+    /// use chrono::Duration;
     ///
     /// let config = AxumSessionConfig::default().with_expiration_update(Duration::days(320));
     /// ```
@@ -349,6 +347,7 @@ impl AxumSessionConfig {
     /// # Examples
     /// ```rust
     /// use axum_database_sessions::AxumSessionConfig;
+    /// use chrono::Duration;
     ///
     /// let config = AxumSessionConfig::default().with_expiration_update(Duration::days(320));
     /// ```
@@ -422,7 +421,7 @@ impl Default for AxumSessionConfig {
             cookie_http_only: true,
             cookie_secure: false,
             cookie_domain: None,
-            cookie_same_site: SameSite::None,
+            cookie_same_site: SameSite::Lax,
             storable_cookie_name: "session_acceptance".into(),
             storable_cookie_max_age: Some(Duration::days(100)),
             table_name: "async_sessions".into(),
@@ -435,7 +434,7 @@ impl Default for AxumSessionConfig {
             expiration_update: Duration::hours(5),
             always_save: false,
             session_mode: AxumSessionMode::Always,
-            /// Makes a Random Key on each Boot if not set statically. Will affect long term cookies.
+            /// Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
             key: None,
         }
     }

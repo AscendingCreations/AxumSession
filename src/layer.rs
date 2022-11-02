@@ -7,11 +7,11 @@ use tower_layer::Layer;
 ///
 /// # Examples
 /// ```
-/// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
+/// use axum_database_sessions::{AxumNullPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
 /// use uuid::Uuid;
 ///
 /// let config = AxumSessionConfig::default();
-/// let session_store = AxumSessionStore::new(None, &config);
+/// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
 /// let layer = AxumSessionLayer::new(session_store);
 /// ```
 ///
@@ -31,11 +31,11 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumSessionConfig, AxumSessionStore};
+    /// use axum_database_sessions::{AxumNullPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
     /// use uuid::Uuid;
     ///
     /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::new(None, &config);
+    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
     /// let layer = AxumSessionLayer::new(session_store);
     /// ```
     ///

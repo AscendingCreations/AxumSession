@@ -1,4 +1,4 @@
-use crate::{AxumSession, AxumSessionStore, AxumDatabasePool, SessionError};
+use crate::{AxumDatabasePool, AxumSession, AxumSessionStore, SessionError};
 use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, Sqlite};
@@ -75,9 +75,9 @@ impl AxumDatabasePool for AxumSqlitePool {
     "#
             .replace("%%TABLE_NAME%%", table_name),
         )
-        .bind(&id)
-        .bind(&session)
-        .bind(&expires)
+        .bind(id)
+        .bind(session)
+        .bind(expires)
         .execute(&self.pool)
         .await?;
         Ok(())
@@ -91,7 +91,7 @@ impl AxumDatabasePool for AxumSqlitePool {
         "#
             .replace("%%TABLE_NAME%%", table_name),
         )
-        .bind(&id)
+        .bind(id)
         .bind(Utc::now().timestamp())
         .fetch_optional(&self.pool)
         .await?;
@@ -103,10 +103,26 @@ impl AxumDatabasePool for AxumSqlitePool {
         sqlx::query(
             &r#"DELETE FROM %%TABLE_NAME%% WHERE id = $1"#.replace("%%TABLE_NAME%%", table_name),
         )
-        .bind(&id)
+        .bind(id)
         .execute(&self.pool)
         .await?;
         Ok(())
+    }
+
+    async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
+        let result: Option<(i64,)> = sqlx::query_as(
+            &r#"
+            SELECT COUNT(*) FROM %%TABLE_NAME%%
+            WHERE id = $1 AND (expires IS NULL OR expires > $2)
+        "#
+            .replace("%%TABLE_NAME%%", table_name),
+        )
+        .bind(id)
+        .bind(Utc::now().timestamp())
+        .fetch_optional(&self.pool)
+        .await?;
+
+        Ok(result.map(|(o,)| o).unwrap_or(0) > 0)
     }
 
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {

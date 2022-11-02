@@ -1,6 +1,7 @@
 # Axum_Database_Sessions
 
-Library to Provide a Session management layer.
+Library to Provide a Session management layer. This stores all session data within a MemoryStore internally. Usage of a database is Optional. We also offer the ability to add new 
+storage types by implementing them with our AxumDatabasePool trait.
 
 [![https://crates.io/crates/axum_database_sessions](https://img.shields.io/crates/v/axum_database_sessions?style=plastic)](https://crates.io/crates/axum_database_sessions)
 [![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
@@ -41,7 +42,7 @@ axum_database_sessions = { version = "4.1.0", features = [ "postgres-rustls"] }
 
 # Example
 
-```rust no_run
+```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
@@ -80,10 +81,10 @@ async fn main() {
 }
 
 async fn greet(session: AxumSession<AxumPgPool>) -> String {
-    let mut count: usize = session.get("count").await.unwrap_or(0);
+    let mut count: usize = session.get("count").unwrap_or(0);
 
     count += 1;
-    session.set("count", count).await;
+    session.set("count", count);
 
     count.to_string()
 }
@@ -99,7 +100,7 @@ When a Key is set it will automatically set the Cookie into an encypted Private 
 both protects the cookies data from prying eye's it also ensures the authenticity of the cookie.
 # Example
 
-```rust no_run
+```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode, Key};
@@ -139,7 +140,7 @@ To use Axum_database_session in non_persistant mode Set the client to None and i
 AxumNullPool is always loaded and can be used where you do not want to include any database within the build.
 # Example
 
-```rust no_run
+```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumNullPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
@@ -170,10 +171,10 @@ async fn main() {
 }
 
 async fn greet(session: AxumSession<AxumNullPool>) -> String {
-    let mut count: usize = session.get("count").await.unwrap_or(0);
+    let mut count: usize = session.get("count").unwrap_or(0);
 
     count += 1;
-    session.set("count", count).await;
+    session.set("count", count);
 
     count.to_string()
 }
@@ -184,7 +185,7 @@ async fn greet(session: AxumSession<AxumNullPool>) -> String {
 To use Axum_database_session with session mode set as Storable.
 # Example
 
-```rust no_run
+```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
 use axum_database_sessions::{AxumSession, AxumPgPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer, AxumSessionMode};
@@ -196,7 +197,7 @@ use axum::{
 #[tokio::main]
 async fn main() {
     let session_config = AxumSessionConfig::default()
-        .with_table_name("test_table").with_mode(AxumSessionMode::AcceptedOnly);
+        .with_table_name("test_table").with_mode(AxumSessionMode::Storable);
 
     let session_store = AxumSessionStore::<AxumPgPool>::new(None, session_config);
     session_store.initiate().await.unwrap();
@@ -217,12 +218,12 @@ async fn main() {
 
 //No need to set the sessions accepted or not with gdpr mode disabled
 async fn greet(session: AxumSession<AxumPgPool>) -> String {
-    let mut count: usize = session.get("count").await.unwrap_or(0);
+    let mut count: usize = session.get("count").unwrap_or(0);
 
     // Allow the Session data to be keep in memory and the database for the lifetime.
-    session.set_store(true).await;
+    session.set_store(true);
     count += 1;
-    session.set("count", count).await;
+    session.set("count", count);
 
     count.to_string()
 }

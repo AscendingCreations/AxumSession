@@ -56,19 +56,26 @@ impl AxumDatabasePool for AxumRedisPool {
 
     async fn load(&self, id: &str, _table_name: &str) -> Result<Option<String>, SessionError> {
         let mut con = self.client.get_async_connection().await?;
-        let mut result: Vec<String> = redis::pipe().get(id).query_async(&mut con).await?;
-        Ok(result.pop())
+        let mut result: String = redis::cmd("GET").arg(id).query_async(&mut con).await?;
+        Ok(Some(result))
     }
 
     async fn delete_one_by_id(&self, id: &str, _table_name: &str) -> Result<(), SessionError> {
         let mut con = self.client.get_async_connection().await?;
-        redis::pipe().del(id).query_async(&mut con).await?;
+        redis::cmd("DEL").arg(id).query_async(&mut con).await?;
         Ok(())
+    }
+
+    async fn exists(&self, id: &str, _table_name: &str) -> Result<bool, SessionError> {
+        let mut con = self.client.get_async_connection().await?;
+        let exists: bool = redis::cmd("EXISTS").arg(id).query_async(&mut con).await?;
+
+        Ok(exists)
     }
 
     async fn delete_all(&self, _table_name: &str) -> Result<(), SessionError> {
         let mut con = self.client.get_async_connection().await?;
-        redis::pipe().cmd("FLUSHDB").query_async(&mut con).await?;
+        redis::cmd("FLUSHDB").query_async(&mut con).await?;
         Ok(())
     }
 }
