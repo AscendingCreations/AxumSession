@@ -114,7 +114,8 @@ where
             sess.renew = true;
             sess.update = true;
             Some(1)
-        });
+        })
+        .await;
     }
 
     /// Sets the Current Session to be Destroyed on the next run.
@@ -130,7 +131,8 @@ where
             sess.destroy = true;
             sess.update = true;
             Some(1)
-        });
+        })
+        .await;
     }
 
     /// Sets the Current Session to a long term expiration. Useful for Remember Me setups.
@@ -146,7 +148,8 @@ where
             sess.longterm = longterm;
             sess.update = true;
             Some(1)
-        });
+        })
+        .await;
     }
 
     /// Sets the Current Session to be storable.
@@ -165,7 +168,8 @@ where
             sess.storable = storable;
             sess.update = true;
             Some(1)
-        });
+        })
+        .await;
     }
 
     /// Gets data from the Session's HashMap
@@ -186,6 +190,7 @@ where
             let string = sess.data.get(key)?;
             serde_json::from_str(string).ok()
         })
+        .await
     }
 
     /// Removes a Key from the Current Session's HashMap returning it.
@@ -207,6 +212,7 @@ where
             sess.update = true;
             serde_json::from_str(&string).ok()
         })
+        .await
     }
 
     /// Sets data to the Current Session's HashMap.
@@ -226,7 +232,8 @@ where
                 sess.update = true;
             }
             Some(1)
-        });
+        })
+        .await;
     }
 
     /// Removes a Key from the Current Session's HashMap.
@@ -242,7 +249,8 @@ where
         self.tap(|sess| {
             sess.update = true;
             sess.data.remove(key)
-        });
+        })
+        .await;
     }
 
     /// Clears all data from the Current Session's HashMap.
