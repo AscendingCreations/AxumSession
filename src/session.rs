@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use cookie::CookieJar;
 use http::{self, request::Parts, StatusCode};
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 use std::{
     fmt::Debug,
     marker::{Send, Sync},
