@@ -64,7 +64,7 @@ where
     }
 
     #[inline]
-    pub(crate) fn tap<T: DeserializeOwned>(
+    pub(crate) async fn tap<T: DeserializeOwned>(
         &self,
         func: impl FnOnce(&mut AxumSessionData) -> Option<T>,
     ) -> Option<T> {
@@ -109,7 +109,7 @@ where
     /// ```
     ///
     #[inline]
-    pub fn renew(&self) {
+    pub async fn renew(&self) {
         self.tap(|sess| {
             sess.renew = true;
             sess.update = true;
@@ -125,7 +125,7 @@ where
     /// ```
     ///
     #[inline]
-    pub fn destroy(&self) {
+    pub async fn destroy(&self) {
         self.tap(|sess| {
             sess.destroy = true;
             sess.update = true;
@@ -141,7 +141,7 @@ where
     /// ```
     ///
     #[inline]
-    pub fn set_longterm(&self, longterm: bool) {
+    pub async fn set_longterm(&self, longterm: bool) {
         self.tap(|sess| {
             sess.longterm = longterm;
             sess.update = true;
@@ -160,7 +160,7 @@ where
     /// ```
     ///
     #[inline]
-    pub fn set_store(&self, storable: bool) {
+    pub async fn set_store(&self, storable: bool) {
         self.tap(|sess| {
             sess.storable = storable;
             sess.update = true;
@@ -181,7 +181,7 @@ where
     ///Used to get data stored within SessionDatas hashmap from a key value.
     ///
     #[inline]
-    pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
+    pub async fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         self.tap(|sess| {
             let string = sess.data.get(key)?;
             serde_json::from_str(string).ok()
@@ -201,7 +201,7 @@ where
     /// Used to get data stored within SessionDatas hashmap from a key value.
     ///
     #[inline]
-    pub fn get_remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
+    pub async fn get_remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         self.tap(|sess| {
             let string = sess.data.remove(key)?;
             sess.update = true;
@@ -217,7 +217,7 @@ where
     /// ```
     ///
     #[inline]
-    pub fn set(&self, key: &str, value: impl Serialize) {
+    pub async fn set(&self, key: &str, value: impl Serialize) {
         let value = serde_json::to_string(&value).unwrap_or_else(|_| "".to_string());
 
         self.tap(|sess| {
@@ -238,7 +238,7 @@ where
     /// ```
     ///
     #[inline]
-    pub fn remove(&self, key: &str) {
+    pub async fn remove(&self, key: &str) {
         self.tap(|sess| {
             sess.update = true;
             sess.data.remove(key)
@@ -253,7 +253,7 @@ where
     /// ```
     ///
     #[inline]
-    pub fn clear(&self) {
+    pub async fn clear(&self) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
             instance.data.clear();
             instance.update = true;
