@@ -56,7 +56,7 @@ impl AxumDatabasePool for AxumRedisPool {
 
     async fn load(&self, id: &str, _table_name: &str) -> Result<Option<String>, SessionError> {
         let mut con = self.client.get_async_connection().await?;
-        let mut result: String = redis::cmd("GET").arg(id).query_async(&mut con).await?;
+        let result: String = redis::cmd("GET").arg(id).query_async(&mut con).await?;
         Ok(Some(result))
     }
 

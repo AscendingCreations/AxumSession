@@ -21,36 +21,31 @@ mysql-native = ["sqlx/mysql", "sqlx/runtime-tokio-native-tls"]
 redis-db = ["redis"]
 
 [dependencies]
-axum-core = {version = "0.3.0-rc.2", git = "https://github.com/tokio-rs/axum.git" }
-serde = { version = "1.0.144", features = ["derive"] }
-serde_json = "1.0.85"
-chrono = { version = "0.4.22", features = ["clock", "serde", "std"] }
-tokio = { version = "1.20.1", features = ["full"] }
-async-trait = "0.1.57"
-tracing = "0.1.36"
-thiserror = "1.0.32"
+axum-core = {version = "0.3.0-rc.3", git = "https://github.com/tokio-rs/axum.git" }
+serde = { version = "1.0.147", features = ["derive"] }
+serde_json = "1.0.88"
+chrono = { version = "0.4.23", features = ["clock", "serde", "std"] }
+tokio = { version = "1.21.2", features = ["full"] }
+async-trait = "0.1.58"
+tracing = "0.1.37"
+thiserror = "1.0.37"
 http-body = "0.4.5"
-uuid = { version = "1.1.2", features = ["v4", "serde"] }
+uuid = { version = "1.2.2", features = ["v4", "serde"] }
 http = "0.2.8"
-tower-layer = "0.3.1"
+tower-layer = "0.3.2"
 tower-service = "0.3.2"
-sqlx = { version = "0.6.1", default-features = false, features = [
+sqlx = { version = "0.6.2", default-features = false, features = [
     "chrono",
     "uuid",
 ], optional = true }
-cookie = { version = "0.16.0", features = ["percent-encode", "private"] }
-futures = "0.3.23"
+cookie = { version = "0.16.1", features = ["percent-encode", "private"] }
+futures = "0.3.25"
 bytes = "1.2.1"
-dashmap = "5.3.4"
-redis = { version = "0.21.6", features = ["tokio-comp"], optional = true }
+dashmap = "5.4.0"
+redis = { version = "0.22.1", features = ["tokio-comp"], optional = true }
 
 [dev-dependencies]
-axum = { version = "0.6.0-rc.2", features = ["macros"] , git = "https://github.com/tokio-rs/axum.git"}
-hyper = "0.14"
-tower = "0.4"
-serde = { version = "1.0.144", features = ["derive"] }
-sqlx = { version = "0.6.1", default-features = false, features = [
-    "chrono",
-    "uuid",
-]}
+axum = { version = "0.6.0-rc.5", features = ["macros"] , git = "https://github.com/tokio-rs/axum.git"}
+hyper = "0.14.23"
+tower = "0.4.13"
 log = { version = "0.4", default-features = false }
