@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## Unreleased
+## 5.0.0 (26. November, 2022)
 ### Changed
 - (Breaking) Updated to axum 0.6
 - (Breaking) Changed with_cookie_domain to take a Into<Cow<'static, str>> instead of Into<Option<Cow<'static, str>>>.
