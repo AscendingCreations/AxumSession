@@ -66,8 +66,7 @@ mod tests {
         let app = Router::new()
             .route("/set_session", get(set_session))
             .route("/test_session", get(test_session))
-            .layer(AxumSessionLayer::new(session_store))
-            .into_service();
+            .layer(AxumSessionLayer::new(session_store));
 
         #[derive(Default, Clone, Deserialize, Serialize, PartialEq, Eq)]
         pub struct Test {
@@ -75,6 +74,7 @@ mod tests {
             b: String,
         }
 
+        #[axum::debug_handler]
         async fn set_session(session: AxumSession<AxumPgPool>) -> Redirect {
             let test = Test {
                 a: 2,

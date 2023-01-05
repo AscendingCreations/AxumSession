@@ -51,7 +51,7 @@ dashmap = "5.4.0"
 redis = { version = "0.22.1", features = ["tokio-comp"], optional = true }
 
 [dev-dependencies]
-axum = { version = "0.6.0", features = ["macros"] , git = "https://github.com/tokio-rs/axum.git"}
+axum = { version = "0.6.0", features = ["macros"]}
 hyper = "0.14.23"
 tower = "0.4.13"
 log = { version = "0.4", default-features = false }
