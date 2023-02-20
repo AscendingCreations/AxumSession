@@ -15,10 +15,10 @@ use tokio::sync::RwLock;
 ///
 /// # Examples
 /// ```rust
-/// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+/// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
 ///
 /// let config = SessionConfig::default();
-/// let session_store = SessionStore::<NullPool>::new(None, config);
+/// let session_store = SessionStore::<SessionNullPool>::new(None, config);
 /// ```
 ///
 #[derive(Clone, Debug)]
@@ -60,10 +60,10 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
     /// ```
     ///
     #[inline]
@@ -87,10 +87,10 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
     /// let is_persistent = session_store.is_persistent();
     /// ```
     ///
@@ -108,10 +108,10 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
     /// async {
     ///     let _ = session_store.initiate().await.unwrap();
     /// };
@@ -135,10 +135,10 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
     /// async {
     ///     let _ = session_store.cleanup().await.unwrap();
     /// };
@@ -162,10 +162,10 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
     /// async {
     ///     let count = session_store.count().await.unwrap();
     /// };
@@ -191,11 +191,11 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
     /// let token = Uuid::new_v4();
     /// async {
     ///     let session_data = session_store.load_session(token.to_string()).await.unwrap();
@@ -228,11 +228,11 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore, SessionData};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore, SessionData};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
     /// let token = Uuid::new_v4();
     /// let session_data = SessionData::new(token, true, &config);
     ///
@@ -265,11 +265,11 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
     /// let token = Uuid::new_v4();
     ///
     /// async {
@@ -295,11 +295,11 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
     ///
     /// async {
     ///     let _ = session_store.clear_store().await.unwrap();
@@ -319,11 +319,11 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<NullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
     ///
     /// async {
     ///     let _ = session_store.clear_store().await.unwrap();
