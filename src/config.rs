@@ -6,7 +6,7 @@ use std::borrow::Cow;
 ///
 /// # Examples
 /// ```rust
-/// use axum_sessions::{SessionConfig, SessionMode};
+/// use axum_database_sessions::{SessionConfig, SessionMode};
 ///
 /// let config = SessionConfig::default().with_mode(SessionMode::Always);
 /// ```
@@ -31,7 +31,7 @@ impl SessionMode {
 ///
 /// # Examples
 /// ```rust
-/// use axum_sessions::SessionConfig;
+/// use axum_database_sessions::SessionConfig;
 ///
 /// let config = SessionConfig::default();
 /// ```
@@ -112,7 +112,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     ///
     /// let config = SessionConfig::default().with_storable_cookie_name("my_stored_cookie".to_owned());
     /// ```
@@ -127,7 +127,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     ///
     /// let config = SessionConfig::default().with_cookie_domain("www.helpme.com".to_string());
     /// ```
@@ -142,7 +142,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     ///
     /// let config = SessionConfig::default().with_cookie_name("my_cookie");
     /// ```
@@ -160,7 +160,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     ///
     /// let config = SessionConfig::default().with_cookie_path("/");
     /// ```
@@ -175,7 +175,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     /// use cookie::SameSite;
     ///
     /// let config = SessionConfig::default().with_cookie_same_site(SameSite::Strict);
@@ -191,7 +191,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{SessionMode, SessionConfig};
+    /// use axum_database_sessions::{SessionMode, SessionConfig};
     /// use cookie::SameSite;
     ///
     /// let config = SessionConfig::default().with_mode(SessionMode::Always);
@@ -207,7 +207,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     ///
     /// let config = SessionConfig::default().with_http_only(false);
     /// ```
@@ -222,7 +222,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
     /// let config = SessionConfig::default().with_lifetime(Duration::days(32));
@@ -242,7 +242,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
     /// let config = SessionConfig::default().with_max_age(Some(Duration::days(64)));
@@ -258,7 +258,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
     /// let config = SessionConfig::default().with_max_lifetime(Duration::days(32));
@@ -274,7 +274,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
     /// let config = SessionConfig::default().with_memory_lifetime(Duration::days(32));
@@ -292,7 +292,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
     /// let config = SessionConfig::default().with_expiration_update(Duration::days(320));
@@ -310,7 +310,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
     /// let config = SessionConfig::default().with_expiration_update(Duration::days(320));
@@ -326,7 +326,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     ///
     /// let config = SessionConfig::default().with_secure(true);
     /// ```
@@ -341,7 +341,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::SessionConfig;
+    /// use axum_database_sessions::SessionConfig;
     ///
     /// let config = SessionConfig::default().with_table_name("my_table");
     /// ```
@@ -362,7 +362,7 @@ impl SessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_sessions::{Key, SessionConfig};
+    /// use axum_database_sessions::{Key, SessionConfig};
     ///
     /// let config = SessionConfig::default().with_key(Key::generate());
     /// ```

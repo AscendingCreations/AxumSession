@@ -19,6 +19,6 @@ sqlx = { version = "0.6.2", features = [
     "runtime-tokio-rustls",
 ] }
 
-[dependencies.axum_sessions]
+[dependencies.axum_database_sessions]
 path = "../"
 features = ["sqlite-rustls"]

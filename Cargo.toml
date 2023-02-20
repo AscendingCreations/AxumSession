@@ -5,14 +5,14 @@ members = [
 ]
 
 [package]
-name = "axum_sessions"
+name = "axum_database_sessions"
 version = "1.0.0"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "Library to Provide Memory and/or Database Session management layer."
 edition = "2021"
 license = "MIT"
 readme = "README.md"
-documentation = "https://docs.rs/axum_sessions"
+documentation = "https://docs.rs/axum_database_sessions"
 keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 

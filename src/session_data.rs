@@ -11,7 +11,7 @@ use uuid::Uuid;
 ///
 /// # Examples
 /// ```rust ignore
-/// use axum_sessions::{SessionConfig, SessionData};
+/// use axum_database_sessions::{SessionConfig, SessionData};
 /// use uuid::Uuid;
 ///
 /// let config = SessionConfig::default();
@@ -37,7 +37,7 @@ impl SessionData {
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_sessions::{SessionConfig, SessionData};
+    /// use axum_database_sessions::{SessionConfig, SessionData};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
@@ -64,7 +64,7 @@ impl SessionData {
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_sessions::{SessionConfig, SessionData};
+    /// use axum_database_sessions::{SessionConfig, SessionData};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
@@ -86,7 +86,7 @@ impl SessionData {
 ///
 /// # Examples
 /// ```rust ignore
-/// use axum_sessions::SessionID;
+/// use axum_database_sessions::SessionID;
 /// use uuid::Uuid;
 ///
 ///
@@ -102,7 +102,7 @@ impl SessionID {
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_sessions::SessionID;
+    /// use axum_database_sessions::SessionID;
     /// use uuid::Uuid;
     ///
     ///
@@ -119,7 +119,7 @@ impl SessionID {
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_sessions::SessionID;
+    /// use axum_database_sessions::SessionID;
     /// use uuid::Uuid;
     ///
     ///
