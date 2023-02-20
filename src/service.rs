@@ -159,28 +159,25 @@ where
             // Lets make a new jar as we only want to add our cookies to the Response cookie header.
             let mut cookies = CookieJar::new();
 
-            // Add the Storable Cookie so we can keep track if they can store the session.
-            if store.config.session_mode.is_storable() && accepted || !store.config.session_mode.is_storable() {
-                cookies.add_cookie(
-                    create_cookie(&store.config, storable.to_string(), CookieType::Storable),
-                    &store.config.key,
-                );
-
+            if store.config.session_mode.is_storable() && accepted
+                || !store.config.session_mode.is_storable()
+            {
                 cookies.add_cookie(
                     create_cookie(&store.config, session.id.inner(), CookieType::Data),
                     &store.config.key,
                 );
             } else {
                 cookies.add_cookie(
-                    remove_cookie(&store.config, CookieType::Storable),
-                    &store.config.key,
-                );
-
-                cookies.add_cookie(
                     remove_cookie(&store.config, CookieType::Data),
                     &store.config.key,
                 );
             }
+
+            // Always Add the Storable Cookie so we can keep track if they can store the session.
+            cookies.add_cookie(
+                create_cookie(&store.config, storable.to_string(), CookieType::Storable),
+                &store.config.key,
+            );
 
             // Add the Session ID so it can link back to a Session if one exists.
             if (!store.config.session_mode.is_storable() || accepted) && store.is_persistent() {
