@@ -1,7 +1,4 @@
-use crate::{
-    AxumDatabasePool, AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionTimers,
-    SessionError,
-};
+use crate::{DatabasePool, Session, SessionConfig, SessionData, SessionError, SessionTimers};
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use chrono::{Duration, Utc};
@@ -18,68 +15,64 @@ use tokio::sync::RwLock;
 ///
 /// # Examples
 /// ```rust
-/// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+/// use axum_sessions::{NullPool, SessionConfig, SessionStore};
 ///
-/// let config = AxumSessionConfig::default();
-/// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
+/// let config = SessionConfig::default();
+/// let session_store = SessionStore::<NullPool>::new(None, config);
 /// ```
 ///
 #[derive(Clone, Debug)]
-pub struct AxumSessionStore<T>
+pub struct SessionStore<T>
 where
-    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+    T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     // Client for the database
     pub client: Option<T>,
     /// locked Hashmap containing UserID and their session data
-    pub(crate) inner: Arc<DashMap<String, AxumSessionData>>,
+    pub(crate) inner: Arc<DashMap<String, SessionData>>,
     //move this to creation upon layer
-    pub config: AxumSessionConfig,
+    pub config: SessionConfig,
     //move this to creation on layer.
-    pub(crate) timers: Arc<RwLock<AxumSessionTimers>>,
+    pub(crate) timers: Arc<RwLock<SessionTimers>>,
 }
 
 #[async_trait]
-impl<T, S> FromRequestParts<S> for AxumSessionStore<T>
+impl<T, S> FromRequestParts<S> for SessionStore<T>
 where
-    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+    T: DatabasePool + Clone + Debug + Sync + Send + 'static,
     S: Send + Sync,
 {
     type Rejection = (http::StatusCode, &'static str);
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        parts
-            .extensions
-            .get::<AxumSessionStore<T>>()
-            .cloned()
-            .ok_or((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Can't extract AxumSession. Is `AxumSessionLayer` enabled?",
-            ))
+        parts.extensions.get::<SessionStore<T>>().cloned().ok_or((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Can't extract Axum `Session`. Is `SessionLayer` enabled?",
+        ))
     }
 }
 
-impl<T> AxumSessionStore<T>
+impl<T> SessionStore<T>
 where
-    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+    T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    /// Constructs a New AxumSessionStore.
+    /// Constructs a New SessionStore.
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config);
     /// ```
     ///
     #[inline]
-    pub fn new(client: Option<T>, config: AxumSessionConfig) -> Self {
+    pub fn new(client: Option<T>, config: SessionConfig) -> Self {
         Self {
             client,
             inner: Default::default(),
             config,
-            timers: Arc::new(RwLock::new(AxumSessionTimers {
+            timers: Arc::new(RwLock::new(SessionTimers {
                 // the first expiry sweep is scheduled one lifetime from start-up
                 last_expiry_sweep: Utc::now() + Duration::hours(1),
                 // the first expiry sweep is scheduled one lifetime from start-up
@@ -94,10 +87,10 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config);
     /// let is_persistent = session_store.is_persistent();
     /// ```
     ///
@@ -115,10 +108,10 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config);
     /// async {
     ///     let _ = session_store.initiate().await.unwrap();
     /// };
@@ -142,10 +135,10 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config);
     /// async {
     ///     let _ = session_store.cleanup().await.unwrap();
     /// };
@@ -169,10 +162,10 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config);
     /// async {
     ///     let count = session_store.count().await.unwrap();
     /// };
@@ -198,11 +191,11 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_database_sessions::{AxumNullPool, AxumSessionConfig, AxumSessionStore};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config);
     /// let token = Uuid::new_v4();
     /// async {
     ///     let session_data = session_store.load_session(token.to_string()).await.unwrap();
@@ -212,7 +205,7 @@ where
     pub(crate) async fn load_session(
         &self,
         cookie_value: String,
-    ) -> Result<Option<AxumSessionData>, SessionError> {
+    ) -> Result<Option<SessionData>, SessionError> {
         if let Some(client) = &self.client {
             let result: Option<String> =
                 client.load(&cookie_value, &self.config.table_name).await?;
@@ -235,23 +228,20 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore, AxumSessionData};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore, SessionData};
     /// use uuid::Uuid;
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config.clone());
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config.clone());
     /// let token = Uuid::new_v4();
-    /// let session_data = AxumSessionData::new(token, true, &config);
+    /// let session_data = SessionData::new(token, true, &config);
     ///
     /// async {
     ///     let _ = session_store.store_session(&session_data).await.unwrap();
     /// };
     /// ```
     ///
-    pub(crate) async fn store_session(
-        &self,
-        session: &AxumSessionData,
-    ) -> Result<(), SessionError> {
+    pub(crate) async fn store_session(&self, session: &SessionData) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             client
                 .store(
@@ -275,11 +265,11 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config.clone());
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config.clone());
     /// let token = Uuid::new_v4();
     ///
     /// async {
@@ -305,11 +295,11 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config.clone());
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config.clone());
     ///
     /// async {
     ///     let _ = session_store.clear_store().await.unwrap();
@@ -329,11 +319,11 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumNullPool,AxumSessionConfig, AxumSessionStore};
+    /// use axum_sessions::{NullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config.clone());
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<NullPool>::new(None, config.clone());
     ///
     /// async {
     ///     let _ = session_store.clear_store().await.unwrap();
@@ -348,7 +338,7 @@ where
     /// Attempts to load check and clear Data.
     ///
     /// If no session is found returns false.
-    pub(crate) fn service_session_data(&self, session: &AxumSession<T>) -> bool {
+    pub(crate) fn service_session_data(&self, session: &Session<T>) -> bool {
         if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
             if !inner.validate() || inner.destroy {
                 inner.destroy = false;

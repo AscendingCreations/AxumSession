@@ -1,4 +1,4 @@
-use crate::AxumSessionConfig;
+use crate::SessionConfig;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -11,16 +11,16 @@ use uuid::Uuid;
 ///
 /// # Examples
 /// ```rust ignore
-/// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
+/// use axum_sessions::{SessionConfig, SessionData};
 /// use uuid::Uuid;
 ///
-/// let config = AxumSessionConfig::default();
+/// let config = SessionConfig::default();
 /// let token = Uuid::new_v4();
-/// let session_data = AxumSessionData::new(token, true, &config);
+/// let session_data = SessionData::new(token, true, &config);
 /// ```
 ///
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub(crate) struct AxumSessionData {
+pub(crate) struct SessionData {
     pub(crate) id: Uuid,
     pub(crate) data: HashMap<String, String>,
     pub(crate) expires: DateTime<Utc>,
@@ -32,21 +32,21 @@ pub(crate) struct AxumSessionData {
     pub(crate) update: bool,
 }
 
-impl AxumSessionData {
-    /// Constructs a new AxumSessionData.
+impl SessionData {
+    /// Constructs a new SessionData.
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
+    /// use axum_sessions::{SessionConfig, SessionData};
     /// use uuid::Uuid;
     ///
-    /// let config = AxumSessionConfig::default();
+    /// let config = SessionConfig::default();
     /// let token = Uuid::new_v4();
-    /// let session_data = AxumSessionData::new(token, true, &config);
+    /// let session_data = SessionData::new(token, true, &config);
     /// ```
     ///
     #[inline]
-    pub(crate) fn new(id: Uuid, storable: bool, config: &AxumSessionConfig) -> Self {
+    pub(crate) fn new(id: Uuid, storable: bool, config: &SessionConfig) -> Self {
         Self {
             id,
             data: HashMap::new(),
@@ -64,12 +64,12 @@ impl AxumSessionData {
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_database_sessions::{AxumSessionConfig, AxumSessionData};
+    /// use axum_sessions::{SessionConfig, SessionData};
     /// use uuid::Uuid;
     ///
-    /// let config = AxumSessionConfig::default();
+    /// let config = SessionConfig::default();
     /// let token = Uuid::new_v4();
-    /// let session_data = AxumSessionData::new(token, true, &config);
+    /// let session_data = SessionData::new(token, true, &config);
     /// let expired = session_data.validate();
     /// ```
     ///
@@ -82,49 +82,49 @@ impl AxumSessionData {
 /// Contains the UUID the Session.
 ///
 /// This is used to store and find the Session.
-/// Used to pass the UUID between Cookies, the Database, and AxumSession.
+/// Used to pass the UUID between Cookies, the Database, and Session.
 ///
 /// # Examples
 /// ```rust ignore
-/// use axum_database_sessions::AxumSessionID;
+/// use axum_sessions::SessionID;
 /// use uuid::Uuid;
 ///
 ///
 /// let token = Uuid::new_v4();
-/// let id = AxumSessionID::new(token);
+/// let id = SessionID::new(token);
 /// ```
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-pub(crate) struct AxumSessionID(pub(crate) Uuid);
+pub(crate) struct SessionID(pub(crate) Uuid);
 
-impl AxumSessionID {
-    /// Constructs a new AxumSessionID hold a UUID.
+impl SessionID {
+    /// Constructs a new SessionID hold a UUID.
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_database_sessions::AxumSessionID;
+    /// use axum_sessions::SessionID;
     /// use uuid::Uuid;
     ///
     ///
     /// let token = Uuid::new_v4();
-    /// let id = AxumSessionID::new(token);
+    /// let id = SessionID::new(token);
     /// ```
     ///
     #[inline]
-    pub(crate) fn new(uuid: Uuid) -> AxumSessionID {
-        AxumSessionID(uuid)
+    pub(crate) fn new(uuid: Uuid) -> SessionID {
+        SessionID(uuid)
     }
 
     /// Returns the inner UUID as a string.
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_database_sessions::AxumSessionID;
+    /// use axum_sessions::SessionID;
     /// use uuid::Uuid;
     ///
     ///
     /// let token = Uuid::new_v4();
-    /// let id = AxumSessionID::new(token);
+    /// let id = SessionID::new(token);
     /// let str_id = id.inner();
     /// ```
     ///
@@ -134,7 +134,7 @@ impl AxumSessionID {
     }
 }
 
-impl Display for AxumSessionID {
+impl Display for SessionID {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str(&self.0.to_string())
     }
@@ -145,7 +145,7 @@ impl Display for AxumSessionID {
 /// used to keep track of the last ran expiration check for both database and memory session data.
 ///
 #[derive(Debug)]
-pub(crate) struct AxumSessionTimers {
+pub(crate) struct SessionTimers {
     pub(crate) last_expiry_sweep: DateTime<Utc>,
     pub(crate) last_database_expiry_sweep: DateTime<Utc>,
 }

@@ -1,58 +1,58 @@
 use std::fmt;
 
-use crate::{AxumDatabasePool, AxumSessionService, AxumSessionStore};
+use crate::{DatabasePool, SessionService, SessionStore};
 use tower_layer::Layer;
 
 /// Sessions Layer used with Axum to activate the Service.
 ///
 /// # Examples
 /// ```
-/// use axum_database_sessions::{AxumNullPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
+/// use axum_sessions::{NullPool, SessionConfig, SessionStore, SessionLayer};
 /// use uuid::Uuid;
 ///
-/// let config = AxumSessionConfig::default();
-/// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
-/// let layer = AxumSessionLayer::new(session_store);
+/// let config = SessionConfig::default();
+/// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+/// let layer = SessionLayer::new(session_store);
 /// ```
 ///
 #[derive(Clone)]
-pub struct AxumSessionLayer<T>
+pub struct SessionLayer<T>
 where
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    T: DatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
 {
-    session_store: AxumSessionStore<T>,
+    session_store: SessionStore<T>,
 }
 
-impl<T> AxumSessionLayer<T>
+impl<T> SessionLayer<T>
 where
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    T: DatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
 {
-    /// Constructs a AxumSessionLayer used with Axum to activate the Service.
+    /// Constructs a SessionLayer used with Axum to activate the Service.
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumNullPool, AxumSessionConfig, AxumSessionStore, AxumSessionLayer};
+    /// use axum_sessions::{SessionNullPool, SessionConfig, SessionStore, SessionLayer};
     /// use uuid::Uuid;
     ///
-    /// let config = AxumSessionConfig::default();
-    /// let session_store = AxumSessionStore::<AxumNullPool>::new(None, config);
-    /// let layer = AxumSessionLayer::new(session_store);
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let layer = SessionLayer::new(session_store);
     /// ```
     ///
     #[inline]
-    pub fn new(session_store: AxumSessionStore<T>) -> Self {
-        AxumSessionLayer { session_store }
+    pub fn new(session_store: SessionStore<T>) -> Self {
+        SessionLayer { session_store }
     }
 }
 
-impl<S, T> Layer<S> for AxumSessionLayer<T>
+impl<S, T> Layer<S> for SessionLayer<T>
 where
-    T: AxumDatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
+    T: DatabasePool + Clone + fmt::Debug + std::marker::Sync + std::marker::Send + 'static,
 {
-    type Service = AxumSessionService<S, T>;
+    type Service = SessionService<S, T>;
 
     fn layer(&self, inner: S) -> Self::Service {
-        AxumSessionService {
+        SessionService {
             session_store: self.session_store.clone(),
             inner,
         }

@@ -21,5 +21,5 @@ pub use redis_pool::*;
 mod database;
 mod null;
 
-pub use database::AxumDatabasePool;
+pub use database::DatabasePool;
 pub use null::*;

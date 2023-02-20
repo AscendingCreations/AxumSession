@@ -1,16 +1,16 @@
-use crate::{AxumDatabasePool, AxumSession, AxumSessionStore, SessionError};
+use crate::{DatabasePool, Session, SessionError, SessionStore};
 use async_trait::async_trait;
 
-pub type AxumNullSession = AxumSession<AxumNullPool>;
-pub type AxumNullSessionStore = AxumSessionStore<AxumNullPool>;
+pub type SessionNullSession = Session<SessionNullPool>;
+pub type SessionNullSessionStore = SessionStore<SessionNullPool>;
 
-/// Null Pool type for AxumDatabasePool.
+/// Null Pool type for DatabasePool.
 /// Use this when you do not want to load any database.
 #[derive(Debug, Clone)]
-pub struct AxumNullPool;
+pub struct SessionNullPool;
 
 #[async_trait]
-impl AxumDatabasePool for AxumNullPool {
+impl DatabasePool for SessionNullPool {
     async fn initiate(&self, _table_name: &str) -> Result<(), SessionError> {
         Ok(())
     }

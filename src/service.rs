@@ -1,4 +1,4 @@
-use crate::{AxumDatabasePool, AxumSession, AxumSessionConfig, AxumSessionData, AxumSessionStore};
+use crate::{DatabasePool, Session, SessionConfig, SessionData, SessionStore};
 use axum_core::{
     body::{self, BoxBody},
     response::Response,
@@ -30,7 +30,7 @@ enum CookieType {
 
 impl CookieType {
     #[inline]
-    pub(crate) fn get_name(&self, config: &AxumSessionConfig) -> String {
+    pub(crate) fn get_name(&self, config: &SessionConfig) -> String {
         match self {
             CookieType::Data => config.cookie_name.to_string(),
             CookieType::Storable => config.storable_cookie_name.to_string(),
@@ -39,15 +39,15 @@ impl CookieType {
 }
 
 #[derive(Clone)]
-pub struct AxumSessionService<S, T>
+pub struct SessionService<S, T>
 where
-    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+    T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    pub(crate) session_store: AxumSessionStore<T>,
+    pub(crate) session_store: SessionStore<T>,
     pub(crate) inner: S,
 }
 
-impl<S, T, ReqBody, ResBody> Service<Request<ReqBody>> for AxumSessionService<S, T>
+impl<S, T, ReqBody, ResBody> Service<Request<ReqBody>> for SessionService<S, T>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>, Error = Infallible>
         + Clone
@@ -58,7 +58,7 @@ where
     Infallible: From<<S as Service<Request<ReqBody>>>::Error>,
     ResBody: HttpBody<Data = Bytes> + Send + 'static,
     ResBody::Error: Into<BoxError>,
-    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+    T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     type Response = Response<BoxBody>;
     type Error = Infallible;
@@ -75,7 +75,7 @@ where
 
         Box::pin(async move {
             let cookies = get_cookies(&req);
-            let mut session = AxumSession::new(&store, &cookies).await;
+            let mut session = Session::new(&store, &cookies).await;
             let accepted = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
@@ -87,7 +87,7 @@ where
                     .await
                     .ok()
                     .flatten()
-                    .unwrap_or_else(|| AxumSessionData::new(session.id.0, accepted, &store.config));
+                    .unwrap_or_else(|| SessionData::new(session.id.0, accepted, &store.config));
 
                 if !sess.validate() || sess.destroy {
                     sess.destroy = false;
@@ -139,7 +139,7 @@ where
 
             if renew {
                 // Lets change the Session ID and destory the old Session from the database.
-                let session_id = AxumSession::generate_uuid(&store).await;
+                let session_id = Session::generate_uuid(&store).await;
 
                 // Lets remove it from the database first.
                 if store.is_persistent() {
@@ -231,13 +231,13 @@ where
     }
 }
 
-impl<S, T> Debug for AxumSessionService<S, T>
+impl<S, T> Debug for SessionService<S, T>
 where
     S: Debug,
-    T: AxumDatabasePool + Clone + Debug + Sync + Send + 'static,
+    T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("AxumSessionService")
+        f.debug_struct("SessionService")
             .field("session_store", &self.session_store)
             .field("inner", &self.inner)
             .finish()
@@ -267,11 +267,7 @@ impl CookiesExt for CookieJar {
     }
 }
 
-fn create_cookie<'a>(
-    config: &AxumSessionConfig,
-    value: String,
-    cookie_type: CookieType,
-) -> Cookie<'a> {
+fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: CookieType) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build(cookie_type.get_name(config), value)
         .path(config.cookie_path.clone())
         .secure(config.cookie_secure)
@@ -291,7 +287,7 @@ fn create_cookie<'a>(
     cookie_builder.finish()
 }
 
-fn remove_cookie<'a>(config: &AxumSessionConfig, cookie_type: CookieType) -> Cookie<'a> {
+fn remove_cookie<'a>(config: &SessionConfig, cookie_type: CookieType) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build(cookie_type.get_name(config), "")
         .path(config.cookie_path.clone())
         .http_only(config.cookie_http_only);

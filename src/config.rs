@@ -6,24 +6,24 @@ use std::borrow::Cow;
 ///
 /// # Examples
 /// ```rust
-/// use axum_database_sessions::{AxumSessionConfig, AxumSessionMode};
+/// use axum_sessions::{SessionConfig, SessionMode};
 ///
-/// let config = AxumSessionConfig::default().with_mode(AxumSessionMode::Always);
+/// let config = SessionConfig::default().with_mode(SessionMode::Always);
 /// ```
 ///
 #[derive(Debug, Clone)]
-pub enum AxumSessionMode {
+pub enum SessionMode {
     /// Deletes Session Data if session.storable is false, if session.storable is true saves data.
     Storable,
     /// Always in Memory and Database. regardless of if storable.
     Always,
 }
 
-impl AxumSessionMode {
+impl SessionMode {
     /// Checks if the Mode is set to only if Storable.
     ///
     pub fn is_storable(&self) -> bool {
-        matches!(self, AxumSessionMode::Storable)
+        matches!(self, SessionMode::Storable)
     }
 }
 
@@ -31,15 +31,15 @@ impl AxumSessionMode {
 ///
 /// # Examples
 /// ```rust
-/// use axum_database_sessions::AxumSessionConfig;
+/// use axum_sessions::SessionConfig;
 ///
-/// let config = AxumSessionConfig::default();
+/// let config = SessionConfig::default();
 /// ```
 ///
 #[derive(Clone)]
-pub struct AxumSessionConfig {
+pub struct SessionConfig {
     /// The cookie name that contains a boolean for session saving.
-    /// Mostly used when session_mode is set to AxumSessionMode::Storable.
+    /// Mostly used when session_mode is set to SessionMode::Storable.
     pub(crate) storable_cookie_name: Cow<'static, str>,
     /// Session cookie name
     pub(crate) cookie_name: Cow<'static, str>,
@@ -57,7 +57,7 @@ pub struct AxumSessionConfig {
     /// Session cookie secure flag
     pub(crate) cookie_secure: bool,
     /// Disables the need to avoid session saving.
-    pub(crate) session_mode: AxumSessionMode,
+    pub(crate) session_mode: SessionMode,
     /// Sessions the minimal lifespan a session can live in the database before expiring.
     pub(crate) lifespan: Duration,
     /// Sessions the maximum lifespan a session can live in the database before expiring.
@@ -79,9 +79,9 @@ pub struct AxumSessionConfig {
     pub(crate) key: Option<Key>,
 }
 
-impl std::fmt::Debug for AxumSessionConfig {
+impl std::fmt::Debug for SessionConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AxumSessionConfig")
+        f.debug_struct("SessionConfig")
             .field("storable_cookie_name", &self.storable_cookie_name)
             .field("cookie_domain", &self.cookie_domain)
             .field("cookie_http_only", &self.cookie_http_only)
@@ -100,9 +100,9 @@ impl std::fmt::Debug for AxumSessionConfig {
     }
 }
 
-impl AxumSessionConfig {
-    /// Creates [`Default`] configuration of [`AxumSessionConfig`].
-    /// This is equivalent to the [`AxumSessionConfig::default()`].
+impl SessionConfig {
+    /// Creates [`Default`] configuration of [`SessionConfig`].
+    /// This is equivalent to the [`SessionConfig::default()`].
     #[inline]
     pub fn new() -> Self {
         Default::default()
@@ -112,9 +112,9 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     ///
-    /// let config = AxumSessionConfig::default().with_storable_cookie_name("my_stored_cookie".to_owned());
+    /// let config = SessionConfig::default().with_storable_cookie_name("my_stored_cookie".to_owned());
     /// ```
     ///
     #[must_use]
@@ -127,9 +127,9 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     ///
-    /// let config = AxumSessionConfig::default().with_cookie_domain("www.helpme.com".to_string());
+    /// let config = SessionConfig::default().with_cookie_domain("www.helpme.com".to_string());
     /// ```
     ///
     #[must_use]
@@ -142,9 +142,9 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     ///
-    /// let config = AxumSessionConfig::default().with_cookie_name("my_cookie");
+    /// let config = SessionConfig::default().with_cookie_name("my_cookie");
     /// ```
     ///
     #[must_use]
@@ -160,9 +160,9 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     ///
-    /// let config = AxumSessionConfig::default().with_cookie_path("/");
+    /// let config = SessionConfig::default().with_cookie_path("/");
     /// ```
     ///
     #[must_use]
@@ -175,10 +175,10 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     /// use cookie::SameSite;
     ///
-    /// let config = AxumSessionConfig::default().with_cookie_same_site(SameSite::Strict);
+    /// let config = SessionConfig::default().with_cookie_same_site(SameSite::Strict);
     /// ```
     ///
     #[must_use]
@@ -191,14 +191,14 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{AxumSessionMode, AxumSessionConfig};
+    /// use axum_sessions::{SessionMode, SessionConfig};
     /// use cookie::SameSite;
     ///
-    /// let config = AxumSessionConfig::default().with_mode(AxumSessionMode::Always);
+    /// let config = SessionConfig::default().with_mode(SessionMode::Always);
     /// ```
     ///
     #[must_use]
-    pub fn with_mode(mut self, mode: AxumSessionMode) -> Self {
+    pub fn with_mode(mut self, mode: SessionMode) -> Self {
         self.session_mode = mode;
         self
     }
@@ -207,9 +207,9 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     ///
-    /// let config = AxumSessionConfig::default().with_http_only(false);
+    /// let config = SessionConfig::default().with_http_only(false);
     /// ```
     ///
     #[must_use]
@@ -222,10 +222,10 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
-    /// let config = AxumSessionConfig::default().with_lifetime(Duration::days(32));
+    /// let config = SessionConfig::default().with_lifetime(Duration::days(32));
     /// ```
     ///
     #[must_use]
@@ -242,10 +242,10 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
-    /// let config = AxumSessionConfig::default().with_max_age(Some(Duration::days(64)));
+    /// let config = SessionConfig::default().with_max_age(Some(Duration::days(64)));
     /// ```
     ///
     #[must_use]
@@ -258,10 +258,10 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
-    /// let config = AxumSessionConfig::default().with_max_lifetime(Duration::days(32));
+    /// let config = SessionConfig::default().with_max_lifetime(Duration::days(32));
     /// ```
     ///
     #[must_use]
@@ -274,10 +274,10 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
-    /// let config = AxumSessionConfig::default().with_memory_lifetime(Duration::days(32));
+    /// let config = SessionConfig::default().with_memory_lifetime(Duration::days(32));
     /// ```
     ///
     #[must_use]
@@ -292,10 +292,10 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
-    /// let config = AxumSessionConfig::default().with_expiration_update(Duration::days(320));
+    /// let config = SessionConfig::default().with_expiration_update(Duration::days(320));
     /// ```
     ///
     #[must_use]
@@ -310,10 +310,10 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     /// use chrono::Duration;
     ///
-    /// let config = AxumSessionConfig::default().with_expiration_update(Duration::days(320));
+    /// let config = SessionConfig::default().with_expiration_update(Duration::days(320));
     /// ```
     ///
     #[must_use]
@@ -326,9 +326,9 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     ///
-    /// let config = AxumSessionConfig::default().with_secure(true);
+    /// let config = SessionConfig::default().with_secure(true);
     /// ```
     ///
     #[must_use]
@@ -341,9 +341,9 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
+    /// use axum_sessions::SessionConfig;
     ///
-    /// let config = AxumSessionConfig::default().with_table_name("my_table");
+    /// let config = SessionConfig::default().with_table_name("my_table");
     /// ```
     ///
     #[must_use]
@@ -362,9 +362,9 @@ impl AxumSessionConfig {
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{Key, AxumSessionConfig};
+    /// use axum_sessions::{Key, SessionConfig};
     ///
-    /// let config = AxumSessionConfig::default().with_key(Key::generate());
+    /// let config = SessionConfig::default().with_key(Key::generate());
     /// ```
     ///
     #[must_use]
@@ -374,7 +374,7 @@ impl AxumSessionConfig {
     }
 }
 
-impl Default for AxumSessionConfig {
+impl Default for SessionConfig {
     fn default() -> Self {
         Self {
             /// Set to a 6 hour default in Database Session stores unloading.
@@ -395,7 +395,7 @@ impl Default for AxumSessionConfig {
             /// Default to update the database every hour if the session is still being requested.
             expiration_update: Duration::hours(5),
             always_save: false,
-            session_mode: AxumSessionMode::Always,
+            session_mode: SessionMode::Always,
             /// Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
             key: None,
         }

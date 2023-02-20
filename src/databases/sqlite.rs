@@ -1,25 +1,25 @@
-use crate::{AxumDatabasePool, AxumSession, AxumSessionStore, SessionError};
+use crate::{DatabasePool, Session, SessionError, SessionStore};
 use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, Sqlite};
 
-pub type AxumSqliteSession = AxumSession<AxumSqlitePool>;
-pub type AxumSqliteSessionStore = AxumSessionStore<AxumSqlitePool>;
+pub type SessionSqliteSession = Session<SessionSqlitePool>;
+pub type SessionSqliteSessionStore = SessionStore<SessionSqlitePool>;
 
-///Mysql's Pool type for AxumDatabasePool
+///Mysql's Pool type for DatabasePool
 #[derive(Debug, Clone)]
-pub struct AxumSqlitePool {
+pub struct SessionSqlitePool {
     pool: Pool<Sqlite>,
 }
 
-impl From<Pool<Sqlite>> for AxumSqlitePool {
+impl From<Pool<Sqlite>> for SessionSqlitePool {
     fn from(conn: Pool<Sqlite>) -> Self {
-        AxumSqlitePool { pool: conn }
+        SessionSqlitePool { pool: conn }
     }
 }
 
 #[async_trait]
-impl AxumDatabasePool for AxumSqlitePool {
+impl DatabasePool for SessionSqlitePool {
     async fn initiate(&self, table_name: &str) -> Result<(), SessionError> {
         sqlx::query(
             &r#"

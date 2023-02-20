@@ -1,4 +1,4 @@
-name: AxumDatabaseSessions
+name: AxumSessions
 
 on:
   pull_request:

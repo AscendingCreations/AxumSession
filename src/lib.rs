@@ -10,15 +10,15 @@ mod session;
 mod session_data;
 mod session_store;
 
-pub use config::{AxumSessionConfig, AxumSessionMode, Key, SameSite};
+pub use config::{Key, SameSite, SessionConfig, SessionMode};
 pub use databases::*;
 pub use errors::SessionError;
-pub use layer::AxumSessionLayer;
-pub use session::AxumSession;
-pub use session_store::AxumSessionStore;
+pub use layer::SessionLayer;
+pub use session::Session;
+pub use session_store::SessionStore;
 
-pub(crate) use service::{AxumSessionService, CookiesExt};
-pub(crate) use session_data::{AxumSessionData, AxumSessionID, AxumSessionTimers};
+pub(crate) use service::{CookiesExt, SessionService};
+pub(crate) use session_data::{SessionData, SessionID, SessionTimers};
 
 #[cfg(test)]
 mod tests {
@@ -41,7 +41,7 @@ mod tests {
 
     #[tokio::test]
     async fn basic() {
-        let config = AxumSessionConfig::new()
+        let config = SessionConfig::new()
             .with_key(Key::generate())
             .with_table_name("test_table");
 
@@ -59,14 +59,14 @@ mod tests {
             .await
             .unwrap();
 
-        let session_store = AxumSessionStore::<AxumPgPool>::new(Some(pool.into()), config);
+        let session_store = SessionStore::<SessionPgPool>::new(Some(pool.into()), config);
         //generate the table needed!
         session_store.initiate().await.unwrap();
 
         let app = Router::new()
             .route("/set_session", get(set_session))
             .route("/test_session", get(test_session))
-            .layer(AxumSessionLayer::new(session_store));
+            .layer(SessionLayer::new(session_store));
 
         #[derive(Default, Clone, Deserialize, Serialize, PartialEq, Eq)]
         pub struct Test {
@@ -75,7 +75,7 @@ mod tests {
         }
 
         #[axum::debug_handler]
-        async fn set_session(session: AxumSession<AxumPgPool>) -> Redirect {
+        async fn set_session(session: Session<SessionPgPool>) -> Redirect {
             let test = Test {
                 a: 2,
                 b: "Hello World".to_owned(),
@@ -85,7 +85,7 @@ mod tests {
             Redirect::to("/")
         }
 
-        async fn test_session(session: AxumSession<AxumPgPool>) -> String {
+        async fn test_session(session: Session<SessionPgPool>) -> String {
             let test: Test = session.get("test").unwrap_or_default();
             let other = Test {
                 a: 2,

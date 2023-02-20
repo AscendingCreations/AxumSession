@@ -1,6 +1,6 @@
 use axum::{routing::get, Router};
-use axum_database_sessions::{
-    AxumSession, AxumSessionConfig, AxumSessionLayer, AxumSessionStore, AxumSqlitePool,
+use axum_sessions::{
+    Session, SessionConfig, SessionLayer, SessionSqlitePool, SessionStore,
 };
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use std::{net::SocketAddr, str::FromStr};
@@ -11,10 +11,10 @@ async fn main() {
 
     //This Defaults as normal Cookies.
     //To enable Private cookies for integrity, and authenticity please check the next Example.
-    let session_config = AxumSessionConfig::default().with_table_name("test_table");
+    let session_config = SessionConfig::default().with_table_name("test_table");
 
     let session_store =
-        AxumSessionStore::<AxumSqlitePool>::new(Some(poll.clone().into()), session_config);
+        SessionStore::<SessionSqlitePool>::new(Some(poll.clone().into()), session_config);
 
     //Create the Database table for storing our Session Data.
     session_store.initiate().await.unwrap();
@@ -22,7 +22,7 @@ async fn main() {
     // build our application with some routes
     let app = Router::new()
         .route("/greet", get(greet))
-        .layer(AxumSessionLayer::new(session_store));
+        .layer(SessionLayer::new(session_store));
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -33,7 +33,7 @@ async fn main() {
         .unwrap();
 }
 
-async fn greet(session: AxumSession<AxumSqlitePool>) -> String {
+async fn greet(session: Session<SessionSqlitePool>) -> String {
     let mut count: usize = session.get("count").unwrap_or(0);
 
     count += 1;

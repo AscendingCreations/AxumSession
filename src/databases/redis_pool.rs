@@ -1,24 +1,24 @@
-use crate::{AxumDatabasePool, AxumSession, AxumSessionStore, SessionError};
+use crate::{DatabasePool, Session, SessionError, SessionStore};
 use async_trait::async_trait;
 use redis::Client;
 
-pub type AxumRedisSession = AxumSession<AxumRedisPool>;
-pub type AxumRedisSessionStore = AxumSessionStore<AxumRedisPool>;
+pub type SessionRedisSession = Session<SessionRedisPool>;
+pub type SessionRedisSessionStore = SessionStore<SessionRedisPool>;
 
-///Mysql's Pool type for AxumDatabasePool
+///Mysql's Pool type for DatabasePool
 #[derive(Debug, Clone)]
-pub struct AxumRedisPool {
+pub struct SessionRedisPool {
     client: Client,
 }
 
-impl From<Client> for AxumRedisPool {
+impl From<Client> for SessionRedisPool {
     fn from(client: Client) -> Self {
-        AxumRedisPool { client }
+        SessionRedisPool { client }
     }
 }
 
 #[async_trait]
-impl AxumDatabasePool for AxumRedisPool {
+impl DatabasePool for SessionRedisPool {
     async fn initiate(&self, _table_name: &str) -> Result<(), SessionError> {
         // Redis does not actually use Tables so there is no way we can make one.
         Ok(())
