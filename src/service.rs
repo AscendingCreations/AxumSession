@@ -126,11 +126,15 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let (storable, renew) =
+            let (storable, renew, accepted) =
                 if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
-                    (session_data.storable, session_data.renew)
+                    (
+                        session_data.storable,
+                        session_data.renew,
+                        session_data.storable,
+                    )
                 } else {
-                    (false, false)
+                    (false, false, false)
                 };
 
             if renew {
