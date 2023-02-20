@@ -88,11 +88,12 @@ where
 
     /// Sets the Session to renew its Session ID.
     /// This Deletes Session data from the database
-    /// associated with the old key.
+    /// associated with the old key. This helps to enhance
+    /// Security when logging into Secure area's across a website.
     ///
     /// # Examples
     /// ```rust ignore
-    /// session.destroy();
+    /// session.renew();
     /// ```
     ///
     #[inline]
@@ -175,7 +176,7 @@ where
     pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         if let Some(instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
             let string = instance.data.get(key)?;
-            serde_json::from_str(&string).ok()
+            serde_json::from_str(string).ok()
         } else {
             tracing::warn!("Session data unexpectedly missing");
             None

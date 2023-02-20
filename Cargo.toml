@@ -27,31 +27,31 @@ mysql-native = ["sqlx/mysql", "sqlx/runtime-tokio-native-tls"]
 redis-db = ["redis"]
 
 [dependencies]
-axum-core = {version = "0.3.0"}
-serde = { version = "1.0.147", features = ["derive"] }
-serde_json = "1.0.88"
+axum-core = {version = "0.3.2"}
+serde = { version = "1.0.152", features = ["derive"] }
+serde_json = "1.0.93"
 chrono = { version = "0.4.23", features = ["clock", "serde", "std"] }
-tokio = { version = "1.21.2", features = ["full"] }
-async-trait = "0.1.58"
+tokio = { version = "1.25.0", features = ["full"] }
+async-trait = "0.1.64"
 tracing = "0.1.37"
-thiserror = "1.0.37"
+thiserror = "1.0.38"
 http-body = "0.4.5"
-uuid = { version = "1.2.2", features = ["v4", "serde"] }
-http = "0.2.8"
+uuid = { version = "1.3.0", features = ["v4", "serde"] }
+http = "0.2.9"
 tower-layer = "0.3.2"
 tower-service = "0.3.2"
 sqlx = { version = "0.6.2", default-features = false, features = [
     "chrono",
     "uuid",
 ], optional = true }
-cookie = { version = "0.16.1", features = ["percent-encode", "private"] }
-futures = "0.3.25"
-bytes = "1.2.1"
+cookie = { version = "0.17.0", features = ["percent-encode", "private"] }
+futures = "0.3.26"
+bytes = "1.4.0"
 dashmap = "5.4.0"
-redis = { version = "0.22.1", features = ["tokio-comp"], optional = true }
+redis = { version = "0.22.3", features = ["tokio-comp"], optional = true }
 
 [dev-dependencies]
-axum = { version = "0.6.0", features = ["macros"]}
-hyper = "0.14.23"
+axum = { version = "0.6.7", features = ["macros"]}
+hyper = "0.14.24"
 tower = "0.4.13"
-log = { version = "0.4", default-features = false }
+log = { version = "0.4.17", default-features = false }

@@ -36,14 +36,6 @@ impl CookieType {
             CookieType::Storable => config.storable_cookie_name.to_string(),
         }
     }
-
-    #[inline]
-    pub(crate) fn get_age(&self, config: &AxumSessionConfig) -> Option<chrono::Duration> {
-        match self {
-            CookieType::Data => config.cookie_max_age,
-            CookieType::Storable => config.storable_cookie_max_age,
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -168,17 +160,29 @@ where
             let mut cookies = CookieJar::new();
 
             // Add the Storable Cookie so we can keep track if they can store the session.
-            cookies.add_cookie(
-                create_cookie(&store.config, storable.to_string(), CookieType::Storable),
-                &store.config.key,
-            );
+            if store.config.session_mode.is_storable() && !accepted {
+                cookies.add_cookie(
+                    create_cookie(&store.config, storable.to_string(), CookieType::Storable),
+                    &store.config.key,
+                );
+
+                cookies.add_cookie(
+                    create_cookie(&store.config, session.id.inner(), CookieType::Data),
+                    &store.config.key,
+                );
+            } else {
+                cookies.add_cookie(
+                    remove_cookie(&store.config, CookieType::Storable),
+                    &store.config.key,
+                );
+
+                cookies.add_cookie(
+                    remove_cookie(&store.config, CookieType::Data),
+                    &store.config.key,
+                );
+            }
 
             // Add the Session ID so it can link back to a Session if one exists.
-            cookies.add_cookie(
-                create_cookie(&store.config, session.id.inner(), CookieType::Data),
-                &store.config.key,
-            );
-
             if (!store.config.session_mode.is_storable() || accepted) && store.is_persistent() {
                 let sess = if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner())
                 {
@@ -268,22 +272,40 @@ fn create_cookie<'a>(
     cookie_type: CookieType,
 ) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build(cookie_type.get_name(config), value)
-        .path(config.cookie_path.to_owned())
+        .path(config.cookie_path.clone())
         .secure(config.cookie_secure)
         .http_only(config.cookie_http_only)
         .same_site(config.cookie_same_site);
 
     if let Some(domain) = &config.cookie_domain {
-        cookie_builder = cookie_builder.domain(domain.to_owned());
+        cookie_builder = cookie_builder.domain(domain.clone());
     }
 
-    if let Some(max_age) = cookie_type.get_age(config) {
+    if let Some(max_age) = config.cookie_max_age {
         let time_duration = max_age.to_std().expect("Max Age out of bounds");
         cookie_builder =
-            cookie_builder.max_age(time_duration.try_into().expect("Max Age out of bounds"));
+            cookie_builder.expires(Some((std::time::SystemTime::now() + time_duration).into()));
     }
 
     cookie_builder.finish()
+}
+
+fn remove_cookie<'a>(config: &AxumSessionConfig, cookie_type: CookieType) -> Cookie<'a> {
+    let mut cookie_builder = Cookie::build(cookie_type.get_name(config), "")
+        .path(config.cookie_path.clone())
+        .http_only(config.cookie_http_only);
+
+    if let Some(domain) = &config.cookie_domain {
+        cookie_builder = cookie_builder.domain(domain.clone());
+    }
+
+    if let Some(domain) = &config.cookie_domain {
+        cookie_builder = cookie_builder.domain(domain.clone());
+    }
+
+    let mut cookie = cookie_builder.finish();
+    cookie.make_removal();
+    cookie
 }
 
 fn get_cookies<ReqBody>(req: &Request<ReqBody>) -> CookieJar {

@@ -38,18 +38,18 @@ impl AxumSessionMode {
 ///
 #[derive(Clone)]
 pub struct AxumSessionConfig {
-    /// The acepted cookies max age None means the browser deletes cookie on close
-    pub(crate) storable_cookie_max_age: Option<Duration>,
     /// The cookie name that contains a boolean for session saving.
+    /// Mostly used when session_mode is set to AxumSessionMode::Storable.
     pub(crate) storable_cookie_name: Cow<'static, str>,
+    /// Session cookie name
+    pub(crate) cookie_name: Cow<'static, str>,
     /// Session cookie domain
     pub(crate) cookie_domain: Option<Cow<'static, str>>,
     /// Session cookie http only flag
     pub(crate) cookie_http_only: bool,
-    /// Session cookie max age None means the browser deletes cookie on close
+    /// Session cookie max age None means the browser deletes cookie on close.
+    /// Please make sure the Duration is longer than max_lifespan.
     pub(crate) cookie_max_age: Option<Duration>,
-    /// Session cookie name
-    pub(crate) cookie_name: Cow<'static, str>,
     /// Session cookie path
     pub(crate) cookie_path: Cow<'static, str>,
     /// Resticts how Cookies are sent cross-site. Default is `SameSite::Lax`
@@ -58,17 +58,16 @@ pub struct AxumSessionConfig {
     pub(crate) cookie_secure: bool,
     /// Disables the need to avoid session saving.
     pub(crate) session_mode: AxumSessionMode,
-    /// Sessions lifespan within the Database.
+    /// Sessions the minimal lifespan a session can live in the database before expiring.
     pub(crate) lifespan: Duration,
-    /// Session Database Max Poll Connections. Can not be 0
-    pub(crate) max_connections: u32,
-    /// This is the long term lifespan for things like Remember Me.
-    /// Deturmines Database unload.
+    /// Sessions the maximum lifespan a session can live in the database before expiring.
+    /// This is generally used when a Session is set to be Long Term.
     pub(crate) max_lifespan: Duration,
-    /// This value represents the offset duration for how often session data gets updated in
-    /// the database regardless of getting changed or not.
+    /// This value represents the duration for how often session's Database data gets updates per request
+    /// when a users Data has had no changes or is not set to always_save.
+    /// This helps alleviate constant Database Updates and widdles it down to a update per Duration per visit.
     pub(crate) expiration_update: Duration,
-    /// Will ignore the update checks and always save the session to the database if set to true.
+    /// Ignore's the update checks and will always save the session to the database if set to true.
     pub(crate) always_save: bool,
     /// Session Memory lifespan, deturmines when to unload it from memory
     /// this works fine since the data can stay in the database till its needed
@@ -76,14 +75,13 @@ pub struct AxumSessionConfig {
     pub(crate) memory_lifespan: Duration,
     /// Session Database table name default is async_sessions
     pub(crate) table_name: Cow<'static, str>,
-    ///Encyption Key used to encypt cookies for confidentiality, integrity, and authenticity.
+    /// Encyption Key used to encypt cookies for confidentiality, integrity, and authenticity.
     pub(crate) key: Option<Key>,
 }
 
 impl std::fmt::Debug for AxumSessionConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AxumSessionConfig")
-            .field("storable_cookie_max_age", &self.storable_cookie_max_age)
             .field("storable_cookie_name", &self.storable_cookie_name)
             .field("cookie_domain", &self.cookie_domain)
             .field("cookie_http_only", &self.cookie_http_only)
@@ -94,7 +92,6 @@ impl std::fmt::Debug for AxumSessionConfig {
             .field("cookie_secure", &self.cookie_secure)
             .field("session_mode", &self.session_mode)
             .field("lifespan", &self.lifespan)
-            .field("max_connections", &self.max_connections)
             .field("max_lifespan", &self.max_lifespan)
             .field("memory_lifespan", &self.memory_lifespan)
             .field("table_name", &self.table_name)
@@ -110,21 +107,6 @@ impl AxumSessionConfig {
     pub fn new() -> Self {
         Default::default()
     }
-    /// Sets the sessions database pool's max connection's limit.
-    ///
-    /// # Examples
-    /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
-    ///
-    /// let config = AxumSessionConfig::default().set_max_connections(5);
-    /// ```
-    ///
-    #[must_use]
-    pub fn set_max_connections(mut self, max: u32) -> Self {
-        let max = std::cmp::max(max, 1);
-        self.max_connections = max;
-        self
-    }
 
     /// Set the session's storable cookie name.
     ///
@@ -138,25 +120,6 @@ impl AxumSessionConfig {
     #[must_use]
     pub fn with_storable_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
         self.storable_cookie_name = name.into();
-        self
-    }
-
-    /// Set's the session's storable cookies max_age (expiration time).
-    ///
-    /// If this is set to None then the storable Cookie will be unloaded on browser Close.
-    /// Set this to be the duration of max_lifespan or longer to prevent session drops.
-    ///
-    /// # Examples
-    /// ```rust
-    /// use axum_database_sessions::AxumSessionConfig;
-    /// use chrono::Duration;
-    ///
-    /// let config = AxumSessionConfig::default().with_storable_max_age(Some(Duration::days(64)));
-    /// ```
-    ///
-    #[must_use]
-    pub fn with_storable_max_age(mut self, time: Option<Duration>) -> Self {
-        self.storable_cookie_max_age = time;
         self
     }
 
@@ -275,6 +238,7 @@ impl AxumSessionConfig {
     ///
     /// If this is set to None then the Cookie will be unloaded on browser Close.
     /// Set this to be the duration of max_lifespan or longer to prevent session drops.
+    /// This is generally in a duration of how many Days a cookie should live in the browser.
     ///
     /// # Examples
     /// ```rust
@@ -423,9 +387,7 @@ impl Default for AxumSessionConfig {
             cookie_domain: None,
             cookie_same_site: SameSite::Lax,
             storable_cookie_name: "session_acceptance".into(),
-            storable_cookie_max_age: Some(Duration::days(100)),
             table_name: "async_sessions".into(),
-            max_connections: 5,
             /// Unload memory after 60 minutes if it has not been accessed.
             memory_lifespan: Duration::minutes(60),
             /// Unload long term session after 60 days if it has not been accessed.
