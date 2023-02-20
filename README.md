@@ -2,7 +2,7 @@
 Axum Sessions
 </h1>
 
-<p align="center">
+<p>
 `axum_sessions` provide's a Session management middleware that stores all session data within a MemoryStore internally. It can also save data to an optional persistent database. 
 </p>
 
