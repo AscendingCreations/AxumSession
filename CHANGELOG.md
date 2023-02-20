@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## 6.0.0 (20. February, 2023)
+### Changed
+- (Breaking) Removed some uneeded Config Settings this includes the Accepted cookie Max Age. Both cookies will have the same age.
+
+### Added
+- When Storage mode is On. The Session Cookie will not be Saved to the browser if it has not been accepted. 
+  This is useful for when you only want to save the cookie during the login process and while logged in.
+
+### Fixed
+- Made sure the Session Accepted Data is updated After the Future is returned for response.
+
 ## 5.0.0 (26. November, 2022)
 ### Changed
 - (Breaking) Updated to axum 0.6
