@@ -160,7 +160,7 @@ where
             let mut cookies = CookieJar::new();
 
             // Add the Storable Cookie so we can keep track if they can store the session.
-            if store.config.session_mode.is_storable() && accepted {
+            if store.config.session_mode.is_storable() && accepted || !store.config.session_mode.is_storable() {
                 cookies.add_cookie(
                     create_cookie(&store.config, storable.to_string(), CookieType::Storable),
                     &store.config.key,
