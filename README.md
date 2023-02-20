@@ -9,7 +9,7 @@ Axum Database Sessions
 [![https://crates.io/crates/axum_database_sessions](https://img.shields.io/crates/v/axum_database_sessions?style=plastic)](https://crates.io/crates/axum_database_sessions)
 [![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
 
-- Cookies only Store a Generate Session UUID and a Storable Boolean.
+- Cookies only Store a Generated Session UUID and a Storable Boolean.
 - Uses a DatabasePool Trait so you can implement your own Sub Storage Layer.
 - Convenient API for `Session` no need to mark as Read or Write making Usage Easier. 
 - Uses `dashmap` for internal memory lookup and storage to achieve high throughput.
@@ -30,7 +30,7 @@ Axum Sessions uses [`tokio`]
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_database_sessions = { version = "1.0.0", features = [ "postgres-rustls"] }
+axum_database_sessions = { version = "7.0.0", features = [ "postgres-rustls"] }
 ```
 
 #### Cargo Feature Flags
