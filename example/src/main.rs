@@ -1,7 +1,5 @@
 use axum::{routing::get, Router};
-use axum_sessions::{
-    Session, SessionConfig, SessionLayer, SessionSqlitePool, SessionStore,
-};
+use axum_sessions::{Session, SessionConfig, SessionLayer, SessionSqlitePool, SessionStore};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use std::{net::SocketAddr, str::FromStr};
 
