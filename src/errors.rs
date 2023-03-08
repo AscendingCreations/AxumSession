@@ -21,6 +21,9 @@ pub enum SessionError {
     SerdeJson(#[from] serde_json::error::Error),
     #[error(transparent)]
     HTTP(#[from] http::Error),
+    #[cfg(feature = "surrealdb_tag")]
+    #[error(transparent)]
+    SurrealDBError(#[from] surrealdb::Error),
     #[error("unknown Session store error")]
     Unknown,
     #[error("Generic Database insert error {0}")]

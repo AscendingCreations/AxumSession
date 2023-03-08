@@ -18,6 +18,11 @@ mod redis_pool;
 #[cfg(feature = "redis-db")]
 pub use redis_pool::*;
 
+#[cfg(feature = "surrealdb_tag")]
+mod surrealdb;
+#[cfg(feature = "surrealdb_tag")]
+pub use surrealdb::*;
+
 mod database;
 mod null;
 
