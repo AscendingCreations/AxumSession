@@ -1,13 +1,14 @@
 <h1 align="center">
-Axum Database Sessions
+Axum Session
 </h1>
 
 <p>
-`axum_database_sessions` provide's a Session management middleware that stores all session data within a MemoryStore internally. It can also save data to an optional persistent database. 
+`axum_session` provide's a Session management middleware that stores all session data within a MemoryStore internally. It can also save data to an optional persistent database.
+It uses a Cookie inserted UUID to sync back to the memory store. Formally known as Axum Database Sessions.
 </p>
 
-[![https://crates.io/crates/axum_database_sessions](https://img.shields.io/crates/v/axum_database_sessions?style=plastic)](https://crates.io/crates/axum_database_sessions)
-[![Docs](https://docs.rs/axum_database_sessions/badge.svg)](https://docs.rs/axum_database_sessions)
+[![https://crates.io/crates/axum_session](https://img.shields.io/crates/v/axum_session?style=plastic)](https://crates.io/crates/axum_session)
+[![Docs](https://docs.rs/axum_session/badge.svg)](https://docs.rs/axum_session)
 
 - Cookies only Store a Generated Session UUID and a Storable Boolean.
 - Uses a DatabasePool Trait so you can implement your own Sub Storage Layer.
@@ -22,7 +23,7 @@ If you need help with this library or have suggestions please go to our [Discord
 
 ## Install
 
-Axum Sessions uses [`tokio`]
+Axum Session uses [`tokio`]
 
 [`tokio`]: https://github.com/tokio-rs/tokio
 
@@ -30,7 +31,7 @@ Axum Sessions uses [`tokio`]
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_database_sessions = { version = "7.0.0", features = [ "postgres-rustls"] }
+axum_session = { version = "0.1.0", features = [ "postgres-rustls"] }
 ```
 
 #### Cargo Feature Flags
@@ -55,7 +56,7 @@ axum_database_sessions = { version = "7.0.0", features = [ "postgres-rustls"] }
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer};
+use axum_session::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer};
 use axum::{
     Router,
     routing::get,
@@ -113,7 +114,7 @@ both protects the cookies data from prying eye's it also ensures the authenticit
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer, SessionMode, Key};
+use axum_session::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer, SessionMode, Key};
 use axum::{
     Router,
     routing::get,
@@ -146,14 +147,14 @@ async fn main() {
 }
 ```
 
-To use axum_database_sessions in non_persistant mode Set the client to None and import SessionNullPool.
+To use axum_session in non_persistant mode Set the client to None and import SessionNullPool.
 SessionNullPool is always loaded and can be used where you do not want to include any database within the build.
 # Example
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{Session, SessionNullPool, SessionConfig, SessionStore, SessionLayer};
+use axum_session::{Session, SessionNullPool, SessionConfig, SessionStore, SessionLayer};
 use axum::{
     Router,
     routing::get,
@@ -192,13 +193,13 @@ async fn greet(session: Session<SessionNullPool>) -> String {
 ```
 
 
-To use axum_database_sessions with session mode set as Storable.
+To use axum_session with session mode set as Storable.
 # Example
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_database_sessions::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer, SessionMode};
+use axum_session::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer, SessionMode};
 use axum::{
     Router,
     routing::get,
@@ -242,4 +243,4 @@ async fn greet(session: Session<SessionPgPool>) -> String {
 
 ## Session Login and Authentication via `axum_sessions_auth`
 
-For user login, login caching and authentication please see [`axum_sessions_auth`](https://github.com/AscendingCreations/AxumSessionsAuth).
+For user login, login caching and authentication please see [`axum_sessions_auth`](https://github.com/AscendingCreations/AxumSessionAuth).

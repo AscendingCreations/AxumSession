@@ -15,7 +15,7 @@ use tokio::sync::RwLock;
 ///
 /// # Examples
 /// ```rust
-/// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+/// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
 ///
 /// let config = SessionConfig::default();
 /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
@@ -60,7 +60,7 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
@@ -87,7 +87,7 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
@@ -108,7 +108,7 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
@@ -135,7 +135,7 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
@@ -162,7 +162,7 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
@@ -191,7 +191,7 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
@@ -228,7 +228,7 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore, SessionData};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore, SessionData};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
@@ -265,7 +265,7 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
@@ -295,7 +295,7 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
@@ -319,7 +319,7 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();

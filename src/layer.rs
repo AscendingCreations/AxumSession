@@ -7,7 +7,7 @@ use tower_layer::Layer;
 ///
 /// # Examples
 /// ```
-/// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore, SessionLayer};
+/// use axum_session::{SessionNullPool, SessionConfig, SessionStore, SessionLayer};
 /// use uuid::Uuid;
 ///
 /// let config = SessionConfig::default();
@@ -31,7 +31,7 @@ where
     ///
     /// # Examples
     /// ```rust
-    /// use axum_database_sessions::{SessionNullPool, SessionConfig, SessionStore, SessionLayer};
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore, SessionLayer};
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
