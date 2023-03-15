@@ -241,6 +241,6 @@ async fn greet(session: Session<SessionPgPool>) -> String {
 
 ```
 
-## Session Login and Authentication via `axum_sessions_auth`
+## Session Login and Authentication via `axum_session_auth`
 
-For user login, login caching and authentication please see [`axum_sessions_auth`](https://github.com/AscendingCreations/AxumSessionAuth).
+For user login, login caching and authentication please see [`axum_session_auth`](https://github.com/AscendingCreations/AxumSessionsAuth).
