@@ -99,8 +99,7 @@ where
     #[inline]
     pub fn renew(&self) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.renew = true;
-            instance.update = true;
+            instance.renew();
         } else {
             tracing::warn!("Session data unexpectedly missing");
         }
@@ -116,8 +115,7 @@ where
     #[inline]
     pub fn destroy(&self) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.destroy = true;
-            instance.update = true;
+            instance.destroy();
         } else {
             tracing::warn!("Session data unexpectedly missing");
         }
@@ -133,8 +131,7 @@ where
     #[inline]
     pub fn set_longterm(&self, longterm: bool) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.longterm = longterm;
-            instance.update = true;
+            instance.set_longterm(longterm);
         } else {
             tracing::warn!("Session data unexpectedly missing");
         }
@@ -153,8 +150,7 @@ where
     #[inline]
     pub fn set_store(&self, storable: bool) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.storable = storable;
-            instance.update = true;
+            instance.set_store(storable);
         } else {
             tracing::warn!("Session data unexpectedly missing");
         }
@@ -175,8 +171,7 @@ where
     #[inline]
     pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         if let Some(instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            let string = instance.data.get(key)?;
-            serde_json::from_str(string).ok()
+            instance.get(key)
         } else {
             tracing::warn!("Session data unexpectedly missing");
             None
@@ -198,9 +193,7 @@ where
     #[inline]
     pub fn get_remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            let string = instance.data.remove(key)?;
-            instance.update = true;
-            serde_json::from_str(&string).ok()
+            instance.get_remove(key)
         } else {
             tracing::warn!("Session data unexpectedly missing");
             None
@@ -216,11 +209,8 @@ where
     ///
     #[inline]
     pub fn set(&self, key: &str, value: impl Serialize) {
-        let value = serde_json::to_string(&value).unwrap_or_else(|_| "".to_string());
-
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            let _ = instance.data.insert(key.to_string(), value);
-            instance.update = true;
+            instance.set(key, value);
         } else {
             tracing::warn!("Session data unexpectedly missing");
         }
@@ -237,8 +227,7 @@ where
     #[inline]
     pub fn remove(&self, key: &str) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            let _ = instance.data.remove(key);
-            instance.update = true;
+            instance.remove(key);
         } else {
             tracing::warn!("Session data unexpectedly missing");
         }
@@ -254,8 +243,7 @@ where
     #[inline]
     pub fn clear(&self) {
         if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.data.clear();
-            instance.update = true;
+            instance.clear();
         } else {
             tracing::warn!("Session data unexpectedly missing");
         }
