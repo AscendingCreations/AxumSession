@@ -15,7 +15,8 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 - Convenient API for `Session` no need to mark as Read or Write making Usage Easier. 
 - Uses `dashmap` for internal memory lookup and storage to achieve high throughput.
 - Uses Serdes for Data Serialization so it can store any Serdes supported type's into the Sessions data.
-- Supports Redis and SQLx optional Databases out of the Box.
+- Supports Redis, SurrealDB and SQLx optional Databases out of the Box.
+- Supports Memory Only usage. No need to use a persistant database.
 
 ## Help
 
@@ -23,7 +24,9 @@ If you need help with this library or have suggestions please go to our [Discord
 
 ## Install
 
-Axum Session uses [`tokio`]
+Axum Session uses [`tokio`]. 
+By Default Axum Session uses `postgres-rustls` so if you need tokio native TLS please add `default-features = false` 
+to your cargo include for Axum Session.
 
 [`tokio`]: https://github.com/tokio-rs/tokio
 
@@ -31,25 +34,24 @@ Axum Session uses [`tokio`]
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.1.0", features = [ "postgres-rustls"] }
+axum_session = { version = "0.1.1", features = [ "postgres-rustls"] }
 ```
 
 #### Cargo Feature Flags
 `default`: [`postgres-rustls`]
 
 `sqlite-rustls`: `Sqlx 0.6.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
-
 `sqlite-native`: `Sqlx 0.6.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `native-tls`.
-
 `postgres-rustls`: `Sqlx 0.6.0` support for the Postgres database server and `rustls`.
-
 `postgres-native`: `Sqlx 0.6.0` support for the Postgres database server and `native-tls`.
-
 `mysql-rustls`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `rustls`.
-
 `mysql-native`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `native-tls`.
-
 `redis-db`:  `redis 0.21.5` session support.
+`surrealdb-rocksdb`: `surrealdb 1.0.0-beta.8` support for rocksdb.
+`surrealdb-tikv` : `surrealdb 1.0.0-beta.8` support for tikv.
+`surrealdb-indxdb` : `surrealdb 1.0.0-beta.8` support for indxdb.
+`surrealdb-fdb-?_?` : `surrealdb 1.0.0-beta.8` support for fdb versions 5_1, 5_2, 6_0, 6_1, 6_2, 6_3, 7_0, 7_1. Replace ?_? with version.
+`surrealdb-mem` : `surrealdb 1.0.0-beta.8` support for mem.
 
 # Example
 
