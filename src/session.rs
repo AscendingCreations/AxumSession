@@ -5,6 +5,7 @@ use cookie::CookieJar;
 use http::{self, request::Parts, StatusCode};
 use serde::Serialize;
 use std::{
+    convert::From,
     fmt::Debug,
     marker::{Send, Sync},
 };
@@ -98,11 +99,7 @@ where
     ///
     #[inline]
     pub fn renew(&self) {
-        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.renew();
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-        }
+        self.store.renew(self.id.inner());
     }
 
     /// Sets the Current Session to be Destroyed on the next run.
@@ -114,11 +111,7 @@ where
     ///
     #[inline]
     pub fn destroy(&self) {
-        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.destroy();
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-        }
+        self.store.destroy(self.id.inner());
     }
 
     /// Sets the Current Session to a long term expiration. Useful for Remember Me setups.
@@ -130,11 +123,7 @@ where
     ///
     #[inline]
     pub fn set_longterm(&self, longterm: bool) {
-        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.set_longterm(longterm);
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-        }
+        self.store.set_longterm(self.id.inner(), longterm);
     }
 
     /// Sets the Current Session to be storable.
@@ -149,11 +138,7 @@ where
     ///
     #[inline]
     pub fn set_store(&self, storable: bool) {
-        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.set_store(storable);
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-        }
+        self.store.set_store(self.id.inner(), storable);
     }
 
     /// Gets data from the Session's HashMap
@@ -170,12 +155,7 @@ where
     ///
     #[inline]
     pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
-        if let Some(instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.get(key)
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-            None
-        }
+        self.store.get(self.id.inner(), key)
     }
 
     /// Removes a Key from the Current Session's HashMap returning it.
@@ -192,12 +172,7 @@ where
     ///
     #[inline]
     pub fn get_remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
-        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.get_remove(key)
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-            None
-        }
+        self.store.get_remove(self.id.inner(), key)
     }
 
     /// Sets data to the Current Session's HashMap.
@@ -209,11 +184,7 @@ where
     ///
     #[inline]
     pub fn set(&self, key: &str, value: impl Serialize) {
-        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.set(key, value);
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-        }
+        self.store.set(self.id.inner(), key, value);
     }
 
     /// Removes a Key from the Current Session's HashMap.
@@ -226,11 +197,7 @@ where
     ///
     #[inline]
     pub fn remove(&self, key: &str) {
-        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.remove(key);
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-        }
+        self.store.remove(self.id.inner(), key);
     }
 
     /// Clears all data from the Current Session's HashMap.
@@ -242,11 +209,7 @@ where
     ///
     #[inline]
     pub fn clear(&self) {
-        if let Some(mut instance) = self.store.inner.get_mut(&self.id.0.to_string()) {
-            instance.clear();
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-        }
+        self.store.clear_session_data(self.id.inner());
     }
 
     /// Returns a i64 count of how many Sessions exist.
@@ -261,10 +224,85 @@ where
     ///
     #[inline]
     pub async fn count(&self) -> i64 {
-        if self.store.is_persistent() {
-            self.store.count().await.unwrap_or(0i64)
-        } else {
-            self.store.inner.len() as i64
+        self.store.count_sessions().await
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ReadOnlySession<T>
+where
+    T: DatabasePool + Clone + Debug + Sync + Send + 'static,
+{
+    pub(crate) store: SessionStore<T>,
+    pub(crate) id: SessionID,
+}
+
+impl<T> From<Session<T>> for ReadOnlySession<T>
+where
+    T: DatabasePool + Clone + Debug + Sync + Send + 'static,
+{
+    fn from(session: Session<T>) -> Self {
+        ReadOnlySession {
+            store: session.store,
+            id: session.id,
         }
+    }
+}
+
+/// Adds FromRequestParts<B> for Session
+///
+/// Returns the Session from Axums request extensions state.
+#[async_trait]
+impl<T, S> FromRequestParts<S> for ReadOnlySession<T>
+where
+    T: DatabasePool + Clone + Debug + Sync + Send + 'static,
+    S: Send + Sync,
+{
+    type Rejection = (http::StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let session = parts.extensions.get::<Session<T>>().cloned().ok_or((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Can't extract Axum `Session`. Is `SessionLayer` enabled?",
+        ))?;
+
+        Ok(session.into())
+    }
+}
+
+impl<S> ReadOnlySession<S>
+where
+    S: DatabasePool + Clone + Debug + Sync + Send + 'static,
+{
+    /// Gets data from the Session's HashMap
+    ///
+    /// Provides an Option<T> that returns the requested data from the Sessions store.
+    /// Returns None if Key does not exist or if serdes_json failed to deserialize.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// let id = session.get("user-id").unwrap_or(0);
+    /// ```
+    ///
+    ///Used to get data stored within SessionDatas hashmap from a key value.
+    ///
+    #[inline]
+    pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
+        self.store.get(self.id.inner(), key)
+    }
+
+    /// Returns a i64 count of how many Sessions exist.
+    ///
+    /// If the Session is persistant it will return all sessions within the database.
+    /// If the Session is not persistant it will return a count within SessionStore.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// let count = session.count().await;
+    /// ```
+    ///
+    #[inline]
+    pub async fn count(&self) -> i64 {
+        self.store.count_sessions().await
     }
 }
