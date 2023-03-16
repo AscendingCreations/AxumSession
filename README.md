@@ -41,16 +41,27 @@ axum_session = { version = "0.1.1", features = [ "postgres-rustls"] }
 `default`: [`postgres-rustls`]
 
 `sqlite-rustls`: `Sqlx 0.6.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
+
 `sqlite-native`: `Sqlx 0.6.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `native-tls`.
+
 `postgres-rustls`: `Sqlx 0.6.0` support for the Postgres database server and `rustls`.
+
 `postgres-native`: `Sqlx 0.6.0` support for the Postgres database server and `native-tls`.
+
 `mysql-rustls`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `rustls`.
+
 `mysql-native`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `native-tls`.
+
 `redis-db`:  `redis 0.21.5` session support.
+
 `surrealdb-rocksdb`: `surrealdb 1.0.0-beta.8` support for rocksdb.
+
 `surrealdb-tikv` : `surrealdb 1.0.0-beta.8` support for tikv.
+
 `surrealdb-indxdb` : `surrealdb 1.0.0-beta.8` support for indxdb.
+
 `surrealdb-fdb-?_?` : `surrealdb 1.0.0-beta.8` support for fdb versions 5_1, 5_2, 6_0, 6_1, 6_2, 6_3, 7_0, 7_1. Replace ?_? with version.
+
 `surrealdb-mem` : `surrealdb 1.0.0-beta.8` support for mem.
 
 # Example
