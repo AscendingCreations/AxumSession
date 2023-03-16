@@ -278,9 +278,8 @@ impl DatabasePool for SessionSurrealPool {
 
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
         let conn = self.connect().await?;
-        
-        conn
-            .ds
+
+        conn.ds
             .execute(
                 &r#"DELETE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
                 &ses,
