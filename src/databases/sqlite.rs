@@ -126,7 +126,7 @@ impl DatabasePool for SessionSqlitePool {
     }
 
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
-        sqlx::query(&r#"TRUNCATE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name))
+        sqlx::query(&r#"DELETE FROM %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name))
             .execute(&self.pool)
             .await?;
         Ok(())
