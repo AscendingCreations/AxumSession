@@ -231,7 +231,7 @@ impl SessionData {
 /// ```
 ///
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-pub(crate) struct SessionID(pub(crate) Uuid);
+pub struct SessionID(pub(crate) Uuid);
 
 impl SessionID {
     /// Constructs a new SessionID hold a UUID.
