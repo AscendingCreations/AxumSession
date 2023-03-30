@@ -265,8 +265,26 @@ impl SessionID {
     /// ```
     ///
     #[inline]
-    pub(crate) fn inner(&self) -> String {
+    pub fn inner(&self) -> String {
         self.0.to_string()
+    }
+    
+    /// Returns the inner UUID.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// use axum_session::SessionID;
+    /// use uuid::Uuid;
+    ///
+    ///
+    /// let token = Uuid::new_v4();
+    /// let id = SessionID::new(token);
+    /// let uuid = id.uuid();
+    /// ```
+    ///
+    #[inline]
+    pub fn uuid(&self) -> Uuid {
+        self.0
     }
 }
 
