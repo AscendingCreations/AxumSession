@@ -226,6 +226,20 @@ where
     pub async fn count(&self) -> i64 {
         self.store.count_sessions().await
     }
+
+    /// Returns the SessionID for this Session.
+    ///
+    /// The SessionID contains the Uuid generated at the beginning of this Session.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// let session_id = session.get_session_id().await;
+    /// ```
+    ///
+    #[inline]
+    pub async fn get_session_id(&self) -> SessionID {
+        self.id
+    }
 }
 
 #[derive(Debug, Clone)]
