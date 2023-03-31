@@ -20,7 +20,7 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 
 ## Help
 
-If you need help with this library or have suggestions please go to our [Discord Group](https://discord.gg/xKkm7UhM36)
+If you need help with this library or have suggestions please go to our [Discord Group](https://discord.gg/gVXNDwpS3Z)
 
 ## Install
 
