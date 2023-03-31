@@ -6,7 +6,7 @@ members = [
 
 [package]
 name = "axum_session"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "Memory and/or Database Session management layer for axum."
 edition = "2021"

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## 0.1.4 (30. March, 2023)
+### Changed
+- Made SessionID Public and Retrievable @mwcz.
+
 ## 0.1.3 (27. March, 2023)
 ### Changed
 - Fixed SqlLite delete all @cold-brewed.
