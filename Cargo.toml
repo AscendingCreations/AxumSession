@@ -72,3 +72,6 @@ axum = { version = "0.6.12", features = ["macros"]}
 hyper = "0.14.25"
 tower = "0.4.13"
 log = { version = "0.4.17", default-features = false }
+
+[package.metadata.docs.rs]
+rustc-args = ["--document-private-items"]
