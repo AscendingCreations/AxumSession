@@ -1,10 +1,10 @@
-use crate::{DatabasePool, Session, SessionError, SessionStore};
+use crate::{DatabasePool,  SessionError, SessionStore};
 use async_trait::async_trait;
 use chrono::Utc;
 use std::collections::BTreeMap;
-use surrealdb::{sql::Value, Datastore, Error, Response, Session};
+use surrealdb::{sql::Value, Datastore, Error, Response, dbs::Session};
 
-pub type SessionSurrealSession = Session<SessionSurrealPool>;
+pub type SessionSurrealSession = crate::Session<SessionSurrealPool>;
 pub type SessionSurrealSessionStore = SessionStore<SessionSurrealPool>;
 
 ///Surreal internal Managed Pool type for DatabasePool

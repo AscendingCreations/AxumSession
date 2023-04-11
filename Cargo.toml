@@ -17,7 +17,7 @@ keywords = ["Axum", "Tower", "SQLx", "Session", "surrealdb"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
-default = ["postgres-rustls"]
+default = ["postgres-rustls", "sqlite-rustls","mysql-rustls","redis-db","surrealdb-rocksdb","surrealdb-mem"]
 sqlite-rustls = ["sqlx/sqlite", "sqlx/runtime-tokio-rustls"]
 sqlite-native = ["sqlx/sqlite", "sqlx/runtime-tokio-native-tls"]
 postgres-rustls = ["sqlx/postgres", "sqlx/runtime-tokio-rustls"]
