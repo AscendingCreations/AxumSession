@@ -1,8 +1,8 @@
-use crate::{DatabasePool,  SessionError, SessionStore};
+use crate::{DatabasePool, SessionError, SessionStore};
 use async_trait::async_trait;
 use chrono::Utc;
 use std::collections::BTreeMap;
-use surrealdb::{sql::Value, Datastore, Error, Response, dbs::Session};
+use surrealdb::{dbs::Session, kvs::Datastore, sql::Value};
 
 pub type SessionSurrealSession = crate::Session<SessionSurrealPool>;
 pub type SessionSurrealSessionStore = SessionStore<SessionSurrealPool>;
@@ -14,6 +14,7 @@ pub struct SessionSurrealPool {
     session: Session,
 }
 
+#[derive(Debug, Clone)]
 enum ConnectionType {
     #[cfg(feature = "surrealdb-mem")]
     Memory,
@@ -105,7 +106,10 @@ impl SessionSurrealPool {
 
     pub async fn is_valid(&self) -> Result<(), SessionError> {
         let connection = self.connect().await?;
-        connection.execute("SELECT * FROM 1;", None, false).await?;
+        connection
+            .ds
+            .execute("SELECT * FROM 1;", &self.session, None, false)
+            .await?;
         Ok(())
     }
 }
@@ -125,7 +129,7 @@ impl DatabasePool for SessionSurrealPool {
                     DEFINE INDEX %%TABLE_NAME%%IdIndex ON TABLE %%TABLE_NAME%% COLUMNS id UNIQUE;
                 "#
                 .replace("%%TABLE_NAME%%", table_name),
-                &ses,
+                &self.session,
                 None,
                 false,
             )
@@ -144,7 +148,7 @@ impl DatabasePool for SessionSurrealPool {
             .execute(
                 &r#"DELETE %%TABLE_NAME%% WHERE expires < $expires"#
                     .replace("%%TABLE_NAME%%", table_name),
-                &ses,
+                &self.session,
                 Some(vars),
                 false,
             )
@@ -160,7 +164,7 @@ impl DatabasePool for SessionSurrealPool {
             .ds
             .execute(
                 &r#"SELECT COUNT() FROM %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
-                &ses,
+                &self.session,
                 None,
                 false,
             )
@@ -197,7 +201,7 @@ impl DatabasePool for SessionSurrealPool {
                 session = $session
         "#
                 .replace("%%TABLE_NAME%%", table_name),
-                &ses,
+                &self.session,
                 Some(vars),
                 false,
             )
@@ -221,7 +225,7 @@ impl DatabasePool for SessionSurrealPool {
                 WHERE id = $id AND (expires = NONE OR expires > $expires)
             "#
                 .replace("%%TABLE_NAME%%", table_name),
-                &ses,
+                &self.session,
                 Some(vars),
                 false,
             )
@@ -243,7 +247,7 @@ impl DatabasePool for SessionSurrealPool {
         conn.ds
             .execute(
                 &r#"DELETE %%TABLE_NAME%% WHERE id < $id"#.replace("%%TABLE_NAME%%", table_name),
-                &ses,
+                &self.session,
                 Some(vars),
                 false,
             )
@@ -263,7 +267,7 @@ impl DatabasePool for SessionSurrealPool {
             .ds
             .execute(
                 &r#"SELECT COUNT() FROM %%TABLE_NAME%% WHERE id = $id AND (expires = NONE OR expires > $expires)"#.replace("%%TABLE_NAME%%", table_name),
-                &ses,
+                &self.session,
                 Some(vars),
                 false,
             )
@@ -282,7 +286,7 @@ impl DatabasePool for SessionSurrealPool {
         conn.ds
             .execute(
                 &r#"DELETE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
-                &ses,
+                &self.session,
                 None,
                 false,
             )

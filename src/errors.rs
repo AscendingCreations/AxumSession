@@ -24,6 +24,9 @@ pub enum SessionError {
     #[cfg(feature = "surrealdb_tag")]
     #[error(transparent)]
     SurrealDBError(#[from] surrealdb::Error),
+    #[cfg(feature = "surrealdb_tag")]
+    #[error(transparent)]
+    SurrealDBDatabaseError(#[from] surrealdb::error::Db),
     #[error("unknown Session store error")]
     Unknown,
     #[error("Generic Database insert error {0}")]

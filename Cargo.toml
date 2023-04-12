@@ -74,5 +74,5 @@ tower = "0.4.13"
 log = { version = "0.4.17", default-features = false }
 
 [package.metadata.docs.rs]
-features = ["sqlite-rustls","mysql-rustls","redis-db"]
+features = ["sqlite-rustls","mysql-rustls","redis-db", "surrealdb-rocksdb", "surrealdb-mem"]
 rustdoc-args = ["--document-private-items"]
