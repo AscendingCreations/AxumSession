@@ -3,10 +3,12 @@ use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, PgPool, Postgres};
 
+///Postgres's Session Helper type for the DatabasePool.
 pub type SessionPgSession = Session<SessionPgPool>;
+///Postgres's Session Store Helper type for the DatabasePool.
 pub type SessionPgSessionStore = SessionStore<SessionPgPool>;
 
-///Mysql's Pool type for DatabasePool
+///Postgres's Pool type for the DatabasePool
 #[derive(Debug, Clone)]
 pub struct SessionPgPool {
     pool: Pool<Postgres>,

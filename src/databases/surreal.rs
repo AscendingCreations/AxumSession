@@ -4,7 +4,9 @@ use chrono::Utc;
 use std::collections::BTreeMap;
 use surrealdb::{dbs::Session, kvs::Datastore, sql::Value};
 
+///Surreal's Session Helper type for the DatabasePool.
 pub type SessionSurrealSession = crate::Session<SessionSurrealPool>;
+///Surreal's Session Store Helper type for the DatabasePool.
 pub type SessionSurrealSessionStore = SessionStore<SessionSurrealPool>;
 
 ///Surreal internal Managed Pool type for DatabasePool

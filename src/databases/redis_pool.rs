@@ -2,10 +2,12 @@ use crate::{DatabasePool, Session, SessionError, SessionStore};
 use async_trait::async_trait;
 use redis::Client;
 
+///Redis's Session Helper type for the DatabasePool.
 pub type SessionRedisSession = Session<SessionRedisPool>;
+///Redis's Session Store Helper type for the DatabasePool.
 pub type SessionRedisSessionStore = SessionStore<SessionRedisPool>;
 
-///Mysql's Pool type for DatabasePool
+///Redis's Pool type for the DatabasePool. Needs a redis Client.
 #[derive(Debug, Clone)]
 pub struct SessionRedisPool {
     client: Client,

@@ -3,7 +3,9 @@ use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, MySql, MySqlPool};
 
+///Mysql's Session Helper type for the DatabasePool.
 pub type SessionMySqlSession = Session<SessionMySqlPool>;
+///Mysql's Session Store Helper type for the DatabasePool.
 pub type SessionMySqlSessionStore = SessionStore<SessionMySqlPool>;
 
 /// Mysql's Pool type for DatabasePool

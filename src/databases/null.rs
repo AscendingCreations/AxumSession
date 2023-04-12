@@ -1,10 +1,12 @@
 use crate::{DatabasePool, Session, SessionError, SessionStore};
 use async_trait::async_trait;
 
+///Null's Session Helper type for a DatabaseLess Session.
 pub type SessionNullSession = Session<SessionNullPool>;
+///Null's Session Store Helper type for a DatabaseLess Session.
 pub type SessionNullSessionStore = SessionStore<SessionNullPool>;
 
-/// Null Pool type for DatabasePool.
+/// Null Pool type for a DatabaseLess Session.
 /// Use this when you do not want to load any database.
 #[derive(Debug, Clone)]
 pub struct SessionNullPool;

@@ -3,10 +3,12 @@ use async_trait::async_trait;
 use chrono::Utc;
 use sqlx::{pool::Pool, Sqlite};
 
+///Sqlite's Session Helper type for the DatabasePool.
 pub type SessionSqliteSession = Session<SessionSqlitePool>;
+///Sqlite's Session Store Helper type for the DatabasePool.
 pub type SessionSqliteSessionStore = SessionStore<SessionSqlitePool>;
 
-///Mysql's Pool type for DatabasePool
+///Sqlite's Pool type for the DatabasePool
 #[derive(Debug, Clone)]
 pub struct SessionSqlitePool {
     pool: Pool<Sqlite>,
