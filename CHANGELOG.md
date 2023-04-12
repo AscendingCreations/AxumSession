@@ -4,11 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## 0.1.9 (11. April, 2023)
+## 0.2.0 (11. April, 2023)
 ### Fixed 
 - Surreal Session compile Error.
+
 ### Changed
 - Made pub(crate) visible in docs... Docs.rs had a error still....
+- Redis is now 0.23.0
+- surrealdb is now 1.0.0-beta.9+20230402
 
 ## 0.1.8 (11. April, 2023)
 ### Changed

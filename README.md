@@ -34,7 +34,7 @@ to your cargo include for Axum Session.
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.1.3", features = [ "postgres-rustls"] }
+axum_session = { version = "0.2.0", features = [ "postgres-rustls"] }
 ```
 
 #### Cargo Feature Flags
@@ -52,17 +52,17 @@ axum_session = { version = "0.1.3", features = [ "postgres-rustls"] }
 
 `mysql-native`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `native-tls`.
 
-`redis-db`:  `redis 0.21.5` session support.
+`redis-db`:  `redis 0.23.0` session support.
 
-`surrealdb-rocksdb`: `surrealdb 1.0.0-beta.8` support for rocksdb.
+`surrealdb-rocksdb`: `surrealdb 1.0.0-beta.9+20230402` support for rocksdb.
 
-`surrealdb-tikv` : `surrealdb 1.0.0-beta.8` support for tikv.
+`surrealdb-tikv` : `surrealdb 1.0.0-beta.9+20230402` support for tikv.
 
-`surrealdb-indxdb` : `surrealdb 1.0.0-beta.8` support for indxdb.
+`surrealdb-indxdb` : `surrealdb 1.0.0-beta.9+20230402` support for indxdb.
 
-`surrealdb-fdb-?_?` : `surrealdb 1.0.0-beta.8` support for fdb versions 5_1, 5_2, 6_0, 6_1, 6_2, 6_3, 7_0, 7_1. Replace ?_? with version.
+`surrealdb-fdb-?_?` : `surrealdb 1.0.0-beta.9+20230402` support for fdb versions 5_1, 5_2, 6_0, 6_1, 6_2, 6_3, 7_0, 7_1. Replace ?_? with version.
 
-`surrealdb-mem` : `surrealdb 1.0.0-beta.8` support for mem.
+`surrealdb-mem` : `surrealdb 1.0.0-beta.9+20230402` support for mem.
 
 # Example
 
