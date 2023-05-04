@@ -46,7 +46,7 @@ fdb_tag = []
 axum-core = {version = "0.3.4"}
 serde = { version = "1.0.160", features = ["derive"] }
 serde_json = "1.0.95"
-chrono = { version = "0.4.24", features = ["clock", "serde", "std"] }
+chrono = { version = "0.4.24", default-features = false, features = ["clock", "serde", "std"] }
 tokio = { version = "1.27.0", features = ["full"] }
 async-trait = "0.1.68"
 tracing = "0.1.37"
