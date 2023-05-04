@@ -268,7 +268,7 @@ impl SessionID {
     pub fn inner(&self) -> String {
         self.0.to_string()
     }
-    
+
     /// Returns the inner UUID.
     ///
     /// # Examples
