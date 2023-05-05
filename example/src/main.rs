@@ -9,7 +9,7 @@ async fn main() {
 
     //This Defaults as normal Cookies.
     //To enable Private cookies for integrity, and authenticity please check the next Example.
-    let session_config = SessionConfig::default().with_table_name("test_table");
+    let session_config = SessionConfig::default().with_table_name("sessions_table");
 
     let session_store =
         SessionStore::<SessionSqlitePool>::new(Some(poll.clone().into()), session_config);

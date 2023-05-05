@@ -43,7 +43,7 @@ mod tests {
     async fn basic() {
         let config = SessionConfig::new()
             .with_key(Key::generate())
-            .with_table_name("test_table");
+            .with_table_name("sessions_table");
 
         let mut connect_opts = PgConnectOptions::new();
         connect_opts.log_statements(LevelFilter::Debug);
