@@ -83,7 +83,7 @@ async fn main() {
     //This Defaults as normal Cookies.
     //To enable Private cookies for integrity, and authenticity please check the next Example.
     let session_config = SessionConfig::default()
-        .with_table_name("test_table");
+        .with_table_name("sessions_table");
 
     let session_store = SessionStore::<SessionPgPool>::new(Some(poll.clone().into()), session_config);
 
@@ -136,7 +136,7 @@ use axum::{
 #[tokio::main]
 async fn main() {
     let session_config = SessionConfig::default()
-        .with_table_name("test_table")
+        .with_table_name("sessions_table")
         // 'Key::generate()' will generate a new key each restart of the server.
         // If you want it to be more permanent then generate and set it to a config file.
         // If with_key() is used it will set all cookies as private, which guarantees integrity, and authenticity.
@@ -176,7 +176,7 @@ use axum::{
 #[tokio::main]
 async fn main() {
     let session_config = SessionConfig::default()
-        .with_table_name("test_table");
+        .with_table_name("sessions_table");
 
     let session_store = SessionStore::<SessionNullPool>::new(None, session_config);
 
@@ -221,7 +221,7 @@ use axum::{
 #[tokio::main]
 async fn main() {
     let session_config = SessionConfig::default()
-        .with_table_name("test_table").with_mode(SessionMode::Storable);
+        .with_table_name("sessions_table").with_mode(SessionMode::Storable);
 
     let session_store = SessionStore::<SessionPgPool>::new(None, session_config);
     session_store.initiate().await.unwrap();
