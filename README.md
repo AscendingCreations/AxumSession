@@ -12,7 +12,7 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 
 - Cookies only Store a Generated Session UUID and a Storable Boolean.
 - Uses a DatabasePool Trait so you can implement your own Sub Storage Layer.
-- Convenient API for `Session` no need to mark as Read or Write making Usage Easier. 
+- Convenient API for `Session` no need to mark as Read or Write making Usage Easier.
 - Uses `dashmap` for internal memory lookup and storage to achieve high throughput.
 - Uses Serdes for Data Serialization so it can store any Serdes supported type's into the Sessions data.
 - Supports Redis, SurrealDB and SQLx optional Databases out of the Box.
@@ -24,8 +24,8 @@ If you need help with this library or have suggestions please go to our [Discord
 
 ## Install
 
-Axum Session uses [`tokio`]. 
-By Default Axum Session uses `postgres-rustls` so if you need tokio native TLS please add `default-features = false` 
+Axum Session uses [`tokio`].
+By Default Axum Session uses `postgres-rustls` so if you need tokio native TLS please add `default-features = false`
 to your cargo include for Axum Session.
 
 [`tokio`]: https://github.com/tokio-rs/tokio
@@ -38,6 +38,7 @@ axum_session = { version = "0.2.0", features = [ "postgres-rustls"] }
 ```
 
 #### Cargo Feature Flags
+
 `default`: [`postgres-rustls`]
 
 `sqlite-rustls`: `Sqlx 0.6.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
@@ -52,7 +53,7 @@ axum_session = { version = "0.2.0", features = [ "postgres-rustls"] }
 
 `mysql-native`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `native-tls`.
 
-`redis-db`:  `redis 0.23.0` session support.
+`redis-db`: `redis 0.23.0` session support.
 
 `surrealdb-rocksdb`: `surrealdb 1.0.0-beta.9+20230402` support for rocksdb.
 
@@ -60,7 +61,7 @@ axum_session = { version = "0.2.0", features = [ "postgres-rustls"] }
 
 `surrealdb-indxdb` : `surrealdb 1.0.0-beta.9+20230402` support for indxdb.
 
-`surrealdb-fdb-?_?` : `surrealdb 1.0.0-beta.9+20230402` support for fdb versions 5_1, 5_2, 6_0, 6_1, 6_2, 6_3, 7_0, 7_1. Replace ?_? with version.
+`surrealdb-fdb-?_?` : `surrealdb 1.0.0-beta.9+20230402` support for fdb versions 5*1, 5_2, 6_0, 6_1, 6_2, 6_3, 7_0, 7_1. Replace ?*? with version.
 
 `surrealdb-mem` : `surrealdb 1.0.0-beta.9+20230402` support for mem.
 
@@ -122,6 +123,7 @@ async fn connect_to_database() -> anyhow::Result<sqlx::Pool<sqlx::Postgres>> {
 To enable private cookies for confidentiality, integrity, and authenticity.
 When a Key is set it will automatically set the Cookie into an encypted Private cookie which
 both protects the cookies data from prying eye's it also ensures the authenticity of the cookie.
+
 # Example
 
 ```rust ignore
@@ -162,6 +164,7 @@ async fn main() {
 
 To use axum_session in non_persistant mode Set the client to None and import SessionNullPool.
 SessionNullPool is always loaded and can be used where you do not want to include any database within the build.
+
 # Example
 
 ```rust ignore
@@ -205,8 +208,8 @@ async fn greet(session: Session<SessionNullPool>) -> String {
 
 ```
 
-
 To use axum_session with session mode set as Storable.
+
 # Example
 
 ```rust ignore
@@ -252,6 +255,101 @@ async fn greet(session: Session<SessionPgPool>) -> String {
     count.to_string()
 }
 
+```
+
+# Example
+
+```rust ignore
+use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
+use std::net::SocketAddr;
+use axum_session::{Session, SessionNullPool, SessionConfig, SessionStore, SessionLayer};
+use axum::{
+    Router,
+    routing::get,
+};
+
+#[tokio::main]
+async fn main() {
+    let session_config = SessionConfig::default()
+        .with_table_name("sessions_table");
+
+    let session_store = SessionStore::<SessionNullPool>::new(None, session_config);
+
+    // build our application with some routes
+    let app = Router::new()
+        .route("/greet", get(greet))
+        .layer(SessionLayer::new(session_store));
+
+    // run it
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    tracing::debug!("listening on {}", addr);
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+}
+
+async fn greet(session: Session<SessionNullPool>) -> String {
+    let mut count: usize = session.get("count").unwrap_or(0);
+
+    count += 1;
+    session.set("count", count);
+
+    count.to_string()
+}
+
+```
+
+To use axum_session with session mode set as Storable.
+
+# Example
+
+```rust ignore
+use axum::{routing::get, Router};
+use axum_session::{Session, SessionConfig, SessionLayer, SessionRedisPool, SessionStore};
+
+#[tokio::main]
+async fn main() {
+    // please consider using dotenvy to get this
+    // please check the docker-compose file included for the redis image used here
+    let redis_url = "redis://default:YourSecretPassWord@127.0.0.1:6379/0";
+
+    let client =
+        redis::Client::open(redis_url).expect("Error while tryiong to open the redis connection");
+
+    // No need here to specify a table name because redis does not support tables
+    let session_config = SessionConfig::default();
+
+    let session_store =
+        SessionStore::<SessionRedisPool>::new(Some(client.clone().into()), session_config);
+
+    // build our application with a single route
+    let app = Router::new()
+        .route("/", get(root))
+        // `POST /users` goes to `counter`
+        .route("/counter", get(counter))
+        .layer(SessionLayer::new(session_store)); // adding the crate plugin ( layer ) to the project
+
+    // run it with hyper on localhost:3000
+    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+}
+
+async fn root() -> &'static str {
+    "Hello, World!"
+}
+
+async fn counter(session: Session<SessionRedisPool>) -> String {
+    let mut count: usize = session.get("count").unwrap_or(0);
+    count += 1;
+    session.set("count", count);
+
+    // consider use better Option handling here instead of expect
+    let new_count = session.get::<usize>("count").expect("error setting count");
+    format!("We have set the counter to redis {new_count}")
+}
 ```
 
 ## Session Login and Authentication via `axum_session_auth`
