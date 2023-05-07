@@ -6,7 +6,8 @@
 	],
 	"settings": {
 		"rust-analyzer.linkedProjects": [
-			"./Cargo.toml"
+			"./Cargo.toml",
+			"./examples/redis/Cargo.toml"
 		]
 	}
 }
