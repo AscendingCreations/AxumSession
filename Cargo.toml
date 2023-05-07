@@ -1,8 +1,9 @@
 [workspace]
 members = [
-    ".",
-    "example",
+    "examples/*",
 ]
+# Only check / build main crates by default (check all with `--workspace`)
+default-members = ["examples/*"]
 
 [package]
 name = "axum_session"
