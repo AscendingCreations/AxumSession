@@ -4,5 +4,10 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"rust-analyzer.linkedProjects": [
+			"./Cargo.toml",
+			"./examples/redis/Cargo.toml"
+		]
+	}
 }

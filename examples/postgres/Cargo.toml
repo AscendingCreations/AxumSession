@@ -14,7 +14,4 @@ sqlx = { version = "0.6.3", features = [
     "all-types",
     "runtime-tokio-rustls",
 ] }
-
-[dependencies.axum_session]
-path = "../"
-features = ["sqlite-rustls"]
+axum_session = { version = "0.2.0", features = [ "postgres-rustls","sqlite-rustls"] }

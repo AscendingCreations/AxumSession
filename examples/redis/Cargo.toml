@@ -1,0 +1,18 @@
+[package]
+name = "redis"
+version = "0.0.1"
+authors = ["Hossam Maher<hos.mercury@gmail.com>"]
+edition = "2021"
+
+[dependencies]
+axum = {version = "0.6.12"}
+tokio = { version = "1.22.0", features = ["full", "tracing"] }
+async-trait = "0.1.58"
+sqlx = { version = "0.6.3", features = [
+    "macros",
+    "sqlite",
+    "all-types",
+    "runtime-tokio-rustls",
+] }
+axum_session = { version = "0.2.0", features = [ "redis"] }
+redis = "0.23.0"
