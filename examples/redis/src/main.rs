@@ -38,6 +38,7 @@ async fn counter(session: Session<SessionRedisPool>) -> String {
     let mut count: usize = session.get("count").unwrap_or(0);
     count += 1;
     session.set("count", count);
+
     // consider use better Option handling here instead of expect
     let new_count = session.get::<usize>("count").expect("error setting count");
     format!("We have set the counter to redis {new_count}")

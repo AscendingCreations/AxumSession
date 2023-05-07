@@ -1,9 +1,9 @@
 [workspace]
 members = [
-    "examples/*",
+    ".",
+    "examples/postgres",
+    "examples/redis",
 ]
-# Only check / build main crates by default (check all with `--workspace`)
-default-members = ["examples/*"]
 
 [package]
 name = "axum_session"
@@ -66,7 +66,7 @@ futures = "0.3.28"
 bytes = "1.4.0"
 dashmap = "5.4.0"
 redis = { version = "0.23.0", features = ["tokio-comp"], optional = true }
-surrealdb = { version = "1.0.0-beta.9+20230402", optional = true }
+surrealdb = { optional = true }
 
 [dev-dependencies]
 axum = { version = "0.6.12", features = ["macros"]}
@@ -74,6 +74,6 @@ hyper = "0.14.25"
 tower = "0.4.13"
 log = { version = "0.4.17", default-features = false }
 
-[package.metadata.docs.rs]
-features = ["sqlite-rustls","mysql-rustls","redis-db", "surrealdb-rocksdb", "surrealdb-mem"]
-rustdoc-args = ["--document-private-items"]
+# [package.metadata.docs.rs]
+# features = ["sqlite-rustls","mysql-rustls","redis-db", "surrealdb-rocksdb", "surrealdb-mem"]
+# rustdoc-args = ["--document-private-items"]

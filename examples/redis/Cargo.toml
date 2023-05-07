@@ -15,3 +15,4 @@ sqlx = { version = "0.6.3", features = [
     "runtime-tokio-rustls",
 ] }
 axum_session = { version = "0.2.0", features = [ "redis"] }
+redis = "0.23.0"
