@@ -3,8 +3,7 @@ use axum_session::{Session, SessionConfig, SessionLayer, SessionRedisPool, Sessi
 
 #[tokio::main]
 async fn main() {
-    // please consider using dotenvy to get this
-    // please check the docker-compose file included for the redis image used here
+    // please consider using dotenvy to get .env variables
     let redis_url = "redis://default:YourSecretPassWord@127.0.0.1:6379/0";
 
     let client =
