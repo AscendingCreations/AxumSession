@@ -27,6 +27,33 @@ impl SessionMode {
     }
 }
 
+/// Mode at which the Session will function As.
+///
+/// # Examples
+/// ```rust
+/// use axum_session::{SessionConfig, SessionMode};
+///
+/// let config = SessionConfig::default().with_mode(SessionMode::Always);
+/// ```
+///
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SecurityMode {
+    /// this will create and store a per session Encryption key to encrypt the
+    /// SessionID and Storable cookies with. will get rotated upon Session renew.
+    /// Config's Key must be set to Some() or the system will Panic.
+    PerSession,
+    /// Uses the config Key to encrypt SessionID in cookies if Key is Some().
+    Simple,
+}
+
+impl SecurityMode {
+    /// Checks if the Mode is set to Simple.
+    ///
+    pub fn is_simple(&self) -> bool {
+        matches!(self, SecurityMode::Simple)
+    }
+}
+
 /// Configuration for how the Session and Cookies are used.
 ///
 /// # Examples
@@ -43,6 +70,8 @@ pub struct SessionConfig {
     pub(crate) storable_cookie_name: Cow<'static, str>,
     /// Session cookie name
     pub(crate) cookie_name: Cow<'static, str>,
+    /// Session cookie name
+    pub(crate) key_cookie_name: Cow<'static, str>,
     /// Session cookie domain
     pub(crate) cookie_domain: Option<Cow<'static, str>>,
     /// Session cookie http only flag
@@ -77,12 +106,17 @@ pub struct SessionConfig {
     pub(crate) table_name: Cow<'static, str>,
     /// Encyption Key used to encypt cookies for confidentiality, integrity, and authenticity.
     pub(crate) key: Option<Key>,
+    /// Encyption Key used to encypt keys stored in the database for confidentiality.
+    pub(crate) database_key: Option<Key>,
+    /// Set how Secure you want SessionID's to be stored as.
+    pub(crate) security_mode: SecurityMode,
 }
 
 impl std::fmt::Debug for SessionConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SessionConfig")
             .field("storable_cookie_name", &self.storable_cookie_name)
+            .field("key_cookie_name", &self.key_cookie_name)
             .field("cookie_domain", &self.cookie_domain)
             .field("cookie_http_only", &self.cookie_http_only)
             .field("cookie_max_age", &self.cookie_max_age)
@@ -95,7 +129,9 @@ impl std::fmt::Debug for SessionConfig {
             .field("max_lifespan", &self.max_lifespan)
             .field("memory_lifespan", &self.memory_lifespan)
             .field("table_name", &self.table_name)
+            .field("security mode", &self.security_mode)
             .field("key", &"key hidden")
+            .field("database_key", &"key hidden")
             .finish()
     }
 }
@@ -150,6 +186,21 @@ impl SessionConfig {
     #[must_use]
     pub fn with_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
         self.cookie_name = name.into();
+        self
+    }
+
+    /// Set's the session's key cookie's name.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_key_cookie_name("my_key_cookie");
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_key_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+        self.key_cookie_name = name.into();
         self
     }
 
@@ -360,6 +411,8 @@ impl SessionConfig {
     /// For Extra Security Regenerate the key every so many months to a year.
     /// A new key will invalidate all old Sessions so it be wise to run session_store.clear_store() on reboot.
     ///
+    /// Must be Set to Some() in order to use Security::PerSession.
+    ///
     /// # Examples
     /// ```rust
     /// use axum_session::{Key, SessionConfig};
@@ -370,6 +423,23 @@ impl SessionConfig {
     #[must_use]
     pub fn with_key(mut self, key: Key) -> Self {
         self.key = Some(key);
+        self
+    }
+
+    /// Set's the session's database encyption key for per session key storage.
+    ///
+    /// Must be Set to Some() in order to use Security::PerSession or will panic if not.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::{Key, SessionConfig};
+    ///
+    /// let config = SessionConfig::default().with_key(Key::generate());
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_database_key(mut self, key: Key) -> Self {
+        self.database_key = Some(key);
         self
     }
 }
@@ -398,6 +468,12 @@ impl Default for SessionConfig {
             session_mode: SessionMode::Always,
             /// Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
             key: None,
+            /// Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.
+            database_key: None,
+            /// Default cookie name for the Key Id.
+            key_cookie_name: "session_key".into(),
+            /// Simple is the Default mode for compatibilty with older versions of the crate.
+            security_mode: SecurityMode::Simple,
         }
     }
 }

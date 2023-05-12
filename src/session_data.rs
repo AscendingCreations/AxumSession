@@ -30,6 +30,7 @@ pub struct SessionData {
     pub(crate) longterm: bool,
     pub(crate) storable: bool,
     pub(crate) update: bool,
+    pub(crate) renew_key: bool,
 }
 
 impl SessionData {
@@ -53,6 +54,7 @@ impl SessionData {
             expires: Utc::now() + config.lifespan,
             destroy: false,
             renew: false,
+            renew_key: false,
             autoremove: Utc::now() + config.memory_lifespan,
             longterm: false,
             storable,
@@ -91,6 +93,23 @@ impl SessionData {
     #[inline]
     pub fn renew(&mut self) {
         self.renew = true;
+        self.update = true;
+    }
+
+    /// Sets the Session to renew its Session Key ID and Encryption Key.
+    /// This Deletes Session data from the database
+    /// associated with the old Key ID. This helps to enhance
+    /// Security when logging into Secure area's across a website much further than
+    /// renew() would. Will only work if SecurityMode::PerSession is Set.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.renew_key();
+    /// ```
+    ///
+    #[inline]
+    pub fn renew_key(&mut self) {
+        self.renew_key = true;
         self.update = true;
     }
 

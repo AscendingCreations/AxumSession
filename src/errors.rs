@@ -4,6 +4,8 @@ use thiserror::Error;
 pub enum SessionError {
     #[error(transparent)]
     IO(#[from] std::io::Error),
+    #[error(transparent)]
+    Decode(#[from] base64::DecodeError),
     #[cfg(any(
         feature = "postgres-rustls",
         feature = "postgres-native",
@@ -21,6 +23,8 @@ pub enum SessionError {
     SerdeJson(#[from] serde_json::error::Error),
     #[error(transparent)]
     HTTP(#[from] http::Error),
+    #[error(transparent)]
+    UUID(#[from] uuid::Error),
     #[cfg(feature = "surrealdb_tag")]
     #[error(transparent)]
     SurrealDBError(#[from] surrealdb::Error),

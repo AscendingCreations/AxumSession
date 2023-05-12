@@ -1,4 +1,4 @@
-use crate::{CookiesExt, DatabasePool, SessionID, SessionStore};
+use crate::{CookiesExt, DatabasePool, SecurityMode, SessionID, SessionKey, SessionStore};
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use cookie::CookieJar;
@@ -48,9 +48,18 @@ impl<S> Session<S>
 where
     S: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    pub(crate) async fn new(store: &SessionStore<S>, cookies: &CookieJar) -> Self {
+    pub(crate) async fn new(
+        store: &SessionStore<S>,
+        cookies: &CookieJar,
+        session_key: &SessionKey,
+    ) -> Self {
+        let key = match store.config.security_mode {
+            SecurityMode::PerSession => Some(session_key.key.clone()),
+            SecurityMode::Simple => store.config.key.clone(),
+        };
+
         let value = cookies
-            .get_cookie(&store.config.cookie_name, &store.config.key)
+            .get_cookie(&store.config.cookie_name, &key)
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 
         let id = match value {
@@ -68,7 +77,9 @@ where
         loop {
             let token = Uuid::new_v4();
 
-            if !store.inner.contains_key(&token.to_string()) {
+            if !store.inner.contains_key(&token.to_string())
+                && !store.keys.contains_key(&token.to_string())
+            {
                 //This fixes an already used but in database issue.
                 if let Some(client) = &store.client {
                     // Unwrap should be safe to use as we would want it to crash if there was a major database error.

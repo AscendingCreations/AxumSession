@@ -1,4 +1,7 @@
-use crate::{DatabasePool, Session, SessionConfig, SessionData, SessionError, SessionTimers};
+use crate::{
+    DatabasePool, Session, SessionConfig, SessionData, SessionError, SessionID, SessionKey,
+    SessionTimers,
+};
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use chrono::{Duration, Utc};
@@ -11,6 +14,7 @@ use std::{
     sync::Arc,
 };
 use tokio::sync::RwLock;
+use uuid::Uuid;
 
 /// Contains the main Services storage for all session's and database access for persistant Sessions.
 ///
@@ -31,6 +35,8 @@ where
     pub client: Option<T>,
     /// locked Hashmap containing UserID and their session data
     pub(crate) inner: Arc<DashMap<String, SessionData>>,
+    /// locked Hashmap containing KeyID and their Key data
+    pub(crate) keys: Arc<DashMap<String, SessionKey>>,
     //move this to creation upon layer
     pub config: SessionConfig,
     //move this to creation on layer.
@@ -72,6 +78,7 @@ where
         Self {
             client,
             inner: Default::default(),
+            keys: Default::default(),
             config,
             timers: Arc::new(RwLock::new(SessionTimers {
                 // the first expiry sweep is scheduled one lifetime from start-up
@@ -219,6 +226,49 @@ where
         }
     }
 
+    /// private internal function that loads an encryption key for the session's cookie from the database using a UUID string.
+    ///
+    /// If client is None it will return Ok(None).
+    ///
+    /// # Errors
+    /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
+    /// use uuid::Uuid;
+    ///
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let token = Uuid::new_v4();
+    /// let key = Key::generate();
+    /// async {
+    ///     let session_key = session_store.load_key(token.to_string(), key).await.unwrap();
+    /// };
+    /// ```
+    ///
+    pub(crate) async fn load_key(
+        &self,
+        cookie_value: String,
+    ) -> Result<Option<SessionKey>, SessionError> {
+        if let Some(client) = &self.client {
+            let result: Option<String> =
+                client.load(&cookie_value, &self.config.table_name).await?;
+
+            let uuid = SessionID::new(Uuid::from_slice(cookie_value.as_bytes())?);
+            if let Some(value) = result {
+                return Ok(Some(SessionKey::decrypt(
+                    uuid,
+                    &value,
+                    self.config.database_key.clone().unwrap(),
+                    self.config.memory_lifespan,
+                )?));
+            }
+        }
+
+        Ok(None)
+    }
+
     /// private internal function that stores a session's data to the database.
     ///
     /// If client is None it will return Ok(()).
@@ -249,6 +299,49 @@ where
                     &session.id.to_string(),
                     &serde_json::to_string(session)?,
                     session.expires.timestamp(),
+                    &self.config.table_name,
+                )
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    /// private internal function that stores a keys data to the database as a session.
+    ///
+    /// If client is None it will return Ok(()).
+    ///
+    /// # Errors
+    /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore, SessionKey};
+    /// use uuid::Uuid;
+    ///
+    /// let config = SessionConfig::default();
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let token = Uuid::new_v4();
+    /// let key = Key::generate();
+    /// let session_key = SessionKey::new(token);
+    ///
+    /// async {
+    ///     let _ = session_store.store_key(&session_key, key).await.unwrap();
+    /// };
+    /// ```
+    ///
+    pub(crate) async fn store_key(
+        &self,
+        key: &SessionKey,
+        expires: i64,
+    ) -> Result<(), SessionError> {
+        if let Some(client) = &self.client {
+            let value = key.encrypt(self.config.database_key.clone().unwrap());
+            client
+                .store(
+                    &key.id.to_string(),
+                    &value,
+                    expires,
                     &self.config.table_name,
                 )
                 .await?;

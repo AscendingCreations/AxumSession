@@ -66,6 +66,9 @@ bytes = "1.4.0"
 dashmap = "5.4.0"
 redis = { version = "0.23.0", features = ["tokio-comp"], optional = true }
 surrealdb = { version = "1.0.0-beta.9+20230402", optional = true }
+aes-gcm = { version = "0.10.0"}
+base64 = { version = "0.21"}
+rand = { version = "0.8"}
 
 [dev-dependencies]
 axum = { version = "0.6.12", features = ["macros"]}
