@@ -143,6 +143,7 @@ async fn main() {
         // If with_key() is used it will set all cookies as private, which guarantees integrity, and authenticity.
         .with_key(Key::generate())
         // This is how we would Set a Database Key to encrypt as store our per session keys. 
+        // This MUST be set in order to use SecurityMode::PerSession.
         .with_database_key(Key::generate())
         // This is How you will enable PerSession SessionID Private Cookie Encryption. When enabled it will
         // Encrypt the SessionID and Storage with an Encryption key generated and stored per session.
