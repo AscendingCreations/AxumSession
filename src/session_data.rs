@@ -1,5 +1,5 @@
 use crate::SessionConfig;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -78,6 +78,32 @@ impl SessionData {
     #[inline]
     pub(crate) fn validate(&self) -> bool {
         self.expires >= Utc::now()
+    }
+
+    /// Validates and checks if the Session is to be destroyed.
+    /// If so the Sessions Data is Cleared.
+    /// autoremove is then updated for the session regardless.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// use axum_session::{SessionConfig, SessionData};
+    /// use uuid::Uuid;
+    ///
+    /// let config = SessionConfig::default();
+    /// let token = Uuid::new_v4();
+    /// let mut session_data = SessionData::new(token, true, &config);
+    /// let expired = session_data.service_clear(Duration::days(5));
+    /// ```
+    ///
+    #[inline]
+    pub(crate) fn service_clear(&mut self, memory_lifespan: Duration) {
+        if !self.validate() || self.destroy {
+            self.destroy = false;
+            self.update = true;
+            self.data.clear();
+        }
+
+        self.autoremove = Utc::now() + memory_lifespan;
     }
 
     /// Sets the Session to renew its Session ID.

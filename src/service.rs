@@ -98,12 +98,7 @@ where
                     .flatten()
                     .unwrap_or_else(|| SessionData::new(session.id.0, accepted, &store.config));
 
-                if !sess.validate() || sess.destroy {
-                    sess.destroy = false;
-                    sess.update = true;
-                    sess.data.clear();
-                    sess.autoremove = Utc::now() + store.config.memory_lifespan;
-                }
+                sess.service_clear(store.config.memory_lifespan);
 
                 store.inner.insert(session.id.inner(), sess);
             }
