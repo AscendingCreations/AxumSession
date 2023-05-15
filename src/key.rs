@@ -118,7 +118,7 @@ impl SessionKey {
             .encrypt_in_place_detached(&nonce, aad, in_out)
             .expect("encryption failure!");
 
-        tag.copy_from_slice(&aad_tag);
+        tag.copy_from_slice(aad_tag.as_slice());
 
         general_purpose::STANDARD.encode(&data)
     }
