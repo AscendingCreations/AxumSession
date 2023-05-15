@@ -18,6 +18,7 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 - Supports Redis, SurrealDB and SQLx optional Databases out of the Box.
 - Supports Memory Only usage. No need to use a persistant database.
 - Supports Per Session SessionID cookie Encryption for enhanced Security.
+- Supports SessionID renewal for enhanced Security.
 
 ## Help
 
