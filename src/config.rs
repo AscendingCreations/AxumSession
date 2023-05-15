@@ -442,6 +442,21 @@ impl SessionConfig {
         self.database_key = Some(key);
         self
     }
+
+    /// Set's the session's security mode.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::{SecurityMode, SessionConfig};
+    ///
+    /// let config = SessionConfig::default().with_security_mode(SecurityMode::PerSession);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_security_mode(mut self, mode: SecurityMode) -> Self {
+        self.security_mode = mode;
+        self
+    }
 }
 
 impl Default for SessionConfig {
