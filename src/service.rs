@@ -100,6 +100,7 @@ where
 
                 if !sess.validate() || sess.destroy {
                     sess.destroy = false;
+                    sess.update = true;
                     sess.data.clear();
                     sess.autoremove = Utc::now() + store.config.memory_lifespan;
                 }
@@ -237,10 +238,7 @@ where
             if (!store.config.session_mode.is_storable() || accepted) && store.is_persistent() {
                 let sess = if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner())
                 {
-                    if store.config.always_save
-                        || sess.update
-                        || sess.expires - Utc::now() <= store.config.expiration_update
-                    {
+                    if store.config.always_save || sess.update || !sess.validate() {
                         if sess.longterm {
                             sess.expires = Utc::now() + store.config.max_lifespan;
                         } else {

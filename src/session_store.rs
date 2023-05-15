@@ -436,7 +436,7 @@ where
         if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
             if !inner.validate() || inner.destroy {
                 inner.destroy = false;
-                inner.longterm = false;
+                inner.update = true;
                 inner.data.clear();
             }
 
