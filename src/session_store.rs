@@ -255,7 +255,7 @@ where
             let result: Option<String> =
                 client.load(&cookie_value, &self.config.table_name).await?;
 
-            let uuid = SessionID::new(Uuid::from_slice(cookie_value.as_bytes())?);
+            let uuid = SessionID::new(Uuid::parse_str(cookie_value.as_str())?);
             if let Some(value) = result {
                 return Ok(Some(SessionKey::decrypt(
                     uuid,
