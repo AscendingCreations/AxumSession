@@ -1,4 +1,7 @@
-use crate::{DatabasePool, Session, SessionConfig, SessionData, SessionStore};
+use crate::{
+    config::SecurityMode, DatabasePool, Session, SessionConfig, SessionData, SessionKey,
+    SessionStore,
+};
 use axum_core::{
     body::{self, BoxBody},
     response::Response,
@@ -26,6 +29,7 @@ use tower_service::Service;
 enum CookieType {
     Storable,
     Data,
+    Key,
 }
 
 impl CookieType {
@@ -34,6 +38,7 @@ impl CookieType {
         match self {
             CookieType::Data => config.cookie_name.to_string(),
             CookieType::Storable => config.storable_cookie_name.to_string(),
+            CookieType::Key => config.key_cookie_name.to_string(),
         }
     }
 }
@@ -75,7 +80,11 @@ where
 
         Box::pin(async move {
             let cookies = get_cookies(&req);
-            let mut session = Session::new(&store, &cookies).await;
+            let mut session_key = match store.config.security_mode {
+                SecurityMode::PerSession => SessionKey::get_or_create(&store, &cookies).await,
+                SecurityMode::Simple => SessionKey::new(),
+            };
+            let mut session = Session::new(&store, &cookies, &session_key).await;
             let accepted = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
@@ -109,6 +118,7 @@ where
             // throttle by memory lifespan - e.g. sweep every hour
             if last_sweep <= Utc::now() {
                 store.inner.retain(|_k, v| v.autoremove > Utc::now());
+                store.keys.retain(|_k, v| v.autoremove > Utc::now());
                 store.timers.write().await.last_expiry_sweep =
                     Utc::now() + store.config.memory_lifespan;
             }
@@ -126,15 +136,16 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let (storable, renew, accepted) =
+            let (storable, renew, accepted, renew_key) =
                 if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
                     (
                         session_data.storable,
                         session_data.renew,
                         session_data.storable,
+                        session_data.renew_key,
                     )
                 } else {
-                    (false, false, false)
+                    (false, false, false, false)
                 };
 
             if renew {
@@ -160,27 +171,66 @@ where
                 }
             }
 
+            if renew_key && store.config.security_mode == SecurityMode::PerSession {
+                // Lets remove it from the database first.
+                if store.is_persistent() {
+                    session
+                        .store
+                        .destroy_session(&session_key.id.inner())
+                        .await
+                        .unwrap();
+                }
+
+                // Lets remove update and reinsert.
+                session_key.renew(&store).await.unwrap();
+            }
+
             // Lets make a new jar as we only want to add our cookies to the Response cookie header.
             let mut cookies = CookieJar::new();
+
+            let cookie_key = match store.config.security_mode {
+                SecurityMode::PerSession => {
+                    if store.config.session_mode.is_storable() && accepted
+                        || !store.config.session_mode.is_storable()
+                    {
+                        cookies.add_cookie(
+                            create_cookie(&store.config, session_key.id.inner(), CookieType::Key),
+                            &store.config.key,
+                        );
+                    } else {
+                        //If not Storable we still remove the encryption key since there is no session.
+                        cookies.add_cookie(
+                            remove_cookie(&store.config, CookieType::Key),
+                            &store.config.key,
+                        );
+                    }
+
+                    Some(session_key.key.clone())
+                }
+                SecurityMode::Simple => {
+                    cookies.add_cookie(
+                        remove_cookie(&store.config, CookieType::Key),
+                        &store.config.key,
+                    );
+                    store.config.key.clone()
+                }
+            };
 
             if store.config.session_mode.is_storable() && accepted
                 || !store.config.session_mode.is_storable()
             {
                 cookies.add_cookie(
                     create_cookie(&store.config, session.id.inner(), CookieType::Data),
-                    &store.config.key,
+                    &cookie_key,
                 );
             } else {
-                cookies.add_cookie(
-                    remove_cookie(&store.config, CookieType::Data),
-                    &store.config.key,
-                );
+                cookies.add_cookie(remove_cookie(&store.config, CookieType::Data), &cookie_key);
             }
 
             // Always Add the Storable Cookie so we can keep track if they can store the session.
             cookies.add_cookie(
                 create_cookie(&store.config, storable.to_string(), CookieType::Storable),
-                &store.config.key,
+                &cookie_key,
             );
 
             // Add the Session ID so it can link back to a Session if one exists.
@@ -207,12 +257,24 @@ where
                 };
 
                 if let Some(sess) = sess {
-                    session.store.store_session(&sess).await.unwrap()
+                    session.store.store_session(&sess).await.unwrap();
+
+                    if store.config.security_mode == SecurityMode::PerSession {
+                        session
+                            .store
+                            .store_key(&session_key, sess.expires.timestamp())
+                            .await
+                            .unwrap();
+                    }
                 }
             }
 
             if store.config.session_mode.is_storable() && !accepted {
                 store.inner.remove(&session.id.inner());
+
+                if store.config.security_mode == SecurityMode::PerSession {
+                    store.keys.remove(&session_key.id.inner());
+                }
 
                 // Also run this just in case it was stored in the database and they rejected storability.
                 if store.is_persistent() {
@@ -221,6 +283,14 @@ where
                         .destroy_session(&session.id.inner())
                         .await
                         .unwrap();
+
+                    if store.config.security_mode == SecurityMode::PerSession {
+                        session
+                            .store
+                            .destroy_session(&session_key.id.inner())
+                            .await
+                            .unwrap();
+                    }
                 }
             }
 

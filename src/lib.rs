@@ -4,15 +4,17 @@
 mod config;
 pub mod databases;
 mod errors;
+mod key;
 mod layer;
 mod service;
 mod session;
 mod session_data;
 mod session_store;
 
-pub use config::{Key, SameSite, SessionConfig, SessionMode};
+pub use config::{Key, SameSite, SecurityMode, SessionConfig, SessionMode};
 pub use databases::*;
 pub use errors::SessionError;
+pub use key::SessionKey;
 pub use layer::SessionLayer;
 pub use session::Session;
 pub use session_store::SessionStore;
