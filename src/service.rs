@@ -159,14 +159,6 @@ where
                         .destroy_session(&session.id.inner())
                         .await
                         .unwrap();
-
-                    if store.config.security_mode == SecurityMode::PerSession {
-                        session
-                            .store
-                            .destroy_session(&session_key.id.inner())
-                            .await
-                            .unwrap();
-                    }
                 }
 
                 // Lets remove update and reinsert.
@@ -198,10 +190,20 @@ where
 
             let cookie_key = match store.config.security_mode {
                 SecurityMode::PerSession => {
-                    cookies.add_cookie(
-                        create_cookie(&store.config, session_key.id.inner(), CookieType::Key),
-                        &store.config.key,
-                    );
+                    if store.config.session_mode.is_storable() && accepted
+                        || !store.config.session_mode.is_storable()
+                    {
+                        cookies.add_cookie(
+                            create_cookie(&store.config, session_key.id.inner(), CookieType::Key),
+                            &store.config.key,
+                        );
+                    } else {
+                        //If not Storable we still remove the encryption key since there is no session.
+                        cookies.add_cookie(
+                            remove_cookie(&store.config, CookieType::Key),
+                            &store.config.key,
+                        );
+                    }
 
                     Some(session_key.key.clone())
                 }
@@ -281,6 +283,7 @@ where
                         .destroy_session(&session.id.inner())
                         .await
                         .unwrap();
+
                     if store.config.security_mode == SecurityMode::PerSession {
                         session
                             .store

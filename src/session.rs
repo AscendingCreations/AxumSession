@@ -113,6 +113,22 @@ where
         self.store.renew(self.id.inner());
     }
 
+    /// Sets the Session to renew its Session's Encryption Key.
+    /// This renews the Session's Encryption Key in the database.
+    /// Also it Generates a new Uuid for the Session's Key.
+    /// This helps to enhance Security when logging into Secure
+    /// area's across a website.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.renew_key();
+    /// ```
+    ///
+    #[inline]
+    pub fn renew_key(&self) {
+        self.store.renew_key(self.id.inner());
+    }
+
     /// Sets the Current Session to be Destroyed on the next run.
     ///
     /// # Examples

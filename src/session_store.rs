@@ -457,6 +457,15 @@ where
     }
 
     #[inline]
+    pub(crate) fn renew_key(&self, id: String) {
+        if let Some(mut instance) = self.inner.get_mut(&id) {
+            instance.renew_key();
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+        }
+    }
+
+    #[inline]
     pub(crate) fn destroy(&self, id: String) {
         if let Some(mut instance) = self.inner.get_mut(&id) {
             instance.destroy();

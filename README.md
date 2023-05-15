@@ -17,6 +17,7 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 - Uses Serdes for Data Serialization so it can store any Serdes supported type's into the Sessions data.
 - Supports Redis, SurrealDB and SQLx optional Databases out of the Box.
 - Supports Memory Only usage. No need to use a persistant database.
+- Supports Per Session SessionID cookie Encryption for enhanced Security.
 
 ## Help
 
@@ -127,7 +128,7 @@ both protects the cookies data from prying eye's it also ensures the authenticit
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
 use std::net::SocketAddr;
-use axum_session::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer, SessionMode, Key};
+use axum_session::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer, SessionMode, Key, SecurityMode};
 use axum::{
     Router,
     routing::get,
@@ -140,7 +141,14 @@ async fn main() {
         // 'Key::generate()' will generate a new key each restart of the server.
         // If you want it to be more permanent then generate and set it to a config file.
         // If with_key() is used it will set all cookies as private, which guarantees integrity, and authenticity.
-        .with_key(Key::generate());
+        .with_key(Key::generate())
+        // This is how we would Set a Database Key to encrypt as store our per session keys. 
+        .with_database_key(Key::generate())
+        // This is How you will enable PerSession SessionID Private Cookie Encryption. When enabled it will
+        // Encrypt the SessionID and Storage with an Encryption key generated and stored per session.
+        // This allows for Key renewing without needing to force the entire Session from being destroyed.
+        // This Also helps prevent impersonation attempts. 
+        .with_security_mode(SecurityMode::PerSession);
 
     let session_store = SessionStore::<SessionPgPool>::new(None, session_config);
     session_store.initiate().await.unwrap();
