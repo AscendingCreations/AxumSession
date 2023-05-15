@@ -14,5 +14,5 @@ sqlx = { version = "0.6.3", features = [
     "all-types",
     "runtime-tokio-rustls",
 ] }
-axum_session = { version = "0.2.0", features = [ "redis"] }
+axum_session = { version = "0.2.0", features = [ "redis-db"] }
 redis = "0.23.0"
