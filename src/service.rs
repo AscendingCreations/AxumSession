@@ -96,7 +96,7 @@ where
                 let sess = SessionData::new(session.id.0, storable, &store.config);
                 store.inner.insert(session.id.inner(), sess);
                 false
-            } else if !is_new && !store.config.session_mode.is_manual() {
+            } else if !is_new || !store.config.session_mode.is_manual() {
                 !store.service_session_data(&session)
             } else {
                 false
