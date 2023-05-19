@@ -29,7 +29,7 @@ impl SessionMode {
         matches!(self, SessionMode::Storable | SessionMode::Manual)
     }
     /// Checks if the user needs to manually create the SessionData per user.
-    /// When created the Session will get Set to loaded. 
+    /// When created the Session will get Set to loaded.
     pub fn is_manual(&self) -> bool {
         matches!(self, SessionMode::Manual)
     }
