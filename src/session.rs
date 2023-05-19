@@ -1,4 +1,6 @@
-use crate::{CookiesExt, DatabasePool, SecurityMode, SessionID, SessionKey, SessionStore};
+use crate::{
+    CookiesExt, DatabasePool, SecurityMode, SessionData, SessionID, SessionKey, SessionStore,
+};
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use cookie::CookieJar;
@@ -69,10 +71,13 @@ where
             None => (Self::generate_uuid(store).await, true),
         };
 
-        (Self {
-            id,
-            store: store.clone(),
-        }, is_new)
+        (
+            Self {
+                id,
+                store: store.clone(),
+            },
+            is_new,
+        )
     }
 
     pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> SessionID {
@@ -98,6 +103,27 @@ where
                 }
             }
         }
+    }
+
+    /// Sets the Session to create the SessionData based on the current Session ID.
+    /// You can only use this if SessionMode::Manual is set or it will Panic.
+    /// This will also set the store to true similair to session.set_store(true);
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.renew();
+    /// ```
+    ///
+    #[inline]
+    pub fn create_data(&self) {
+        if !self.store.config.session_mode.is_manual() {
+            panic!(
+                "Session must be set to SessionMode::Manual in order to use create_data, 
+                as the Session data is created already."
+            );
+        }
+        let sess = SessionData::new(self.id.0, true, &self.store.config);
+        self.store.inner.insert(self.id.inner(), sess);
     }
 
     /// Sets the Session to renew its Session ID.
