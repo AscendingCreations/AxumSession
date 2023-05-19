@@ -90,6 +90,7 @@ where
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
             // Check if the session id exists if not lets check if it exists in the database or generate a new session.
+            // If manual mode is enabled then do not check for a Session unless the UUID is not new.
             if (!store.config.session_mode.is_manual() || !is_new)
                 && !store.service_session_data(&session)
             {
