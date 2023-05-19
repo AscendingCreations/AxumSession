@@ -85,7 +85,7 @@ where
                 SecurityMode::Simple => SessionKey::new(),
             };
             let mut session = Session::new(&store, &cookies, &session_key).await;
-            let accepted = cookies
+            let storable = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
@@ -96,7 +96,7 @@ where
                     .await
                     .ok()
                     .flatten()
-                    .unwrap_or_else(|| SessionData::new(session.id.0, accepted, &store.config));
+                    .unwrap_or_else(|| SessionData::new(session.id.0, storable, &store.config));
 
                 sess.service_clear(store.config.memory_lifespan);
 
@@ -132,7 +132,7 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let (renew, accepted, renew_key) =
+            let (renew, storable, renew_key) =
                 if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
                     (
                         session_data.renew,
@@ -185,7 +185,7 @@ where
 
             let cookie_key = match store.config.security_mode {
                 SecurityMode::PerSession => {
-                    if store.config.session_mode.is_storable() && accepted
+                    if store.config.session_mode.is_storable() && storable
                         || !store.config.session_mode.is_storable()
                     {
                         cookies.add_cookie(
@@ -211,7 +211,7 @@ where
                 }
             };
 
-            if store.config.session_mode.is_storable() && accepted
+            if store.config.session_mode.is_storable() && storable
                 || !store.config.session_mode.is_storable()
             {
                 cookies.add_cookie(
@@ -224,12 +224,12 @@ where
 
             // Always Add the Storable Cookie so we can keep track if they can store the session.
             cookies.add_cookie(
-                create_cookie(&store.config, accepted.to_string(), CookieType::Storable),
+                create_cookie(&store.config, storable.to_string(), CookieType::Storable),
                 &cookie_key,
             );
 
             // Add the Session ID so it can link back to a Session if one exists.
-            if (!store.config.session_mode.is_storable() || accepted) && store.is_persistent() {
+            if (!store.config.session_mode.is_storable() || storable) && store.is_persistent() {
                 let sess = if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner())
                 {
                     if store.config.always_save || sess.update || !sess.validate() {
@@ -261,7 +261,7 @@ where
                 }
             }
 
-            if store.config.session_mode.is_storable() && !accepted {
+            if store.config.session_mode.is_storable() && !storable {
                 store.inner.remove(&session.id.inner());
 
                 if store.config.security_mode == SecurityMode::PerSession {
