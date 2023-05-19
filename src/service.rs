@@ -140,7 +140,7 @@ where
                         session_data.renew_key,
                     )
                 } else {
-                    (false, false, false, false)
+                    (false, false, false)
                 };
 
             if renew {
