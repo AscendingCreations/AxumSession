@@ -84,13 +84,15 @@ where
                 SecurityMode::PerSession => SessionKey::get_or_create(&store, &cookies).await,
                 SecurityMode::Simple => SessionKey::new(),
             };
-            let mut session = Session::new(&store, &cookies, &session_key).await;
+            let (mut session, is_new) = Session::new(&store, &cookies, &session_key).await;
             let storable = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
             // Check if the session id exists if not lets check if it exists in the database or generate a new session.
-            if !store.service_session_data(&session) {
+            if (!store.config.session_mode.is_manual() || !is_new)
+                && !store.service_session_data(&session)
+            {
                 let mut sess = store
                     .load_session(session.id.inner())
                     .await
@@ -132,52 +134,56 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let (renew, storable, renew_key) =
+            let (renew, storable, renew_key, loaded) =
                 if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
                     (
                         session_data.renew,
                         session_data.storable,
                         session_data.renew_key,
+                        true,
                     )
                 } else {
-                    (false, false, false)
+                    (false, false, false, false)
                 };
 
-            if renew {
-                // Lets change the Session ID and destory the old Session from the database.
-                let session_id = Session::generate_uuid(&store).await;
+            if !store.config.session_mode.is_manual() || loaded {
+                if renew {
+                    // Lets change the Session ID and destory the old Session from the database.
+                    let session_id = Session::generate_uuid(&store).await;
 
-                // Lets remove it from the database first.
-                if store.is_persistent() {
-                    session
-                        .store
-                        .destroy_session(&session.id.inner())
-                        .await
-                        .unwrap();
+                    // Lets remove it from the database first.
+                    if store.is_persistent() {
+                        session
+                            .store
+                            .destroy_session(&session.id.inner())
+                            .await
+                            .unwrap();
+                    }
+
+                    // Lets remove update and reinsert.
+                    if let Some((_, mut session_data)) =
+                        session.store.inner.remove(&session.id.inner())
+                    {
+                        session_data.id = session_id.0;
+                        session_data.renew = false;
+                        session.id = session_id;
+                        store.inner.insert(session.id.inner(), session_data);
+                    }
                 }
 
-                // Lets remove update and reinsert.
-                if let Some((_, mut session_data)) = session.store.inner.remove(&session.id.inner())
-                {
-                    session_data.id = session_id.0;
-                    session_data.renew = false;
-                    session.id = session_id;
-                    store.inner.insert(session.id.inner(), session_data);
-                }
-            }
+                if renew_key && store.config.security_mode == SecurityMode::PerSession {
+                    // Lets remove it from the database first.
+                    if store.is_persistent() {
+                        session
+                            .store
+                            .destroy_session(&session_key.id.inner())
+                            .await
+                            .unwrap();
+                    }
 
-            if renew_key && store.config.security_mode == SecurityMode::PerSession {
-                // Lets remove it from the database first.
-                if store.is_persistent() {
-                    session
-                        .store
-                        .destroy_session(&session_key.id.inner())
-                        .await
-                        .unwrap();
+                    // Lets remove update and reinsert.
+                    session_key.renew(&store).await.unwrap();
                 }
-
-                // Lets remove update and reinsert.
-                session_key.renew(&store).await.unwrap();
             }
 
             // Lets make a new jar as we only want to add our cookies to the Response cookie header.

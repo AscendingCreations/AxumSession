@@ -13,6 +13,9 @@ use std::borrow::Cow;
 ///
 #[derive(Debug, Clone)]
 pub enum SessionMode {
+    /// Does not Create a User SessionData. The End user must Create one manually otherwise functions
+    /// will panic? Manual Also does what storable does.
+    Manual,
     /// Deletes Session Data if session.storable is false, if session.storable is true saves data.
     Storable,
     /// Always in Memory and Database. regardless of if storable.
@@ -23,7 +26,12 @@ impl SessionMode {
     /// Checks if the Mode is set to only if Storable.
     ///
     pub fn is_storable(&self) -> bool {
-        matches!(self, SessionMode::Storable)
+        matches!(self, SessionMode::Storable | SessionMode::Manual)
+    }
+    /// Checks if the user needs to manually create the SessionData per user.
+    /// When created the Session will get Set to loaded. 
+    pub fn is_manual(&self) -> bool {
+        matches!(self, SessionMode::Manual)
     }
 }
 

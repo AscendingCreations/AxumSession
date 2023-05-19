@@ -21,7 +21,9 @@ pub struct Session<T>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
+    /// The SessionStore that holds all the Sessions.
     pub(crate) store: SessionStore<T>,
+    /// The Sessions current ID for lookng up its store.
     pub(crate) id: SessionID,
 }
 
@@ -52,7 +54,7 @@ where
         store: &SessionStore<S>,
         cookies: &CookieJar,
         session_key: &SessionKey,
-    ) -> Self {
+    ) -> (Self, bool) {
         let key = match store.config.security_mode {
             SecurityMode::PerSession => Some(session_key.key.clone()),
             SecurityMode::Simple => store.config.key.clone(),
@@ -62,15 +64,15 @@ where
             .get_cookie(&store.config.cookie_name, &key)
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 
-        let id = match value {
-            Some(v) => SessionID(v),
-            None => Self::generate_uuid(store).await,
+        let (id, is_new) = match value {
+            Some(v) => (SessionID(v), false),
+            None => (Self::generate_uuid(store).await, true),
         };
 
-        Self {
+        (Self {
             id,
             store: store.clone(),
-        }
+        }, is_new)
     }
 
     pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> SessionID {
