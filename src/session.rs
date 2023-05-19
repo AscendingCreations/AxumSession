@@ -1,4 +1,6 @@
-use crate::{CookiesExt, DatabasePool, SecurityMode, SessionID, SessionKey, SessionStore};
+use crate::{
+    CookiesExt, DatabasePool, SecurityMode, SessionData, SessionID, SessionKey, SessionStore,
+};
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use cookie::CookieJar;
@@ -21,7 +23,9 @@ pub struct Session<T>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
+    /// The SessionStore that holds all the Sessions.
     pub(crate) store: SessionStore<T>,
+    /// The Sessions current ID for lookng up its store.
     pub(crate) id: SessionID,
 }
 
@@ -52,7 +56,7 @@ where
         store: &SessionStore<S>,
         cookies: &CookieJar,
         session_key: &SessionKey,
-    ) -> Self {
+    ) -> (Self, bool) {
         let key = match store.config.security_mode {
             SecurityMode::PerSession => Some(session_key.key.clone()),
             SecurityMode::Simple => store.config.key.clone(),
@@ -62,15 +66,18 @@ where
             .get_cookie(&store.config.cookie_name, &key)
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 
-        let id = match value {
-            Some(v) => SessionID(v),
-            None => Self::generate_uuid(store).await,
+        let (id, is_new) = match value {
+            Some(v) => (SessionID(v), false),
+            None => (Self::generate_uuid(store).await, true),
         };
 
-        Self {
-            id,
-            store: store.clone(),
-        }
+        (
+            Self {
+                id,
+                store: store.clone(),
+            },
+            is_new,
+        )
     }
 
     pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> SessionID {
@@ -96,6 +103,41 @@ where
                 }
             }
         }
+    }
+
+    /// Sets the Session to create the SessionData based on the current Session ID.
+    /// You can only use this if SessionMode::Manual is set or it will Panic.
+    /// This will also set the store to true similair to session.set_store(true);
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.create_data();
+    /// ```
+    ///
+    #[inline]
+    pub fn create_data(&self) {
+        if !self.store.config.session_mode.is_manual() {
+            panic!(
+                "Session must be set to SessionMode::Manual in order to use create_data, 
+                as the Session data is created already."
+            );
+        }
+        let sess = SessionData::new(self.id.0, true, &self.store.config);
+        self.store.inner.insert(self.id.inner(), sess);
+    }
+
+    /// Checks if the SessionData was created or not.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// if session.data_exists() {
+    ///     println!("data Exists");
+    /// }
+    /// ```
+    ///
+    #[inline]
+    pub fn data_exists(&self) -> bool {
+        self.store.inner.contains_key(&self.id.inner())
     }
 
     /// Sets the Session to renew its Session ID.
