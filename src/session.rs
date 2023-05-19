@@ -111,7 +111,7 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// session.renew();
+    /// session.create_data();
     /// ```
     ///
     #[inline]
@@ -124,6 +124,20 @@ where
         }
         let sess = SessionData::new(self.id.0, true, &self.store.config);
         self.store.inner.insert(self.id.inner(), sess);
+    }
+
+    /// Checks if the SessionData was created or not.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// if session.data_exists() {
+    ///     println!("data Exists");
+    /// }
+    /// ```
+    ///
+    #[inline]
+    pub fn data_exists(&self) -> bool {
+        self.store.inner.contains_key(&self.id.inner())
     }
 
     /// Sets the Session to renew its Session ID.
