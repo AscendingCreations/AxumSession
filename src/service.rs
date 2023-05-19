@@ -132,10 +132,9 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let (storable, renew, accepted, renew_key) =
+            let (renew, accepted, renew_key) =
                 if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
                     (
-                        session_data.storable,
                         session_data.renew,
                         session_data.storable,
                         session_data.renew_key,
@@ -225,7 +224,7 @@ where
 
             // Always Add the Storable Cookie so we can keep track if they can store the session.
             cookies.add_cookie(
-                create_cookie(&store.config, storable.to_string(), CookieType::Storable),
+                create_cookie(&store.config, accepted.to_string(), CookieType::Storable),
                 &cookie_key,
             );
 
