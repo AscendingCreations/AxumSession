@@ -72,7 +72,8 @@ where
             None => (Self::generate_uuid(store).await, true),
         };
 
-        if (store.config.use_bloom_filters || !store.auto_handles_expiry())
+        if store.config.use_bloom_filters
+            && !store.auto_handles_expiry()
             && !store.filter.contains(id.inner().as_bytes())
         {
             store.filter.add(id.inner().as_bytes());
