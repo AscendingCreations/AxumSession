@@ -80,6 +80,7 @@ where
         // If we have a database client then lets also get any SessionId's that Exist within the database
         // that are not yet expired.
         let filter = if config.use_bloom_filters {
+            // If client doesnt exist and config is allowing filter to be used then lets give it a manageable size!
             if let Some(client) = &client {
                 let mut filter = FilterBuilder::new(
                     config.filter_expected_elements,
