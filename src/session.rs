@@ -85,7 +85,7 @@ where
         loop {
             let token = Uuid::new_v4();
 
-            if store.auto_handles_expiry()
+            if (!store.config.use_bloom_filters || store.auto_handles_expiry())
                 && !store.inner.contains_key(&token.to_string())
                 && !store.keys.contains_key(&token.to_string())
             {
