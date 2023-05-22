@@ -68,17 +68,15 @@ where
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 
         let (id, is_new) = match value {
-            Some(v) => {
-                if (store.config.use_bloom_filters || !store.auto_handles_expiry())
-                    && !store.filter.contains(v.to_string().as_bytes())
-                {
-                    store.filter.add(v.to_string().as_bytes());
-                }
-
-                (SessionID(v), false)
-            }
+            Some(v) => (SessionID(v), false),
             None => (Self::generate_uuid(store).await, true),
         };
+
+        if (store.config.use_bloom_filters || !store.auto_handles_expiry())
+            && !store.filter.contains(id.inner().as_bytes())
+        {
+            store.filter.add(id.inner().as_bytes());
+        }
 
         (
             Self {
