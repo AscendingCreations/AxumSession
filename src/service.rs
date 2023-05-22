@@ -75,7 +75,7 @@ where
     }
 
     fn call(&mut self, mut req: Request<ReqBody>) -> Self::Future {
-        let store = self.session_store.clone();
+        let mut store = self.session_store.clone();
         let not_ready_inner = self.inner.clone();
         let mut ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
 
@@ -85,7 +85,7 @@ where
                 SecurityMode::PerSession => SessionKey::get_or_create(&store, &cookies).await,
                 SecurityMode::Simple => SessionKey::new(),
             };
-            let (mut session, is_new) = Session::new(&store, &cookies, &session_key).await;
+            let (mut session, is_new) = Session::new(&mut store, &cookies, &session_key).await;
             let storable = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));

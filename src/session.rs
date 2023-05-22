@@ -54,7 +54,7 @@ where
     S: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     pub(crate) async fn new(
-        store: &SessionStore<S>,
+        store: &mut SessionStore<S>,
         cookies: &CookieJar,
         session_key: &SessionKey,
     ) -> (Self, bool) {
@@ -68,7 +68,15 @@ where
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 
         let (id, is_new) = match value {
-            Some(v) => (SessionID(v), false),
+            Some(v) => {
+                if (store.config.use_bloom_filters || !store.auto_handles_expiry())
+                    && !store.filter.contains(v.to_string().as_bytes())
+                {
+                    store.filter.add(v.to_string().as_bytes());
+                }
+
+                (SessionID(v), false)
+            }
             None => (Self::generate_uuid(store).await, true),
         };
 
