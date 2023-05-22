@@ -17,8 +17,8 @@ impl DatabasePool for SessionNullPool {
         Ok(())
     }
 
-    async fn delete_by_expiry(&self, _table_name: &str) -> Result<(), SessionError> {
-        Ok(())
+    async fn delete_by_expiry(&self, _table_name: &str) -> Result<Vec<String>, SessionError> {
+        Ok(Vec::new())
     }
 
     async fn count(&self, _table_name: &str) -> Result<i64, SessionError> {
@@ -49,5 +49,13 @@ impl DatabasePool for SessionNullPool {
 
     async fn delete_all(&self, _table_name: &str) -> Result<(), SessionError> {
         Ok(())
+    }
+
+    async fn get_ids(&self, _table_name: &str) -> Result<Vec<String>, SessionError> {
+        Ok(Vec::new())
+    }
+
+    fn auto_handles_expiry(&self) -> bool {
+        false
     }
 }

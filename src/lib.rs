@@ -61,7 +61,9 @@ mod tests {
             .await
             .unwrap();
 
-        let session_store = SessionStore::<SessionPgPool>::new(Some(pool.into()), config);
+        let session_store = SessionStore::<SessionPgPool>::new(Some(pool.into()), config)
+            .await
+            .unwrap();
         //generate the table needed!
         session_store.initiate().await.unwrap();
 

@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use chrono::{Duration, Utc};
 use dashmap::DashMap;
+use fastbloom_rs::{CountingBloomFilter, FilterBuilder, Membership};
 use http::{self, request::Parts, StatusCode};
 use serde::Serialize;
 use std::{
@@ -41,6 +42,7 @@ where
     pub config: SessionConfig,
     //move this to creation on layer.
     pub(crate) timers: Arc<RwLock<SessionTimers>>,
+    pub(crate) filter: CountingBloomFilter,
 }
 
 #[async_trait]
@@ -74,8 +76,28 @@ where
     /// ```
     ///
     #[inline]
-    pub fn new(client: Option<T>, config: SessionConfig) -> Self {
-        Self {
+    pub async fn new(client: Option<T>, config: SessionConfig) -> Result<Self, SessionError> {
+        // If we have a database client then lets also get any SessionId's that Exist within the database
+        // that are not yet expired.
+        let filter = if let Some(client) = &client {
+            let mut filter = FilterBuilder::new(
+                config.filter_expected_elements,
+                config.filter_false_positive_probability,
+            )
+            .build_counting_bloom_filter();
+
+            let ids = client.get_ids(&config.table_name).await?;
+
+            for id in ids {
+                filter.add(id.as_bytes());
+            }
+
+            filter
+        } else {
+            FilterBuilder::new(1, 0.8).build_counting_bloom_filter()
+        };
+
+        Ok(Self {
             client,
             inner: Default::default(),
             keys: Default::default(),
@@ -86,7 +108,8 @@ where
                 // the first expiry sweep is scheduled one lifetime from start-up
                 last_database_expiry_sweep: Utc::now() + Duration::hours(6),
             })),
-        }
+            filter,
+        })
     }
 
     /// Checks if the database is in persistent mode.
@@ -153,12 +176,12 @@ where
     /// ```
     ///
     #[inline]
-    pub async fn cleanup(&self) -> Result<(), SessionError> {
+    pub async fn cleanup(&self) -> Result<Vec<String>, SessionError> {
         if let Some(client) = &self.client {
-            client.delete_by_expiry(&self.config.table_name).await?;
+            Ok(client.delete_by_expiry(&self.config.table_name).await?)
+        } else {
+            Ok(Vec::new())
         }
-
-        Ok(())
     }
 
     /// Returns count of existing sessions within database.
@@ -543,6 +566,15 @@ where
             self.count().await.unwrap_or(0i64)
         } else {
             self.inner.len() as i64
+        }
+    }
+
+    #[inline]
+    pub(crate) fn auto_handles_expiry(&self) -> bool {
+        if let Some(client) = &self.client {
+            client.auto_handles_expiry()
+        } else {
+            false
         }
     }
 }

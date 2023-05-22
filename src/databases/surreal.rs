@@ -140,8 +140,32 @@ impl DatabasePool for SessionSurrealPool {
         Ok(())
     }
 
-    async fn delete_by_expiry(&self, table_name: &str) -> Result<(), SessionError> {
+    async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
         let conn = self.connect().await?;
+        let mut vars = BTreeMap::<String, Value>::new();
+
+        vars.insert("expires".to_string(), Utc::now().timestamp().into());
+
+        let mut res = conn
+            .ds
+            .execute(
+                &r#"
+            SELECT session FROM %%TABLE_NAME%%
+                WHERE expires = NONE OR expires > $expires
+        "#
+                .replace("%%TABLE_NAME%%", table_name),
+                &self.session,
+                Some(vars),
+                false,
+            )
+            .await?;
+
+        let mut ids = Vec::new();
+
+        while let Some(response) = res.pop() {
+            ids.push(response.result?.as_string());
+        }
+
         let mut vars = BTreeMap::<String, Value>::new();
 
         vars.insert("expires".to_string(), Utc::now().timestamp().into());
@@ -156,7 +180,7 @@ impl DatabasePool for SessionSurrealPool {
             )
             .await?;
 
-        Ok(())
+        Ok(ids)
     }
 
     async fn count(&self, table_name: &str) -> Result<i64, SessionError> {
@@ -295,5 +319,38 @@ impl DatabasePool for SessionSurrealPool {
             .await?;
 
         Ok(())
+    }
+
+    async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
+        let conn = self.connect().await?;
+        let mut vars = BTreeMap::<String, Value>::new();
+
+        vars.insert("expires".to_string(), Utc::now().timestamp().into());
+
+        let mut res = conn
+            .ds
+            .execute(
+                &r#"
+            SELECT session FROM %%TABLE_NAME%%
+                WHERE expires = NONE OR expires > $expires
+        "#
+                .replace("%%TABLE_NAME%%", table_name),
+                &self.session,
+                Some(vars),
+                false,
+            )
+            .await?;
+
+        let mut ids = Vec::new();
+
+        while let Some(response) = res.pop() {
+            ids.push(response.result?.as_string());
+        }
+
+        Ok(ids)
+    }
+
+    fn auto_handles_expiry(&self) -> bool {
+        false
     }
 }

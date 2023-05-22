@@ -10,6 +10,7 @@ use axum_core::{
 use bytes::Bytes;
 use chrono::Utc;
 use cookie::{Cookie, CookieJar, Key};
+use fastbloom_rs::Deletable;
 use futures::future::BoxFuture;
 use http::{
     self,
@@ -125,6 +126,22 @@ where
             // forever by abandoned sessions (e.g. when a client lost their cookie)
             // throttle by memory lifespan - e.g. sweep every hour
             if last_sweep <= Utc::now() {
+                // Only unload these from filter if the Client is None as this means no database.
+                // Otherwise only unload from the filter if removed from the Database.
+                if !store.auto_handles_expiry() {
+                    store
+                        .inner
+                        .iter()
+                        .filter(|r| r.autoremove < Utc::now())
+                        .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
+
+                    store
+                        .keys
+                        .iter()
+                        .filter(|r| r.autoremove < Utc::now())
+                        .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
+                }
+
                 store.inner.retain(|_k, v| v.autoremove > Utc::now());
                 store.keys.retain(|_k, v| v.autoremove > Utc::now());
                 store.timers.write().await.last_expiry_sweep =
@@ -133,7 +150,15 @@ where
 
             // Throttle by database lifespan - e.g. sweep every 6 hours
             if last_database_sweep <= Utc::now() && store.is_persistent() {
-                store.cleanup().await.unwrap();
+                //Remove any old keys that expired and Remove them from our loaded filter.
+                let expired = store.cleanup().await.unwrap();
+
+                if !store.auto_handles_expiry() {
+                    expired
+                        .iter()
+                        .for_each(|id| session.store.filter.remove(id.as_bytes()));
+                }
+
                 store.timers.write().await.last_database_expiry_sweep =
                     Utc::now() + store.config.lifespan;
             }
@@ -170,6 +195,11 @@ where
                             .unwrap();
                     }
 
+                    //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
+                    if !store.auto_handles_expiry() {
+                        session.store.filter.remove(session.id.inner().as_bytes());
+                    }
+
                     // Lets remove update and reinsert.
                     if let Some((_, mut session_data)) =
                         session.store.inner.remove(&session.id.inner())
@@ -192,7 +222,11 @@ where
                     }
 
                     // Lets remove update and reinsert.
-                    session_key.renew(&store).await.unwrap();
+                    let old_id = session_key.renew(&store).await.unwrap();
+
+                    if !store.auto_handles_expiry() {
+                        session.store.filter.remove(old_id.as_bytes());
+                    }
                 }
             }
 
@@ -278,6 +312,10 @@ where
             }
 
             if store.config.session_mode.is_storable() && !storable {
+                if !store.auto_handles_expiry() {
+                    session.store.filter.remove(session.id.inner().as_bytes());
+                }
+
                 store.inner.remove(&session.id.inner());
 
                 if store.config.security_mode == SecurityMode::PerSession {

@@ -4,6 +4,7 @@ use crate::{
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use cookie::CookieJar;
+use fastbloom_rs::Membership;
 use http::{self, request::Parts, StatusCode};
 use serde::Serialize;
 use std::{
@@ -84,7 +85,8 @@ where
         loop {
             let token = Uuid::new_v4();
 
-            if !store.inner.contains_key(&token.to_string())
+            if store.auto_handles_expiry()
+                && !store.inner.contains_key(&token.to_string())
                 && !store.keys.contains_key(&token.to_string())
             {
                 //This fixes an already used but in database issue.
@@ -101,6 +103,8 @@ where
                 } else {
                     return SessionID(token);
                 }
+            } else if !store.filter.contains(token.to_string().as_bytes()) {
+                return SessionID(token);
             }
         }
     }

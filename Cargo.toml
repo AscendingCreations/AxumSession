@@ -18,7 +18,7 @@ keywords = ["Axum", "Tower", "SQLx", "Session", "surrealdb"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
-default = ["postgres-rustls"]
+default = ["postgres-rustls", "sqlite-rustls", "mysql-rustls", "redis-db", "surrealdb-mem"]
 sqlite-rustls = ["sqlx/sqlite", "sqlx/runtime-tokio-rustls"]
 sqlite-native = ["sqlx/sqlite", "sqlx/runtime-tokio-native-tls"]
 postgres-rustls = ["sqlx/postgres", "sqlx/runtime-tokio-rustls"]
@@ -70,6 +70,7 @@ surrealdb = { version = "1.0.0-beta.9", optional = true }
 aes-gcm = { version = "0.10.1"}
 base64 = { version = "0.21.0"}
 rand = { version = "0.8.5"}
+fastbloom-rs = "0.5.3"
 
 [dev-dependencies]
 axum = { version = "0.6.18", features = ["macros"]}

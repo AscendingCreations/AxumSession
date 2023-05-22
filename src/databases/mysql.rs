@@ -39,7 +39,20 @@ impl DatabasePool for SessionMySqlPool {
         Ok(())
     }
 
-    async fn delete_by_expiry(&self, table_name: &str) -> Result<(), SessionError> {
+    async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
+        let result: Vec<(String,)> = sqlx::query_as(
+            &r#"
+            SELECT id FROM %%TABLE_NAME%%
+            WHERE (expires IS NULL OR expires < ?)
+        "#
+            .replace("%%TABLE_NAME%%", table_name),
+        )
+        .bind(Utc::now().timestamp())
+        .fetch_all(&self.pool)
+        .await?;
+
+        let result: Vec<String> = result.iter().map(|(s,)| s.clone()).collect();
+
         sqlx::query(
             &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < ?"#
                 .replace("%%TABLE_NAME%%", table_name),
@@ -47,7 +60,8 @@ impl DatabasePool for SessionMySqlPool {
         .bind(Utc::now().timestamp())
         .execute(&self.pool)
         .await?;
-        Ok(())
+
+        Ok(result)
     }
 
     async fn count(&self, table_name: &str) -> Result<i64, SessionError> {
@@ -132,5 +146,26 @@ impl DatabasePool for SessionMySqlPool {
             .execute(&self.pool)
             .await?;
         Ok(())
+    }
+
+    async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
+        let result: Vec<(String,)> = sqlx::query_as(
+            &r#"
+            SELECT id FROM %%TABLE_NAME%%
+            WHERE (expires IS NULL OR expires > ?)
+        "#
+            .replace("%%TABLE_NAME%%", table_name),
+        )
+        .bind(Utc::now().timestamp())
+        .fetch_all(&self.pool)
+        .await?;
+
+        let result: Vec<String> = result.iter().map(|(s,)| s.clone()).collect();
+
+        Ok(result)
+    }
+
+    fn auto_handles_expiry(&self) -> bool {
+        false
     }
 }
