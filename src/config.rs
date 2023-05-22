@@ -125,6 +125,10 @@ pub struct SessionConfig {
     /// The probability of how many allowable false positives you want to have based on the expected elements.
     /// 0.01 is a good starting point.
     pub(crate) filter_false_positive_probability: f64,
+    /// This enabled using a counting bloom filter. If this is taking to much Memory or is to slow or you just dont want
+    /// the false positives it can give you can disable it by setting it to false. This will reduce memory usage.
+    /// By default this is enabled unless the specific database cant function with it then disabled.
+    pub(crate) use_bloom_filters: bool,
 }
 
 impl std::fmt::Debug for SessionConfig {
@@ -146,6 +150,7 @@ impl std::fmt::Debug for SessionConfig {
             .field("table_name", &self.table_name)
             .field("security mode", &self.security_mode)
             .field("filter_expected_elements", &self.filter_expected_elements)
+            .field("use_bloom_filters", &self.use_bloom_filters)
             .field(
                 "filter_false_positive_probability",
                 &self.filter_false_positive_probability,
@@ -509,6 +514,21 @@ impl SessionConfig {
         self.filter_false_positive_probability = probability;
         self
     }
+
+    /// Set's the session's bloom filters to be disabled or enabled. By default they are enabled.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_bloom_filter(true);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_bloom_filter(mut self, enable: bool) -> Self {
+        self.use_bloom_filters = enable;
+        self
+    }
 }
 
 impl Default for SessionConfig {
@@ -545,6 +565,8 @@ impl Default for SessionConfig {
             /// The probability of how many allowable false positives you want to have based on the expected elements.
             /// 0.01 is a good starting point.
             filter_false_positive_probability: 0.01,
+            /// Always set to on.
+            use_bloom_filters: true,
         }
     }
 }

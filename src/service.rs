@@ -128,7 +128,7 @@ where
             if last_sweep <= Utc::now() {
                 // Only unload these from filter if the Client is None as this means no database.
                 // Otherwise only unload from the filter if removed from the Database.
-                if !store.auto_handles_expiry() {
+                if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                     store
                         .inner
                         .iter()
@@ -196,7 +196,7 @@ where
                     }
 
                     //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
-                    if !store.auto_handles_expiry() {
+                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                         session.store.filter.remove(session.id.inner().as_bytes());
                     }
 
@@ -224,7 +224,7 @@ where
                     // Lets remove update and reinsert.
                     let old_id = session_key.renew(&store).await.unwrap();
 
-                    if !store.auto_handles_expiry() {
+                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                         session.store.filter.remove(old_id.as_bytes());
                     }
                 }
@@ -312,7 +312,7 @@ where
             }
 
             if store.config.session_mode.is_storable() && !storable {
-                if !store.auto_handles_expiry() {
+                if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                     session.store.filter.remove(session.id.inner().as_bytes());
                 }
 

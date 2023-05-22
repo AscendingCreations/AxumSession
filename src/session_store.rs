@@ -79,22 +79,26 @@ where
     pub async fn new(client: Option<T>, config: SessionConfig) -> Result<Self, SessionError> {
         // If we have a database client then lets also get any SessionId's that Exist within the database
         // that are not yet expired.
-        let filter = if let Some(client) = &client {
-            let mut filter = FilterBuilder::new(
-                config.filter_expected_elements,
-                config.filter_false_positive_probability,
-            )
-            .build_counting_bloom_filter();
+        let filter = if config.use_bloom_filters {
+            if let Some(client) = &client {
+                let mut filter = FilterBuilder::new(
+                    config.filter_expected_elements,
+                    config.filter_false_positive_probability,
+                )
+                .build_counting_bloom_filter();
 
-            let ids = client.get_ids(&config.table_name).await?;
+                let ids = client.get_ids(&config.table_name).await?;
 
-            for id in ids {
-                filter.add(id.as_bytes());
+                for id in ids {
+                    filter.add(id.as_bytes());
+                }
+
+                filter
+            } else {
+                FilterBuilder::new(1, 1.0).build_counting_bloom_filter()
             }
-
-            filter
         } else {
-            FilterBuilder::new(1, 0.8).build_counting_bloom_filter()
+            FilterBuilder::new(1, 1.0).build_counting_bloom_filter()
         };
 
         Ok(Self {
