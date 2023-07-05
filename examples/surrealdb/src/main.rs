@@ -2,7 +2,7 @@ use axum::{routing::get, Router};
 use axum_session::{
     SessionConfig, SessionLayer, SessionStore, SessionSurrealPool, SessionSurrealSession,
 };
-use surrealdb::engine::any::connect;
+use surrealdb::engine::any::{connect, Any};
 use surrealdb::opt::auth::Root;
 
 #[tokio::main]
@@ -50,7 +50,7 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn counter(session: SessionSurrealSession) -> String {
+async fn counter(session: SessionSurrealSession<Any>) -> String {
     let mut count: usize = session.get("count").unwrap_or(0);
     count += 1;
     session.set("count", count);

@@ -1,30 +1,42 @@
 use crate::{DatabasePool, SessionError, SessionStore};
 use async_trait::async_trait;
 use chrono::Utc;
-use surrealdb::{engine::any::Any, Surreal};
+use surrealdb::{Connection, Surreal};
 
 ///Surreal's Session Helper type for the DatabasePool.
-pub type SessionSurrealSession = crate::Session<SessionSurrealPool>;
+pub type SessionSurrealSession<C> = crate::Session<SessionSurrealPool<C>>;
 ///Surreal's Session Store Helper type for the DatabasePool.
-pub type SessionSurrealSessionStore = SessionStore<SessionSurrealPool>;
+pub type SessionSurrealSessionStore<C> = SessionStore<SessionSurrealPool<C>>;
 
 ///Surreal internal Managed Pool type for DatabasePool
 /// Please refer to https://docs.rs/surrealdb/1.0.0-beta.9+20230402/surrealdb/struct.Surreal.html#method.new
-#[derive(Debug, Clone)]
-pub struct SessionSurrealPool {
-    connection: Surreal<Any>,
+#[derive(Debug)]
+pub struct SessionSurrealPool<C: Connection> {
+    connection: Surreal<C>,
 }
 
-impl From<Surreal<Any>> for SessionSurrealPool {
-    fn from(connection: Surreal<Any>) -> Self {
+// We do this to avoid Any needing Clone when being used in the Type traits.
+impl<C> Clone for SessionSurrealPool<C>
+where
+    C: Connection,
+{
+    fn clone(&self) -> Self {
+        Self {
+            connection: self.connection.clone(),
+        }
+    }
+}
+
+impl<C: Connection> From<Surreal<C>> for SessionSurrealPool<C> {
+    fn from(connection: Surreal<C>) -> Self {
         SessionSurrealPool { connection }
     }
 }
 
-impl SessionSurrealPool {
+impl<C: Connection> SessionSurrealPool<C> {
     /// Creates a New Session pool from a Connection.
     /// Please refer to https://docs.rs/surrealdb/1.0.0-beta.9+20230402/surrealdb/struct.Surreal.html#method.new
-    pub fn new(connection: Surreal<Any>) -> Self {
+    pub fn new(connection: Surreal<C>) -> Self {
         Self { connection }
     }
 
@@ -35,7 +47,7 @@ impl SessionSurrealPool {
 }
 
 #[async_trait]
-impl DatabasePool for SessionSurrealPool {
+impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     async fn initiate(&self, table_name: &str) -> Result<(), SessionError> {
         self.connection
             .query(
