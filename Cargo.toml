@@ -3,6 +3,7 @@ members = [
     ".",
     "examples/postgres",
     "examples/redis",
+    "examples/surrealdb",
 ]
 
 [package]
@@ -29,19 +30,18 @@ redis-db = ["redis"]
 surrealdb-rocksdb =  ["surrealdb/kv-rocksdb", "surrealdb_tag"]
 surrealdb-tikv =  ["surrealdb/kv-tikv", "surrealdb_tag"]
 surrealdb-indxdb =  ["surrealdb/kv-indxdb", "surrealdb_tag"]
-surrealdb-fdb-5_1 =  ["surrealdb/kv-fdb-5_1", "surrealdb_tag", "fdb_tag"]
-surrealdb-fdb-5_2 =  ["surrealdb/kv-fdb-5_2", "surrealdb_tag", "fdb_tag"]
-surrealdb-fdb-6_0 =  ["surrealdb/kv-fdb-6_0", "surrealdb_tag", "fdb_tag"]
-surrealdb-fdb-6_1 =  ["surrealdb/kv-fdb-6_1", "surrealdb_tag", "fdb_tag"]
-surrealdb-fdb-6_2 =  ["surrealdb/kv-fdb-6_2", "surrealdb_tag", "fdb_tag"]
-surrealdb-fdb-6_3 =  ["surrealdb/kv-fdb-6_3", "surrealdb_tag", "fdb_tag"]
-surrealdb-fdb-7_0 =  ["surrealdb/kv-fdb-7_0", "surrealdb_tag", "fdb_tag"]
-surrealdb-fdb-7_1 =  ["surrealdb/kv-fdb-7_1", "surrealdb_tag", "fdb_tag"]
+surrealdb-fdb-5_1 =  ["surrealdb/kv-fdb-5_1", "surrealdb_tag"]
+surrealdb-fdb-5_2 =  ["surrealdb/kv-fdb-5_2", "surrealdb_tag"]
+surrealdb-fdb-6_0 =  ["surrealdb/kv-fdb-6_0", "surrealdb_tag"]
+surrealdb-fdb-6_1 =  ["surrealdb/kv-fdb-6_1", "surrealdb_tag"]
+surrealdb-fdb-6_2 =  ["surrealdb/kv-fdb-6_2", "surrealdb_tag"]
+surrealdb-fdb-6_3 =  ["surrealdb/kv-fdb-6_3", "surrealdb_tag"]
+surrealdb-fdb-7_0 =  ["surrealdb/kv-fdb-7_0", "surrealdb_tag"]
+surrealdb-fdb-7_1 =  ["surrealdb/kv-fdb-7_1", "surrealdb_tag"]
 surrealdb-mem =  ["surrealdb/kv-mem", "surrealdb_tag"]
 
 #private features.
 surrealdb_tag = []
-fdb_tag = []
 
 [dependencies]
 axum-core = {version = "0.3.4"}

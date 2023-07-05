@@ -1,139 +1,52 @@
 use crate::{DatabasePool, SessionError, SessionStore};
 use async_trait::async_trait;
 use chrono::Utc;
-use std::collections::BTreeMap;
-use surrealdb::{dbs::Session, kvs::Datastore, sql::Value};
+use surrealdb::{Connection, Surreal};
 
 ///Surreal's Session Helper type for the DatabasePool.
-pub type SessionSurrealSession = crate::Session<SessionSurrealPool>;
+pub type SessionSurrealSession<C> = crate::Session<SessionSurrealPool<C>>;
 ///Surreal's Session Store Helper type for the DatabasePool.
-pub type SessionSurrealSessionStore = SessionStore<SessionSurrealPool>;
+pub type SessionSurrealSessionStore<C> = SessionStore<SessionSurrealPool<C>>;
 
 ///Surreal internal Managed Pool type for DatabasePool
+/// Please refer to https://docs.rs/surrealdb/1.0.0-beta.9+20230402/surrealdb/struct.Surreal.html#method.new
 #[derive(Debug, Clone)]
-pub struct SessionSurrealPool {
-    connection_type: ConnectionType,
-    session: Session,
+pub struct SessionSurrealPool<C: Connection> {
+    connection: Surreal<C>,
 }
 
-#[derive(Debug, Clone)]
-enum ConnectionType {
-    #[cfg(feature = "surrealdb-mem")]
-    Memory,
-    #[cfg(feature = "surrealdb-rocksdb")]
-    File(String),
-    #[cfg(feature = "surrealdb-rocksdb")]
-    Rockdb(String),
-    #[cfg(feature = "surrealdb-tikv")]
-    TiKV(String),
-    #[cfg(feature = "surrealdb-indxdb")]
-    Indxdb(String),
-    #[cfg(feature = "fdb_tag")]
-    Fdb(String),
+impl<C: Connection> From<Surreal<C>> for SessionSurrealPool<C> {
+    fn from(connection: Surreal<C>) -> Self {
+        SessionSurrealPool { connection }
+    }
 }
 
-pub(crate) struct Connection {
-    ds: Datastore,
-    ses: Session,
-}
-
-impl SessionSurrealPool {
-    #[cfg(feature = "surrealdb-mem")]
-    pub async fn memory(session: Session) -> Self {
-        Self {
-            session,
-            connection_type: ConnectionType::Memory,
-        }
-    }
-
-    #[cfg(feature = "surrealdb-rocksdb")]
-    pub async fn file(path: impl AsRef<str>, session: Session) -> Self {
-        Self {
-            session,
-            connection_type: ConnectionType::File(format!("file://{}", path.as_ref())),
-        }
-    }
-
-    #[cfg(feature = "surrealdb-tikv")]
-    pub async fn tikv(uri: impl AsRef<str>, session: Session) -> Self {
-        Self {
-            session,
-            connection_type: ConnectionType::TiKV(format!("tikv://{}", uri.as_ref())),
-        }
-    }
-
-    #[cfg(feature = "surrealdb-rocksdb")]
-    pub async fn rockdb(uri: impl AsRef<str>, session: Session) -> Self {
-        Self {
-            session,
-            connection_type: ConnectionType::Rockdb(format!("rocksdb://{}", uri.as_ref())),
-        }
-    }
-
-    #[cfg(feature = "surrealdb-indxdb")]
-    pub async fn indxdb(uri: impl AsRef<str>, session: Session) -> Self {
-        Self {
-            session,
-            connection_type: ConnectionType::Indxdb(format!("indxdb://{}", uri.as_ref())),
-        }
-    }
-
-    #[cfg(feature = "fdb_tag")]
-    pub async fn fdb(uri: impl AsRef<str>, session: Session) -> Self {
-        Self {
-            session,
-            connection_type: ConnectionType::Fdb(format!("fdb://{}", uri.as_ref())),
-        }
-    }
-
-    pub(crate) async fn connect(&self) -> Result<Connection, SessionError> {
-        Ok(Connection {
-            ds: match &self.connection_type {
-                #[cfg(feature = "surrealdb-mem")]
-                ConnectionType::Memory => Datastore::new("memory").await?,
-                #[cfg(feature = "surrealdb-rocksdb")]
-                ConnectionType::File(path) => Datastore::new(path.as_ref()).await?,
-                #[cfg(feature = "surrealdb-tikv")]
-                ConnectionType::TiKV(uri) => Datastore::new(uri.as_ref()).await?,
-                #[cfg(feature = "surrealdb-rocksdb")]
-                ConnectionType::Rockdb(uri) => Datastore::new(uri.as_ref()).await?,
-                #[cfg(feature = "surrealdb-indxdb")]
-                ConnectionType::Indxdb(uri) => Datastore::new(uri.as_ref()).await?,
-                #[cfg(feature = "fdb_tag")]
-                ConnectionType::Fdb(uri) => Datastore::new(uri.as_ref()).await?,
-            },
-            ses: self.session.clone(),
-        })
+impl<C: Connection> SessionSurrealPool<C> {
+    /// Creates a New Session pool from a Connection.
+    /// Please refer to https://docs.rs/surrealdb/1.0.0-beta.9+20230402/surrealdb/struct.Surreal.html#method.new
+    pub fn new(connection: Surreal<C>) -> Self {
+        Self { connection }
     }
 
     pub async fn is_valid(&self) -> Result<(), SessionError> {
-        let connection = self.connect().await?;
-        connection
-            .ds
-            .execute("SELECT * FROM 1;", &self.session, None, false)
-            .await?;
+        self.connection.query("SELECT * FROM 1;").await?;
         Ok(())
     }
 }
 
 #[async_trait]
-impl DatabasePool for SessionSurrealPool {
+impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     async fn initiate(&self, table_name: &str) -> Result<(), SessionError> {
-        let conn = self.connect().await?;
-
-        conn.ds
-            .execute(
+        self.connection
+            .query(
                 &r#"
                     DEFINE TABLE %%TABLE_NAME%% SCHEMAFULL;
-                    DEFINE FIELD id ON TABLE %%TABLE_NAME%% TYPE string ASSERT $value != NONE;
-                    DEFINE FIELD expire ON TABLE %%TABLE_NAME%% TYPE int;
-                    DEFINE FIELD session ON TABLE %%TABLE_NAME%% TYPE string ASSERT $value != NONE;
-                    DEFINE INDEX %%TABLE_NAME%%IdIndex ON TABLE %%TABLE_NAME%% COLUMNS id UNIQUE;
+                    DEFINE FIELD sessionid ON TABLE %%TABLE_NAME%% TYPE string ASSERT $value != NONE;
+                    DEFINE FIELD sessionexpires ON TABLE %%TABLE_NAME%% TYPE int;
+                    DEFINE FIELD sessionstore ON TABLE %%TABLE_NAME%% TYPE string ASSERT $value != NONE;
+                    DEFINE INDEX %%TABLE_NAME%%IdIndex ON TABLE %%TABLE_NAME%% COLUMNS sessionid UNIQUE;
                 "#
                 .replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                None,
-                false,
             )
             .await?;
 
@@ -141,42 +54,31 @@ impl DatabasePool for SessionSurrealPool {
     }
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
-        let conn = self.connect().await?;
-        let mut vars = BTreeMap::<String, Value>::new();
+        self.connection
+            .set("expires".to_string(), Utc::now().timestamp())
+            .await?;
 
-        vars.insert("expires".to_string(), Utc::now().timestamp().into());
-
-        let mut res = conn
-            .ds
-            .execute(
+        let mut res = self
+            .connection
+            .query(
                 &r#"
-            SELECT session FROM %%TABLE_NAME%%
-                WHERE expires = NONE OR expires > $expires
+            SELECT sessionid FROM %%TABLE_NAME%%
+                WHERE sessionexpires = NONE OR sessionexpires > $expires;
         "#
                 .replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                Some(vars),
-                false,
             )
             .await?;
 
-        let mut ids = Vec::new();
+        let ids: Vec<String> = res.take("sessionid")?;
 
-        while let Some(response) = res.pop() {
-            ids.push(response.result?.as_string());
-        }
+        self.connection
+            .set("expires".to_string(), Utc::now().timestamp())
+            .await?;
 
-        let mut vars = BTreeMap::<String, Value>::new();
-
-        vars.insert("expires".to_string(), Utc::now().timestamp().into());
-
-        conn.ds
-            .execute(
-                &r#"DELETE %%TABLE_NAME%% WHERE expires < $expires"#
+        self.connection
+            .query(
+                &r#"DELETE %%TABLE_NAME%% WHERE sessionexpires < $expires;"#
                     .replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                Some(vars),
-                false,
             )
             .await?;
 
@@ -184,20 +86,17 @@ impl DatabasePool for SessionSurrealPool {
     }
 
     async fn count(&self, table_name: &str) -> Result<i64, SessionError> {
-        let conn = self.connect().await?;
-
-        let mut res = conn
-            .ds
-            .execute(
-                &r#"SELECT COUNT() FROM %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                None,
-                false,
+        let mut res = self
+            .connection
+            .query(
+                &r#"SELECT count() AS amount FROM %%TABLE_NAME%% GROUP ALL;"#
+                    .replace("%%TABLE_NAME%%", table_name),
             )
             .await?;
 
-        if let Some(response) = res.pop() {
-            Ok(response.result?.as_int())
+        let response: Option<i64> = res.take("amount")?;
+        if let Some(count) = response {
+            Ok(count)
         } else {
             Ok(0)
         }
@@ -210,26 +109,20 @@ impl DatabasePool for SessionSurrealPool {
         expires: i64,
         table_name: &str,
     ) -> Result<(), SessionError> {
-        let conn = self.connect().await?;
-        let mut vars = BTreeMap::<String, Value>::new();
+        self.connection.set("id".to_string(), id).await?;
+        self.connection.set("store".to_string(), session).await?;
+        self.connection
+            .set("expire".to_string(), expires.to_string())
+            .await?;
 
-        vars.insert("id".to_string(), id.into());
-        vars.insert("session".to_string(), session.into());
-        vars.insert("expires".to_string(), expires.into());
-
-        conn.ds
-            .execute(
+        self.connection
+            .query(
                 &r#"
+                DELETE %%TABLE_NAME%% WHERE sessionid=$id;
             INSERT INTO %%TABLE_NAME%%
-                (id, session, expires) VALUES $id, $session, $expires
-                ON DUPLICATE KEY UPDATE
-                expires = $expires,
-                session = $session
+                (sessionid, sessionstore, sessionexpires) VALUES ($id, $store, $expire);
         "#
                 .replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                Some(vars),
-                false,
             )
             .await?;
 
@@ -237,45 +130,33 @@ impl DatabasePool for SessionSurrealPool {
     }
 
     async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, SessionError> {
-        let conn = self.connect().await?;
-        let mut vars = BTreeMap::<String, Value>::new();
+        self.connection.set("id".to_string(), id).await?;
+        self.connection
+            .set("expires".to_string(), Utc::now().timestamp())
+            .await?;
 
-        vars.insert("id".to_string(), id.into());
-        vars.insert("expires".to_string(), Utc::now().timestamp().into());
-
-        let mut res = conn
-            .ds
-            .execute(
+        let mut res = self
+            .connection
+            .query(
                 &r#"
-                SELECT session FROM %%TABLE_NAME%%
-                WHERE id = $id AND (expires = NONE OR expires > $expires)
+                SELECT sessionstore FROM %%TABLE_NAME%%
+                WHERE sessionid = $id AND (sessionexpires = NONE OR sessionexpires > $expires);
             "#
                 .replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                Some(vars),
-                false,
             )
             .await?;
 
-        if let Some(response) = res.pop() {
-            Ok(Some(response.result?.as_string()))
-        } else {
-            Ok(None)
-        }
+        let response: Option<String> = res.take("sessionstore")?;
+        Ok(response)
     }
 
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError> {
-        let conn = self.connect().await?;
-        let mut vars = BTreeMap::<String, Value>::new();
+        self.connection.set("id".to_string(), id).await?;
 
-        vars.insert("id".to_string(), id.into());
-
-        conn.ds
-            .execute(
-                &r#"DELETE %%TABLE_NAME%% WHERE id < $id"#.replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                Some(vars),
-                false,
+        self.connection
+            .query(
+                &r#"DELETE %%TABLE_NAME%% WHERE sessionid < $id;"#
+                    .replace("%%TABLE_NAME%%", table_name),
             )
             .await?;
 
@@ -283,69 +164,46 @@ impl DatabasePool for SessionSurrealPool {
     }
 
     async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
-        let conn = self.connect().await?;
-        let mut vars = BTreeMap::<String, Value>::new();
+        self.connection.set("id".to_string(), id).await?;
+        self.connection
+            .set("expires".to_string(), Utc::now().timestamp())
+            .await?;
 
-        vars.insert("id".to_string(), id.into());
-        vars.insert("expires".to_string(), Utc::now().timestamp().into());
-
-        let mut res = conn
-            .ds
-            .execute(
-                &r#"SELECT COUNT() FROM %%TABLE_NAME%% WHERE id = $id AND (expires = NONE OR expires > $expires)"#.replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                Some(vars),
-                false,
+        let mut res = self.connection
+        .query(
+                &r#"SELECT count() AS amount FROM %%TABLE_NAME%% WHERE sessionid = $id AND (sessionexpires = NONE OR sessionexpires > $expires) GROUP ALL;"#.replace("%%TABLE_NAME%%", table_name),
             )
             .await?;
 
-        if let Some(response) = res.pop() {
-            Ok(response.result?.as_int() > 0)
-        } else {
-            Ok(false)
-        }
+        let response: Option<i64> = res.take("amount")?;
+        Ok(response.map(|f| f > 0).unwrap_or_default())
     }
 
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
-        let conn = self.connect().await?;
-
-        conn.ds
-            .execute(
-                &r#"DELETE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                None,
-                false,
-            )
+        self.connection
+            .query(&r#"DELETE %%TABLE_NAME%%;"#.replace("%%TABLE_NAME%%", table_name))
             .await?;
 
         Ok(())
     }
 
     async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
-        let conn = self.connect().await?;
-        let mut vars = BTreeMap::<String, Value>::new();
+        self.connection
+            .set("expires".to_string(), Utc::now().timestamp())
+            .await?;
 
-        vars.insert("expires".to_string(), Utc::now().timestamp().into());
-
-        let mut res = conn
-            .ds
-            .execute(
+        let mut res = self
+            .connection
+            .query(
                 &r#"
-            SELECT session FROM %%TABLE_NAME%%
-                WHERE expires = NONE OR expires > $expires
+            SELECT sessionid FROM %%TABLE_NAME%%
+                WHERE sessionexpires = NONE OR sessionexpires > $expires;
         "#
                 .replace("%%TABLE_NAME%%", table_name),
-                &self.session,
-                Some(vars),
-                false,
             )
             .await?;
 
-        let mut ids = Vec::new();
-
-        while let Some(response) = res.pop() {
-            ids.push(response.result?.as_string());
-        }
+        let ids: Vec<String> = res.take("sessionid")?;
 
         Ok(ids)
     }
