@@ -1,13 +1,14 @@
 use axum::{routing::get, Router};
-use axum_session::{Session, SessionConfig, SessionLayer, SessionStore, SessionSurrealPool};
-use surrealdb::engine::remote::ws::{Client, Ws};
+use axum_session::{
+    SessionConfig, SessionLayer, SessionStore, SessionSurrealPool, SessionSurrealSession,
+};
+use surrealdb::engine::any::connect;
 use surrealdb::opt::auth::Root;
-use surrealdb::Surreal;
 
 #[tokio::main]
 async fn main() {
     // Create the Surreal connection.
-    let db = Surreal::new::<Ws>("localhost:8080").await.unwrap();
+    let db = connect("ws://localhost:8080").await.unwrap();
 
     // sign in as our account.
     db.signin(Root {
@@ -49,7 +50,7 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn counter(session: Session<SessionSurrealPool<Client>>) -> String {
+async fn counter(session: SessionSurrealSession) -> String {
     let mut count: usize = session.get("count").unwrap_or(0);
     count += 1;
     session.set("count", count);

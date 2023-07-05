@@ -1,30 +1,33 @@
 use crate::{DatabasePool, SessionError, SessionStore};
 use async_trait::async_trait;
 use chrono::Utc;
-use surrealdb::{Connection, Surreal};
+use surrealdb::{
+    engine::any::{connect, Any},
+    Connection, Surreal,
+};
 
 ///Surreal's Session Helper type for the DatabasePool.
-pub type SessionSurrealSession<C> = crate::Session<SessionSurrealPool<C>>;
+pub type SessionSurrealSession = crate::Session<SessionSurrealPool>;
 ///Surreal's Session Store Helper type for the DatabasePool.
-pub type SessionSurrealSessionStore<C> = SessionStore<SessionSurrealPool<C>>;
+pub type SessionSurrealSessionStore = SessionStore<SessionSurrealPool>;
 
 ///Surreal internal Managed Pool type for DatabasePool
 /// Please refer to https://docs.rs/surrealdb/1.0.0-beta.9+20230402/surrealdb/struct.Surreal.html#method.new
 #[derive(Debug, Clone)]
-pub struct SessionSurrealPool<C: Connection> {
-    connection: Surreal<C>,
+pub struct SessionSurrealPool {
+    connection: Surreal<Any>,
 }
 
-impl<C: Connection> From<Surreal<C>> for SessionSurrealPool<C> {
-    fn from(connection: Surreal<C>) -> Self {
+impl From<Surreal<Any>> for SessionSurrealPool {
+    fn from(connection: Surreal<Any>) -> Self {
         SessionSurrealPool { connection }
     }
 }
 
-impl<C: Connection> SessionSurrealPool<C> {
+impl SessionSurrealPool {
     /// Creates a New Session pool from a Connection.
     /// Please refer to https://docs.rs/surrealdb/1.0.0-beta.9+20230402/surrealdb/struct.Surreal.html#method.new
-    pub fn new(connection: Surreal<C>) -> Self {
+    pub fn new(connection: Surreal<Any>) -> Self {
         Self { connection }
     }
 
@@ -35,7 +38,7 @@ impl<C: Connection> SessionSurrealPool<C> {
 }
 
 #[async_trait]
-impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
+impl DatabasePool for SessionSurrealPool {
     async fn initiate(&self, table_name: &str) -> Result<(), SessionError> {
         self.connection
             .query(
