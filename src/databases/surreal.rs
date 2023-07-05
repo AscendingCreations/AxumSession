@@ -1,10 +1,7 @@
 use crate::{DatabasePool, SessionError, SessionStore};
 use async_trait::async_trait;
 use chrono::Utc;
-use surrealdb::{
-    engine::any::{connect, Any},
-    Connection, Surreal,
-};
+use surrealdb::{engine::any::Any, Surreal};
 
 ///Surreal's Session Helper type for the DatabasePool.
 pub type SessionSurrealSession = crate::Session<SessionSurrealPool>;
