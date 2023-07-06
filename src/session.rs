@@ -45,7 +45,7 @@ where
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         parts.extensions.get::<Session<T>>().cloned().ok_or((
             StatusCode::INTERNAL_SERVER_ERROR,
-            "Can't extract Axum `Session`. Is `SessionLayer` enabled? 2",
+            "Can't extract Axum `Session`. Is `SessionLayer` enabled?",
         ))
     }
 }
@@ -385,7 +385,7 @@ where
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         let session = parts.extensions.get::<Session<T>>().cloned().ok_or((
             StatusCode::INTERNAL_SERVER_ERROR,
-            "Can't extract Axum `Session`. Is `SessionLayer` enabled 3?",
+            "Can't extract Axum `Session`. Is `SessionLayer` enabled?",
         ))?;
 
         Ok(session.into())

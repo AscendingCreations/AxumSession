@@ -95,7 +95,6 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .query("SELECT count() AS amount FROM type::table($table_name) GROUP BY amount;")
             .bind(("table_name", table_name))
             .await?;
-        dbg!(&res);
 
         let response: Option<i64> = res.take("amount")?;
         if let Some(count) = response {
@@ -138,7 +137,6 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .await?;
 
         let response: Option<String> = res.take("sessionstore")?;
-        dbg!(response.clone());
         Ok(response)
     }
 
@@ -163,7 +161,6 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .bind(("session_id", id))
             .bind(("expires", Utc::now().timestamp()))
             .await?;
-        dbg!(&res);
 
         let response: Option<i64> = res.take("amount")?;
         Ok(response.map(|f| f > 0).unwrap_or_default())
@@ -194,7 +191,6 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .await?;
 
         let ids: Vec<String> = res.take("sessionid")?;
-        dbg!(&ids);
         Ok(ids)
     }
 
