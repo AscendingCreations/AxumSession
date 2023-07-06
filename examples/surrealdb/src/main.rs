@@ -54,8 +54,8 @@ async fn counter(session: SessionSurrealSession<Any>) -> String {
     let mut count: usize = session.get("count").unwrap_or(0);
     count += 1;
     session.set("count", count);
-
+    let sessions_count = session.count().await;
     // consider use better Option handling here instead of expect
     let new_count = session.get::<usize>("count").expect("error setting count");
-    format!("We have set the counter to surreal: {new_count}")
+    format!("We have set the counter to surreal: {new_count}, Sessions Count: {sessions_count}")
 }
