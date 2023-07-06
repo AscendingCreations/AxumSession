@@ -12,7 +12,9 @@ async fn main() {
     let session_config = SessionConfig::default().with_table_name("sessions_table");
 
     let session_store =
-        SessionStore::<SessionSqlitePool>::new(Some(poll.clone().into()), session_config);
+        SessionStore::<SessionSqlitePool>::new(Some(poll.clone().into()), session_config)
+            .await
+            .unwrap();
 
     //Create the Database table for storing our Session Data.
     session_store.initiate().await.unwrap();

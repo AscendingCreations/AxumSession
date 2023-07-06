@@ -14,7 +14,9 @@ async fn main() {
     let session_config = SessionConfig::default();
 
     let session_store =
-        SessionStore::<SessionRedisPool>::new(Some(client.clone().into()), session_config);
+        SessionStore::<SessionRedisPool>::new(Some(client.clone().into()), session_config)
+            .await
+            .unwrap();
 
     // build our application with a single route
     let app = Router::new()

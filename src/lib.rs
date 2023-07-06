@@ -48,7 +48,7 @@ mod tests {
             .with_table_name("sessions_table");
 
         let mut connect_opts = PgConnectOptions::new();
-        connect_opts.log_statements(LevelFilter::Debug);
+        connect_opts = connect_opts.log_statements(LevelFilter::Debug);
         connect_opts = connect_opts.database("postgres");
         connect_opts = connect_opts.username("postgres");
         connect_opts = connect_opts.password("password");
