@@ -43,6 +43,7 @@ where
     type Rejection = (http::StatusCode, &'static str);
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        dbg!(&parts.extensions);
         parts.extensions.get::<Session<T>>().cloned().ok_or((
             StatusCode::INTERNAL_SERVER_ERROR,
             "Can't extract Axum `Session`. Is `SessionLayer` enabled? 2",
