@@ -49,17 +49,17 @@ impl<C: Connection> SessionSurrealPool<C> {
 #[async_trait]
 impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     async fn initiate(&self, table_name: &str) -> Result<(), SessionError> {
-        self.connection
-            .query(
-                "
-                    DEFINE TABLE type::table($table_name) SCHEMAFULL;
-                    DEFINE FIELD sessionid ON TABLE $type::table($table_name) TYPE string ASSERT $value != NONE;
-                    DEFINE FIELD sessionexpires ON TABLE type::table($table_name) TYPE int;
-                    DEFINE FIELD sessionstore ON TABLE type::table($table_name) TYPE string ASSERT $value != NONE;
-                "
-            )
-            .bind(("table_name", table_name))
-            .await?;
+        // self.connection
+        // .query(
+        //     "
+        //         DEFINE TABLE type::table($table_name) SCHEMAFULL;
+        //         DEFINE FIELD sessionid ON TABLE $type::table($table_name) TYPE string ASSERT $value != NONE;
+        //         DEFINE FIELD sessionexpires ON TABLE type::table($table_name) TYPE int;
+        //         DEFINE FIELD sessionstore ON TABLE type::table($table_name) TYPE string ASSERT $value != NONE;
+        //     "
+        // )
+        // .bind(("table_name", table_name))
+        // .await?;
 
         Ok(())
     }
