@@ -53,10 +53,6 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     }
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
-        self.connection
-            .set("expires".to_string(), Utc::now().timestamp())
-            .await?;
-
         let mut res = self
             .connection
             .query(
@@ -165,10 +161,6 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     }
 
     async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
-        self.connection
-            .set("expires".to_string(), Utc::now().timestamp())
-            .await?;
-
         let mut res = self
             .connection
             .query(
