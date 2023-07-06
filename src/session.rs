@@ -4,6 +4,7 @@ use crate::{
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use cookie::CookieJar;
+#[cfg(feature = "key-store")]
 use fastbloom_rs::Membership;
 use http::{self, request::Parts, StatusCode};
 use serde::Serialize;
@@ -72,6 +73,7 @@ where
             None => (Self::generate_uuid(store).await, true),
         };
 
+        #[cfg(feature = "key-store")]
         if store.config.use_bloom_filters
             && !store.auto_handles_expiry()
             && !store.filter.contains(id.inner().as_bytes())
@@ -88,6 +90,7 @@ where
         )
     }
 
+    #[cfg(feature = "key-store")]
     pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> SessionID {
         loop {
             let token = Uuid::new_v4();
@@ -116,6 +119,31 @@ where
         }
     }
 
+    #[cfg(not(feature = "key-store"))]
+    pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> SessionID {
+        loop {
+            let token = Uuid::new_v4();
+
+            if !store.inner.contains_key(&token.to_string())
+                && !store.keys.contains_key(&token.to_string())
+            {
+                //This fixes an already used but in database issue.
+                if let Some(client) = &store.client {
+                    // Unwrap should be safe to use as we would want it to crash if there was a major database error.
+                    // This would mean the database no longer is online or the table missing etc.
+                    if !client
+                        .exists(&token.to_string(), &store.config.table_name)
+                        .await
+                        .unwrap()
+                    {
+                        return SessionID(token);
+                    }
+                } else {
+                    return SessionID(token);
+                }
+            }
+        }
+    }
     /// Sets the Session to create the SessionData based on the current Session ID.
     /// You can only use this if SessionMode::Manual is set or it will Panic.
     /// This will also set the store to true similair to session.set_store(true);

@@ -10,6 +10,7 @@ use axum_core::{
 use bytes::Bytes;
 use chrono::Utc;
 use cookie::{Cookie, CookieJar, Key};
+#[cfg(feature = "key-store")]
 use fastbloom_rs::Deletable;
 use futures::future::BoxFuture;
 use http::{
@@ -128,6 +129,7 @@ where
             if last_sweep <= Utc::now() {
                 // Only unload these from filter if the Client is None as this means no database.
                 // Otherwise only unload from the filter if removed from the Database.
+                #[cfg(feature = "key-store")]
                 if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                     store
                         .inner
@@ -151,8 +153,12 @@ where
             // Throttle by database lifespan - e.g. sweep every 6 hours
             if last_database_sweep <= Utc::now() && store.is_persistent() {
                 //Remove any old keys that expired and Remove them from our loaded filter.
+                #[cfg(feature = "key-store")]
                 let expired = store.cleanup().await.unwrap();
+                #[cfg(not(feature = "key-store"))]
+                let _ = store.cleanup().await.unwrap();
 
+                #[cfg(feature = "key-store")]
                 if !store.auto_handles_expiry() {
                     expired
                         .iter()
@@ -196,6 +202,7 @@ where
                     }
 
                     //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
+                    #[cfg(feature = "key-store")]
                     if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                         session.store.filter.remove(session.id.inner().as_bytes());
                     }
@@ -222,8 +229,13 @@ where
                     }
 
                     // Lets remove update and reinsert.
+                    #[cfg(feature = "key-store")]
                     let old_id = session_key.renew(&store).await.unwrap();
 
+                    #[cfg(not(feature = "key-store"))]
+                    let _ = session_key.renew(&store).await.unwrap();
+
+                    #[cfg(feature = "key-store")]
                     if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                         session.store.filter.remove(old_id.as_bytes());
                     }
@@ -312,6 +324,7 @@ where
             }
 
             if store.config.session_mode.is_storable() && !storable {
+                #[cfg(feature = "key-store")]
                 if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                     session.store.filter.remove(session.id.inner().as_bytes());
                 }

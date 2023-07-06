@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use chrono::{Duration, Utc};
 use dashmap::DashMap;
+#[cfg(feature = "key-store")]
 use fastbloom_rs::{CountingBloomFilter, FilterBuilder, Membership};
 use http::{self, request::Parts, StatusCode};
 use serde::Serialize;
@@ -42,6 +43,7 @@ where
     pub config: SessionConfig,
     //move this to creation on layer.
     pub(crate) timers: Arc<RwLock<SessionTimers>>,
+    #[cfg(feature = "key-store")]
     pub(crate) filter: CountingBloomFilter,
 }
 
@@ -79,6 +81,7 @@ where
     pub async fn new(client: Option<T>, config: SessionConfig) -> Result<Self, SessionError> {
         // If we have a database client then lets also get any SessionId's that Exist within the database
         // that are not yet expired.
+        #[cfg(feature = "key-store")]
         let filter = if config.use_bloom_filters {
             // If client doesnt exist and config is allowing filter to be used then lets give it a manageable size!
             if let Some(client) = &client {
@@ -113,6 +116,7 @@ where
                 // the first expiry sweep is scheduled one lifetime from start-up
                 last_database_expiry_sweep: Utc::now() + Duration::hours(6),
             })),
+            #[cfg(feature = "key-store")]
             filter,
         })
     }
