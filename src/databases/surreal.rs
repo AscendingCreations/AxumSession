@@ -137,6 +137,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .await?;
 
         let response: Option<String> = res.take("sessionstore")?;
+        dbg!(response.clone());
         Ok(response)
     }
 
