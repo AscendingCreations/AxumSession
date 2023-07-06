@@ -48,20 +48,7 @@ impl<C: Connection> SessionSurrealPool<C> {
 
 #[async_trait]
 impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
-    async fn initiate(&self, table_name: &str) -> Result<(), SessionError> {
-        self.connection
-            .query(
-                &r#"
-                    DEFINE TABLE %%TABLE_NAME%% SCHEMAFULL;
-                    DEFINE FIELD sessionid ON TABLE %%TABLE_NAME%% TYPE string ASSERT $value != NONE;
-                    DEFINE FIELD sessionexpires ON TABLE %%TABLE_NAME%% TYPE int;
-                    DEFINE FIELD sessionstore ON TABLE %%TABLE_NAME%% TYPE string ASSERT $value != NONE;
-                    DEFINE INDEX %%TABLE_NAME%%IdIndex ON TABLE %%TABLE_NAME%% COLUMNS sessionid UNIQUE;
-                "#
-                .replace("%%TABLE_NAME%%", table_name),
-            )
-            .await?;
-
+    async fn initiate(&self, _table_name: &str) -> Result<(), SessionError> {
         Ok(())
     }
 
@@ -69,23 +56,18 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         let mut res = self
             .connection
             .query(
-                &r#"
-            SELECT sessionid FROM %%TABLE_NAME%%
-                WHERE sessionexpires = NONE OR sessionexpires > $expire;
-        "#
-                .replace("%%TABLE_NAME%%", table_name),
+                "SELECT sessionid FROM type::table($table_name)
+                WHERE sessionexpires = NONE OR sessionexpires > $expires;",
             )
-            .bind(("expire", Utc::now().timestamp()))
+            .bind(("table_name", table_name))
             .await?;
 
         let ids: Vec<String> = res.take("sessionid")?;
 
         self.connection
-            .query(
-                &r#"DELETE %%TABLE_NAME%% WHERE sessionexpires < $expire;"#
-                    .replace("%%TABLE_NAME%%", table_name),
-            )
-            .bind(("expire", Utc::now().timestamp()))
+            .query("DELETE type::table($table_name) WHERE sessionexpires < $expires;")
+            .bind(("table_name", table_name))
+            .bind(("expires", Utc::now().timestamp()))
             .await?;
 
         Ok(ids)
@@ -94,10 +76,8 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     async fn count(&self, table_name: &str) -> Result<i64, SessionError> {
         let mut res = self
             .connection
-            .query(
-                &r#"SELECT count() AS amount FROM %%TABLE_NAME%% GROUP BY amount;"#
-                    .replace("%%TABLE_NAME%%", table_name),
-            )
+            .query("SELECT count() AS amount FROM type::table($table_name) GROUP BY amount;")
+            .bind(("table_name", table_name))
             .await?;
 
         let response: Option<i64> = res.take("amount")?;
@@ -116,18 +96,14 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         table_name: &str,
     ) -> Result<(), SessionError> {
         self.connection
-            .query(
-                &r#"
-                DELETE %%TABLE_NAME%% WHERE sessionid=$session_id;
-                INSERT INTO %%TABLE_NAME%%
-                (sessionid, sessionstore, sessionexpires) VALUES ($session_id, $store, $expire);
-        "#
-                .replace("%%TABLE_NAME%%", table_name),
-            )
-            .bind(("session_id", id))
-            .bind(("store", session))
-            .bind(("expire", expires))
-            .await?;
+        .query(
+            "UPDATE type::thing($table_name, $session_id) SET sessionstore = $store, sessionexpires = $expire, sessionid = $session_id;",
+        )
+        .bind(("table_name", table_name))
+        .bind(("session_id", id.to_string()))
+        .bind(("expire", expires.to_string()))
+        .bind(("store", session))
+        .await?;
 
         Ok(())
     }
@@ -136,14 +112,14 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         let mut res = self
             .connection
             .query(
-                &r#"
-                SELECT sessionstore FROM %%TABLE_NAME%%
-                WHERE sessionid = $session_id AND (sessionexpires = NONE OR sessionexpires > $expire);
-            "#
-                .replace("%%TABLE_NAME%%", table_name),
-            ).bind(("session_id", id))
-            .bind(("expire", Utc::now().timestamp()))
-            .await?;
+                "SELECT sessionstore FROM type::thing($table_name, $session_id)
+                WHERE sessionexpires = NONE OR sessionexpires > $expires;",
+            )
+            .bind(("table_name", table_name))
+            .bind(("session_id", id))
+            .bind(("expires", Utc::now().timestamp()))
+            .await
+            .unwrap();
 
         let response: Option<String> = res.take("sessionstore")?;
         Ok(response)
@@ -151,10 +127,8 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
 
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError> {
         self.connection
-            .query(
-                &r#"DELETE %%TABLE_NAME%% WHERE sessionid < $session_id;"#
-                    .replace("%%TABLE_NAME%%", table_name),
-            )
+            .query("DELETE type::table($table_name) WHERE sessionid < $session_id;")
+            .bind(("table_name", table_name))
             .bind(("session_id", id))
             .await?;
 
@@ -162,22 +136,15 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     }
 
     async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
-        self.connection.set("id".to_string(), id).await?;
-        self.connection
-            .set("expires".to_string(), Utc::now().timestamp())
-            .await?;
-
         let mut res = self
             .connection
             .query(
-                &r#"
-                SELECT count() AS amount FROM %%TABLE_NAME%% WHERE sessionid = $session_id AND 
-                (sessionexpires = NONE OR sessionexpires > $expire);
-                "#
-                .replace("%%TABLE_NAME%%", table_name),
+                "SELECT count() AS amount FROM type::thing($table_name, $session_id) 
+                WHERE sessionexpires = NONE OR sessionexpires > $expires GROUP BY amount;",
             )
+            .bind(("table_name", table_name))
             .bind(("session_id", id))
-            .bind(("expire", Utc::now().timestamp()))
+            .bind(("expires", Utc::now().timestamp()))
             .await?;
 
         let response: Option<i64> = res.take("amount")?;
@@ -186,7 +153,8 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
 
     async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
         self.connection
-            .query(&r#"DELETE %%TABLE_NAME%%;"#.replace("%%TABLE_NAME%%", table_name))
+            .query("DELETE type::table($table_name);")
+            .bind(("table_name", table_name))
             .await?;
 
         Ok(())
@@ -196,17 +164,14 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         let mut res = self
             .connection
             .query(
-                &r#"
-            SELECT sessionid FROM %%TABLE_NAME%%
-                WHERE sessionexpires = NONE OR sessionexpires > $expires;
-        "#
-                .replace("%%TABLE_NAME%%", table_name),
+                "SELECT sessionid FROM type::table($table_name)
+                WHERE sessionexpires = NONE OR sessionexpires > $expires;",
             )
-            .bind(("expire", Utc::now().timestamp()))
+            .bind(("table_name", table_name))
+            .bind(("expires", Utc::now().timestamp()))
             .await?;
 
         let ids: Vec<String> = res.take("sessionid")?;
-
         Ok(ids)
     }
 
