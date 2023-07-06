@@ -128,13 +128,14 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         let mut res = self
             .connection
             .query(
-                "SELECT type::thing($table_name, $session_id)
-                WHERE (sessionexpires = NONE OR sessionexpires > $expires);",
+                "SELECT sessionstore FROM type::thing($table_name, $session_id)
+                WHERE sessionexpires = NONE OR sessionexpires > $expires;",
             )
             .bind(("table_name", table_name))
             .bind(("session_id", id))
             .bind(("expires", Utc::now().timestamp()))
-            .await?;
+            .await
+            .unwrap();
 
         let response: Option<String> = res.take("sessionstore")?;
         Ok(response)
