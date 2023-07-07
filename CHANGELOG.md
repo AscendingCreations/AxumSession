@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## 0.3.1 (7. July, 2023)
+### Added
+- Made ReadOnlySession Visible.
+
 ## 0.3.0 (7. July, 2023)
 ### Added
 - Key Storage via fastbloom. for optimized key usage comparison.
