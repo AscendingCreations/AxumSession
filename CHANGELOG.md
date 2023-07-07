@@ -4,13 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## Current
+## 0.3.0 (7. July, 2023)
 ### Added
 - Key Storage via fastbloom. for optimized key usage comparison.
 - key-store feature to tie key storage behind.
 
 ### Changed
-- Surrealdb connection API has been updated to recommends methods.
+- (breaking) Surrealdb connection API has been updated to recommends methods.
 - (breaking) Updated Sqlx to 0.7.0
 
 ## 0.2.3 (15. May, 2023)
