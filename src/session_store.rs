@@ -25,7 +25,7 @@ use uuid::Uuid;
 /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
 ///
 /// let config = SessionConfig::default();
-/// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+/// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
 /// ```
 ///
 #[derive(Clone, Debug)]
@@ -74,7 +74,7 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// ```
     ///
     #[inline]
@@ -130,7 +130,7 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// let is_persistent = session_store.is_persistent();
     /// ```
     ///
@@ -151,7 +151,7 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// async {
     ///     let _ = session_store.initiate().await.unwrap();
     /// };
@@ -178,7 +178,7 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// async {
     ///     let _ = session_store.cleanup().await.unwrap();
     /// };
@@ -205,7 +205,7 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// async {
     ///     let count = session_store.count().await.unwrap();
     /// };
@@ -235,7 +235,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// let token = Uuid::new_v4();
     /// async {
     ///     let session_data = session_store.load_session(token.to_string()).await.unwrap();
@@ -271,7 +271,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// let token = Uuid::new_v4();
     /// let key = Key::generate();
     /// async {
@@ -315,7 +315,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     /// let token = Uuid::new_v4();
     /// let session_data = SessionData::new(token, true, &config);
     ///
@@ -352,7 +352,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     /// let token = Uuid::new_v4();
     /// let key = Key::generate();
     /// let session_key = SessionKey::new(token);
@@ -395,7 +395,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     /// let token = Uuid::new_v4();
     ///
     /// async {
@@ -425,7 +425,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     ///
     /// async {
     ///     let _ = session_store.clear_store().await.unwrap();
@@ -449,7 +449,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     ///
     /// async {
     ///     let _ = session_store.clear_store().await.unwrap();
