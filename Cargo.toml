@@ -4,6 +4,7 @@ members = [
     "examples/postgres",
     "examples/redis",
     "examples/surrealdb",
+    "examples/middleware_layer",
 ]
 
 [package]
