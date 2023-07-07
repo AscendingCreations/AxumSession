@@ -6,6 +6,8 @@ use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 use chrono::{Duration, Utc};
 use dashmap::DashMap;
+#[cfg(feature = "key-store")]
+use fastbloom_rs::{CountingBloomFilter, FilterBuilder, Membership};
 use http::{self, request::Parts, StatusCode};
 use serde::Serialize;
 use std::{
@@ -23,7 +25,7 @@ use uuid::Uuid;
 /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
 ///
 /// let config = SessionConfig::default();
-/// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+/// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
 /// ```
 ///
 #[derive(Clone, Debug)]
@@ -41,6 +43,8 @@ where
     pub config: SessionConfig,
     //move this to creation on layer.
     pub(crate) timers: Arc<RwLock<SessionTimers>>,
+    #[cfg(feature = "key-store")]
+    pub(crate) filter: CountingBloomFilter,
 }
 
 #[async_trait]
@@ -70,12 +74,38 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// ```
     ///
     #[inline]
-    pub fn new(client: Option<T>, config: SessionConfig) -> Self {
-        Self {
+    pub async fn new(client: Option<T>, config: SessionConfig) -> Result<Self, SessionError> {
+        // If we have a database client then lets also get any SessionId's that Exist within the database
+        // that are not yet expired.
+        #[cfg(feature = "key-store")]
+        let filter = if config.use_bloom_filters {
+            // If client doesnt exist and config is allowing filter to be used then lets give it a manageable size!
+            if let Some(client) = &client {
+                let mut filter = FilterBuilder::new(
+                    config.filter_expected_elements,
+                    config.filter_false_positive_probability,
+                )
+                .build_counting_bloom_filter();
+
+                let ids = client.get_ids(&config.table_name).await?;
+
+                for id in ids {
+                    filter.add(id.as_bytes());
+                }
+
+                filter
+            } else {
+                FilterBuilder::new(1, 1.0).build_counting_bloom_filter()
+            }
+        } else {
+            FilterBuilder::new(1, 1.0).build_counting_bloom_filter()
+        };
+
+        Ok(Self {
             client,
             inner: Default::default(),
             keys: Default::default(),
@@ -86,7 +116,9 @@ where
                 // the first expiry sweep is scheduled one lifetime from start-up
                 last_database_expiry_sweep: Utc::now() + Duration::hours(6),
             })),
-        }
+            #[cfg(feature = "key-store")]
+            filter,
+        })
     }
 
     /// Checks if the database is in persistent mode.
@@ -98,7 +130,7 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// let is_persistent = session_store.is_persistent();
     /// ```
     ///
@@ -119,7 +151,7 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// async {
     ///     let _ = session_store.initiate().await.unwrap();
     /// };
@@ -146,19 +178,19 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// async {
     ///     let _ = session_store.cleanup().await.unwrap();
     /// };
     /// ```
     ///
     #[inline]
-    pub async fn cleanup(&self) -> Result<(), SessionError> {
+    pub async fn cleanup(&self) -> Result<Vec<String>, SessionError> {
         if let Some(client) = &self.client {
-            client.delete_by_expiry(&self.config.table_name).await?;
+            Ok(client.delete_by_expiry(&self.config.table_name).await?)
+        } else {
+            Ok(Vec::new())
         }
-
-        Ok(())
     }
 
     /// Returns count of existing sessions within database.
@@ -173,7 +205,7 @@ where
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// async {
     ///     let count = session_store.count().await.unwrap();
     /// };
@@ -203,7 +235,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// let token = Uuid::new_v4();
     /// async {
     ///     let session_data = session_store.load_session(token.to_string()).await.unwrap();
@@ -239,7 +271,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// let token = Uuid::new_v4();
     /// let key = Key::generate();
     /// async {
@@ -283,7 +315,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     /// let token = Uuid::new_v4();
     /// let session_data = SessionData::new(token, true, &config);
     ///
@@ -320,7 +352,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     /// let token = Uuid::new_v4();
     /// let key = Key::generate();
     /// let session_key = SessionKey::new(token);
@@ -363,7 +395,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     /// let token = Uuid::new_v4();
     ///
     /// async {
@@ -393,7 +425,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     ///
     /// async {
     ///     let _ = session_store.clear_store().await.unwrap();
@@ -417,7 +449,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone());
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     ///
     /// async {
     ///     let _ = session_store.clear_store().await.unwrap();
@@ -543,6 +575,15 @@ where
             self.count().await.unwrap_or(0i64)
         } else {
             self.inner.len() as i64
+        }
+    }
+
+    #[inline]
+    pub(crate) fn auto_handles_expiry(&self) -> bool {
+        if let Some(client) = &self.client {
+            client.auto_handles_expiry()
+        } else {
+            false
         }
     }
 }

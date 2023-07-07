@@ -26,9 +26,9 @@ impl DatabasePool for SessionRedisPool {
         Ok(())
     }
 
-    async fn delete_by_expiry(&self, _table_name: &str) -> Result<(), SessionError> {
+    async fn delete_by_expiry(&self, _table_name: &str) -> Result<Vec<String>, SessionError> {
         // Redis does this for use using the Expiry Options.
-        Ok(())
+        Ok(Vec::new())
     }
 
     async fn count(&self, _table_name: &str) -> Result<i64, SessionError> {
@@ -79,5 +79,15 @@ impl DatabasePool for SessionRedisPool {
         let mut con = self.client.get_async_connection().await?;
         redis::cmd("FLUSHDB").query_async(&mut con).await?;
         Ok(())
+    }
+
+    async fn get_ids(&self, _table_name: &str) -> Result<Vec<String>, SessionError> {
+        let mut con = self.client.get_async_connection().await?;
+        let result: Vec<String> = redis::cmd("KEYS").arg("*").query_async(&mut con).await?;
+        Ok(result)
+    }
+
+    fn auto_handles_expiry(&self) -> bool {
+        true
     }
 }

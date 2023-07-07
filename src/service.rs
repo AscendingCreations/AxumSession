@@ -10,6 +10,8 @@ use axum_core::{
 use bytes::Bytes;
 use chrono::Utc;
 use cookie::{Cookie, CookieJar, Key};
+#[cfg(feature = "key-store")]
+use fastbloom_rs::Deletable;
 use futures::future::BoxFuture;
 use http::{
     self,
@@ -74,7 +76,7 @@ where
     }
 
     fn call(&mut self, mut req: Request<ReqBody>) -> Self::Future {
-        let store = self.session_store.clone();
+        let mut store = self.session_store.clone();
         let not_ready_inner = self.inner.clone();
         let mut ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
 
@@ -84,7 +86,7 @@ where
                 SecurityMode::PerSession => SessionKey::get_or_create(&store, &cookies).await,
                 SecurityMode::Simple => SessionKey::new(),
             };
-            let (mut session, is_new) = Session::new(&store, &cookies, &session_key).await;
+            let (mut session, is_new) = Session::new(&mut store, &cookies, &session_key).await;
             let storable = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
@@ -125,6 +127,23 @@ where
             // forever by abandoned sessions (e.g. when a client lost their cookie)
             // throttle by memory lifespan - e.g. sweep every hour
             if last_sweep <= Utc::now() {
+                // Only unload these from filter if the Client is None as this means no database.
+                // Otherwise only unload from the filter if removed from the Database.
+                #[cfg(feature = "key-store")]
+                if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                    store
+                        .inner
+                        .iter()
+                        .filter(|r| r.autoremove < Utc::now())
+                        .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
+
+                    store
+                        .keys
+                        .iter()
+                        .filter(|r| r.autoremove < Utc::now())
+                        .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
+                }
+
                 store.inner.retain(|_k, v| v.autoremove > Utc::now());
                 store.keys.retain(|_k, v| v.autoremove > Utc::now());
                 store.timers.write().await.last_expiry_sweep =
@@ -133,7 +152,19 @@ where
 
             // Throttle by database lifespan - e.g. sweep every 6 hours
             if last_database_sweep <= Utc::now() && store.is_persistent() {
-                store.cleanup().await.unwrap();
+                //Remove any old keys that expired and Remove them from our loaded filter.
+                #[cfg(feature = "key-store")]
+                let expired = store.cleanup().await.unwrap();
+                #[cfg(not(feature = "key-store"))]
+                let _ = store.cleanup().await.unwrap();
+
+                #[cfg(feature = "key-store")]
+                if !store.auto_handles_expiry() {
+                    expired
+                        .iter()
+                        .for_each(|id| session.store.filter.remove(id.as_bytes()));
+                }
+
                 store.timers.write().await.last_database_expiry_sweep =
                     Utc::now() + store.config.lifespan;
             }
@@ -170,6 +201,12 @@ where
                             .unwrap();
                     }
 
+                    //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
+                    #[cfg(feature = "key-store")]
+                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                        session.store.filter.remove(session.id.inner().as_bytes());
+                    }
+
                     // Lets remove update and reinsert.
                     if let Some((_, mut session_data)) =
                         session.store.inner.remove(&session.id.inner())
@@ -192,7 +229,16 @@ where
                     }
 
                     // Lets remove update and reinsert.
-                    session_key.renew(&store).await.unwrap();
+                    #[cfg(feature = "key-store")]
+                    let old_id = session_key.renew(&store).await.unwrap();
+
+                    #[cfg(not(feature = "key-store"))]
+                    let _ = session_key.renew(&store).await.unwrap();
+
+                    #[cfg(feature = "key-store")]
+                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                        session.store.filter.remove(old_id.as_bytes());
+                    }
                 }
             }
 
@@ -278,6 +324,11 @@ where
             }
 
             if store.config.session_mode.is_storable() && !storable {
+                #[cfg(feature = "key-store")]
+                if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                    session.store.filter.remove(session.id.inner().as_bytes());
+                }
+
                 store.inner.remove(&session.id.inner());
 
                 if store.config.security_mode == SecurityMode::PerSession {

@@ -49,7 +49,7 @@ impl SessionKey {
             .and_then(|c| Uuid::parse_str(c.value()).ok());
 
         if let Some(v) = value {
-            let id = SessionID(v);
+            let id: SessionID = SessionID(v);
 
             if let Some(mut value) = store.keys.get_mut(&id.inner()) {
                 value.autoremove = Utc::now() + store.config.memory_lifespan;
@@ -79,13 +79,13 @@ impl SessionKey {
 
     /// Renews the KeyID and Key. This can make things more Secure since it rotates the old encryption keys out
     /// and rotates the old ID out so if anyone did get the Key or ID it will be worthless for them.
-    pub(crate) async fn renew<S>(&mut self, store: &SessionStore<S>) -> Result<(), SessionError>
+    pub(crate) async fn renew<S>(&mut self, store: &SessionStore<S>) -> Result<String, SessionError>
     where
         S: DatabasePool + Clone + Debug + Sync + Send + 'static,
     {
-        let old_id = self.id;
+        let old_id = self.id.inner();
 
-        let _ = store.keys.remove(&old_id.inner());
+        let _ = store.keys.remove(&old_id);
         // When we renew a SessionID we also should renew the Key SessionID and Key for extra Security.
         // This is the best time to do this as it doesnt disturb the force and loss data.
         // Switching the config Key and config Database Key however will invalidate everything.
@@ -93,7 +93,7 @@ impl SessionKey {
         self.key = Key::generate();
 
         store.keys.insert(self.id.inner(), self.clone());
-        Ok(())
+        Ok(old_id)
     }
 
     ///Encrypts the Key for Database Storage using the master key.

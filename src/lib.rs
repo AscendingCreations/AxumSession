@@ -48,7 +48,7 @@ mod tests {
             .with_table_name("sessions_table");
 
         let mut connect_opts = PgConnectOptions::new();
-        connect_opts.log_statements(LevelFilter::Debug);
+        connect_opts = connect_opts.log_statements(LevelFilter::Debug);
         connect_opts = connect_opts.database("postgres");
         connect_opts = connect_opts.username("postgres");
         connect_opts = connect_opts.password("password");
@@ -61,7 +61,9 @@ mod tests {
             .await
             .unwrap();
 
-        let session_store = SessionStore::<SessionPgPool>::new(Some(pool.into()), config);
+        let session_store = SessionStore::<SessionPgPool>::new(Some(pool.into()), config)
+            .await
+            .unwrap();
         //generate the table needed!
         session_store.initiate().await.unwrap();
 

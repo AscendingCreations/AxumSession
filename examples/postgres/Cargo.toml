@@ -5,13 +5,14 @@ authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-axum = {version = "0.6.12"}
-tokio = { version = "1.22.0", features = ["full", "tracing"] }
-async-trait = "0.1.58"
-sqlx = { version = "0.6.3", features = [
+axum = {version = "0.6.18"}
+tokio = { version = "1.29.1", features = ["full", "tracing"] }
+async-trait = "0.1.71"
+sqlx = { version = "=0.7.0", features = [
     "macros",
     "sqlite",
-    "all-types",
-    "runtime-tokio-rustls",
+    "_unstable-all-types",
+    "tls-rustls",
+    "runtime-tokio",
 ] }
-axum_session = { version = "0.2.0", features = [ "postgres-rustls","sqlite-rustls"] }
+axum_session = { path = "../../", features = [ "postgres-rustls","sqlite-rustls"] }

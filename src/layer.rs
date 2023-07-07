@@ -11,7 +11,7 @@ use tower_layer::Layer;
 /// use uuid::Uuid;
 ///
 /// let config = SessionConfig::default();
-/// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+/// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
 /// let layer = SessionLayer::new(session_store);
 /// ```
 ///
@@ -35,7 +35,7 @@ where
     /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config);
+    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
     /// let layer = SessionLayer::new(session_store);
     /// ```
     ///

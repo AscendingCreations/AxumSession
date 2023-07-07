@@ -19,6 +19,7 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 - Supports Memory Only usage. No need to use a persistant database.
 - Supports Per Session SessionID cookie Encryption for enhanced Security.
 - Supports SessionID renewal for enhanced Security.
+- Optional Fastbloom key storage for reduced Database lookups during new UUID generation. Boosting Bandwidth.
 
 ## Help
 
@@ -42,17 +43,19 @@ axum_session = { version = "0.2.3", features = [ "postgres-rustls"] }
 #### Cargo Feature Flags
 `default`: [`postgres-rustls`]
 
-`sqlite-rustls`: `Sqlx 0.6.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
+`key-store`: Enabled the optional key storage. Will increase ram usage based on Fastbloom settings.
 
-`sqlite-native`: `Sqlx 0.6.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `native-tls`.
+`sqlite-rustls`: `Sqlx 0.7.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
 
-`postgres-rustls`: `Sqlx 0.6.0` support for the Postgres database server and `rustls`.
+`sqlite-native`: `Sqlx 0.7.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `native-tls`.
 
-`postgres-native`: `Sqlx 0.6.0` support for the Postgres database server and `native-tls`.
+`postgres-rustls`: `Sqlx 0.7.0` support for the Postgres database server and `rustls`.
 
-`mysql-rustls`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `rustls`.
+`postgres-native`: `Sqlx 0.7.0` support for the Postgres database server and `native-tls`.
 
-`mysql-native`: `Sqlx 0.6.0` support for the MySQL/MariaDB database server and `native-tls`.
+`mysql-rustls`: `Sqlx 0.7.0` support for the MySQL/MariaDB database server and `rustls`.
+
+`mysql-native`: `Sqlx 0.7.0` support for the MySQL/MariaDB database server and `native-tls`.
 
 `redis-db`:  `redis 0.23.0` session support.
 
@@ -263,6 +266,17 @@ async fn greet(session: Session<SessionPgPool>) -> String {
 }
 
 ```
+
+To enable and use fastbloom key storage for less database lookups. 
+Add the feature `"key-store"` to the crate’s features. This feature will increase the ram usage server side.
+but will heavily improve the bandwidth limitations and reduce latency of returns from the server. 
+This is based on how much the `filter_expected_elements` and `filter_false_positive_probability` are set too.
+The higher they are the more ram is used. You will also need to Enable the bloom filter in the config for it to be used. By default, 
+the `use_bloom_filters` is enabled and these config options exist whither or not the feature is enabled.
+Please refer to `with_filter_expected_elements` and `with_filter_false_positive_probability` within the documents to set the options.
+Otherwise stick with the default settings which should work in most situations. Just do note these options provide on how many False positives
+could possibly occur when comparing a UUID to what currently exists, which means it will keep trying till it finds none that match. 
+Higher values decrease the chance of a false positive but increase ram usage.
 
 ## Session Login and Authentication via `axum_session_auth`
 

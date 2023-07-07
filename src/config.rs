@@ -118,6 +118,17 @@ pub struct SessionConfig {
     pub(crate) database_key: Option<Key>,
     /// Set how Secure you want SessionID's to be stored as.
     pub(crate) security_mode: SecurityMode,
+    /// How many Elements could we see at one time in the Table?
+    /// So if you have 1000 unique visitors a second and each generate a UUID.
+    /// That would be 1000 * 60(secs) * 60(mins) * 24(hours) to get 1 days worth of visitors.
+    pub(crate) filter_expected_elements: u64,
+    /// The probability of how many allowable false positives you want to have based on the expected elements.
+    /// 0.01 is a good starting point.
+    pub(crate) filter_false_positive_probability: f64,
+    /// This enabled using a counting bloom filter. If this is taking to much Memory or is to slow or you just dont want
+    /// the false positives it can give you can disable it by setting it to false. This will reduce memory usage.
+    /// By default this is enabled unless the specific database cant function with it then disabled.
+    pub(crate) use_bloom_filters: bool,
 }
 
 impl std::fmt::Debug for SessionConfig {
@@ -138,6 +149,12 @@ impl std::fmt::Debug for SessionConfig {
             .field("memory_lifespan", &self.memory_lifespan)
             .field("table_name", &self.table_name)
             .field("security mode", &self.security_mode)
+            .field("filter_expected_elements", &self.filter_expected_elements)
+            .field("use_bloom_filters", &self.use_bloom_filters)
+            .field(
+                "filter_false_positive_probability",
+                &self.filter_false_positive_probability,
+            )
             .field("key", &"key hidden")
             .field("database_key", &"key hidden")
             .finish()
@@ -465,6 +482,53 @@ impl SessionConfig {
         self.security_mode = mode;
         self
     }
+
+    /// Set's the session's filters expected elements.
+    /// Please Set this by a daily value.
+    /// Example: 1000 * 60(secs) * 60(mins) * 24(hours) to get 1 days worth of visitors.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_filter_expected_elements(100_000);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_filter_expected_elements(mut self, elements: u64) -> Self {
+        self.filter_expected_elements = elements;
+        self
+    }
+
+    /// Set's the session's filters False Posistive probability when creating and comparing UUID.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_filter_false_positive_probability(0.01);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_filter_false_positive_probability(mut self, probability: f64) -> Self {
+        self.filter_false_positive_probability = probability;
+        self
+    }
+
+    /// Set's the session's bloom filters to be disabled or enabled. By default they are enabled.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_bloom_filter(true);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_bloom_filter(mut self, enable: bool) -> Self {
+        self.use_bloom_filters = enable;
+        self
+    }
 }
 
 impl Default for SessionConfig {
@@ -497,6 +561,12 @@ impl Default for SessionConfig {
             key_cookie_name: "session_key".into(),
             /// Simple is the Default mode for compatibilty with older versions of the crate.
             security_mode: SecurityMode::Simple,
+            filter_expected_elements: 100_000,
+            /// The probability of how many allowable false positives you want to have based on the expected elements.
+            /// 0.01 is a good starting point.
+            filter_false_positive_probability: 0.01,
+            /// Always set to on.
+            use_bloom_filters: true,
         }
     }
 }

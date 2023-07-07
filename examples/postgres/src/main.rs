@@ -1,7 +1,7 @@
 use axum::{routing::get, Router};
 use axum_session::{Session, SessionConfig, SessionLayer, SessionSqlitePool, SessionStore};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
-use std::{net::SocketAddr, str::FromStr};
+use std::str::FromStr;
 
 #[tokio::main]
 async fn main() {
@@ -12,7 +12,9 @@ async fn main() {
     let session_config = SessionConfig::default().with_table_name("sessions_table");
 
     let session_store =
-        SessionStore::<SessionSqlitePool>::new(Some(poll.clone().into()), session_config);
+        SessionStore::<SessionSqlitePool>::new(Some(poll.clone().into()), session_config)
+            .await
+            .unwrap();
 
     //Create the Database table for storing our Session Data.
     session_store.initiate().await.unwrap();
@@ -22,10 +24,7 @@ async fn main() {
         .route("/greet", get(greet))
         .layer(SessionLayer::new(session_store));
 
-    // run it
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-
-    axum::Server::bind(&addr)
+    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
