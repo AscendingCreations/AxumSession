@@ -16,7 +16,7 @@ pub use databases::*;
 pub use errors::SessionError;
 pub use key::SessionKey;
 pub use layer::SessionLayer;
-pub use session::Session;
+pub use session::{ReadOnlySession, Session};
 pub use session_store::SessionStore;
 
 pub(crate) use service::{CookiesExt, SessionService};

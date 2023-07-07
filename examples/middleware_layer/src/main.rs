@@ -3,7 +3,8 @@ use axum::middleware::Next;
 use axum::response::Response;
 use axum::{routing::get, Router};
 use axum_session::{
-    SessionConfig, SessionLayer, SessionStore, SessionSurrealPool, SessionSurrealSession,
+    ReadOnlySession, SessionConfig, SessionLayer, SessionStore, SessionSurrealPool,
+    SessionSurrealSession,
 };
 use hyper::StatusCode;
 use surrealdb::engine::any::{connect, Any};
@@ -56,7 +57,7 @@ async fn root() -> &'static str {
 }
 
 pub async fn auth_middleware<T>(
-    session: SessionSurrealSession<Any>,
+    session: ReadOnlySession<SessionSurrealPool<Any>>,
     request: Request<T>,
     next: Next<T>,
 ) -> Result<Response, StatusCode> {
