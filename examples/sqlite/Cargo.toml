@@ -1,5 +1,5 @@
 [package]
-name = "postgres"
+name = "sqlite"
 version = "0.0.1"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 edition = "2021"
@@ -10,9 +10,9 @@ tokio = { version = "1.29.1", features = ["full", "tracing"] }
 async-trait = "0.1.71"
 sqlx = { version = "0.7.0", features = [
     "macros",
-    "postgres",
+    "sqlite",
     "_unstable-all-types",
     "tls-rustls",
     "runtime-tokio",
 ] }
-axum_session = { path = "../../", features = [ "postgres-rustls"] }
+axum_session = { path = "../../", features = ["sqlite-rustls"] }

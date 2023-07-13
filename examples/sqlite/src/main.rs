@@ -1,6 +1,7 @@
 use axum::{routing::get, Router};
-use axum_session::{SessionConfig, SessionLayer, SessionPgSession, SessionPgSessionStore};
-use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions};
+use axum_session::{Session, SessionConfig, SessionLayer, SessionSqlitePool, SessionStore};
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
+use std::str::FromStr;
 
 #[tokio::main]
 async fn main() {
@@ -10,9 +11,10 @@ async fn main() {
     //To enable Private cookies for integrity, and authenticity please check the next Example.
     let session_config = SessionConfig::default().with_table_name("sessions_table");
 
-    let session_store = SessionPgSessionStore::new(Some(poll.clone().into()), session_config)
-        .await
-        .unwrap();
+    let session_store =
+        SessionStore::<SessionSqlitePool>::new(Some(poll.clone().into()), session_config)
+            .await
+            .unwrap();
 
     //Create the Database table for storing our Session Data.
     session_store.initiate().await.unwrap();
@@ -28,7 +30,7 @@ async fn main() {
         .unwrap();
 }
 
-async fn greet(session: SessionPgSession) -> String {
+async fn greet(session: Session<SessionSqlitePool>) -> String {
     let mut count: usize = session.get("count").unwrap_or(0);
 
     count += 1;
@@ -37,16 +39,10 @@ async fn greet(session: SessionPgSession) -> String {
     count.to_string()
 }
 
-async fn connect_to_database() -> PgPool {
-    let mut connect_opts = PgConnectOptions::new();
-    connect_opts = connect_opts
-        .database("test")
-        .username("test")
-        .password("password")
-        .host("127.0.0.1")
-        .port(5432);
+async fn connect_to_database() -> SqlitePool {
+    let connect_opts = SqliteConnectOptions::from_str("sqlite::memory:").unwrap();
 
-    PgPoolOptions::new()
+    SqlitePoolOptions::new()
         .max_connections(5)
         .connect_with(connect_opts)
         .await

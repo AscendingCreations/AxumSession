@@ -2,6 +2,7 @@
 members = [
     ".",
     "examples/postgres",
+    "examples/sqlite",
     "examples/redis",
     "examples/surrealdb",
     "examples/middleware_layer",
