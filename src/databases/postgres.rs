@@ -43,7 +43,7 @@ impl DatabasePool for SessionPgPool {
         let result: Vec<(String,)> = sqlx::query_as(
             &r#"
             SELECT id FROM %%TABLE_NAME%%
-            WHERE (expires IS NULL OR expires > $1)
+            WHERE (expires IS NULL OR expires < $1)
         "#
             .replace("%%TABLE_NAME%%", table_name),
         )

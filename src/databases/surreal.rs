@@ -57,7 +57,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .connection
             .query(
                 "SELECT sessionid FROM type::table($table_name)
-                WHERE sessionexpires = NONE OR sessionexpires > $expires;",
+                WHERE sessionexpires = NONE OR sessionexpires < $expires;",
             )
             .bind(("table_name", table_name))
             .await?;
