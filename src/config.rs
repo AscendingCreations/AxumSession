@@ -295,7 +295,7 @@ impl SessionConfig {
     }
 
     /// Set's the session's lifetime (expiration time) within database storage.
-    ///
+    /// This should be equal too or less than the Cookies Expiration time.
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
@@ -315,7 +315,7 @@ impl SessionConfig {
     /// If this is set to None then the Cookie will be unloaded on browser Close.
     /// Set this to be the duration of max_lifespan or longer to prevent session drops.
     /// This is generally in a duration of how many Days a cookie should live in the browser.
-    ///
+    /// Please Ensure the Duration is greater or equal to max_lifespan for proper storage.
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
@@ -347,6 +347,8 @@ impl SessionConfig {
     }
 
     /// Set's the session's lifetime (expiration time) within memory storage.
+    /// This setting should be Less than lifespan and max_lifespan. This is to
+    /// Unload the data from memory and allow it to stay stored in the database.
     ///
     /// # Examples
     /// ```rust
