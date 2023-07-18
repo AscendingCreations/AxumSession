@@ -51,7 +51,7 @@ impl DatabasePool for SessionSqlitePool {
         .fetch_all(&self.pool)
         .await?;
 
-        let result: Vec<String> = result.iter().map(|(s,)| s.clone()).collect();
+        let result: Vec<String> = result.into_iter().map(|(s,)| s).collect();
 
         sqlx::query(
             &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < $1"#
@@ -159,7 +159,7 @@ impl DatabasePool for SessionSqlitePool {
         .fetch_all(&self.pool)
         .await?;
 
-        let result: Vec<String> = result.iter().map(|(s,)| s.clone()).collect();
+        let result: Vec<String> = result.into_iter().map(|(s,)| s).collect();
 
         Ok(result)
     }

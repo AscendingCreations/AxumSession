@@ -10,7 +10,7 @@ members = [
 
 [package]
 name = "axum_session"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "Memory and/or Database Session management layer for axum."
 edition = "2021"
@@ -84,5 +84,5 @@ tower = "0.4.13"
 log = { version = "0.4.19", default-features = false }
 
 [package.metadata.docs.rs]
-features = ["sqlite-rustls","mysql-rustls","redis-db", "surrealdb-rocksdb", "surrealdb-mem"]
+features = ["sqlite-rustls", "mysql-rustls", "redis-db", "surrealdb-rocksdb", "surrealdb-mem", "key-store"]
 rustdoc-args = ["--document-private-items"]
