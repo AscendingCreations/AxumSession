@@ -10,7 +10,7 @@ members = [
 
 [package]
 name = "axum_session"
-version = "0.3.3"
+version = "0.3.4"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "Memory and/or Database Session management layer for axum."
 edition = "2021"
@@ -21,7 +21,7 @@ keywords = ["Axum", "Tower", "SQLx", "Session", "surrealdb"]
 repository = "https://github.com/AscendingCreations/AxumSessions"
 
 [features]
-default = ["postgres-rustls", "sqlite-rustls", "mysql-rustls", "redis-db", "surrealdb-mem"]
+default = ["postgres-rustls"]
 
 key-store = ["fastbloom-rs"]
 sqlite-rustls = ["sqlx/sqlite", "sqlx/tls-rustls"]
