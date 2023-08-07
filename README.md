@@ -280,4 +280,4 @@ Higher values decrease the chance of a false positive but increase ram usage.
 
 ## Session Login and Authentication via `axum_session_auth`
 
-For user login, login caching and authentication please see [`axum_session_auth`](https://github.com/AscendingCreations/AxumSessionsAuth).
+For user login, login caching and authentication please see [`axum_session_auth`](https://github.com/AscendingCreations/AxumSessionAuth).

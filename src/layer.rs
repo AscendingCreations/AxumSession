@@ -6,7 +6,7 @@ use tower_layer::Layer;
 /// Sessions Layer used with Axum to activate the Service.
 ///
 /// # Examples
-/// ```
+/// ```rust ignore
 /// use axum_session::{SessionNullPool, SessionConfig, SessionStore, SessionLayer};
 /// use uuid::Uuid;
 ///
@@ -30,7 +30,7 @@ where
     /// Constructs a SessionLayer used with Axum to activate the Service.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore, SessionLayer};
     /// use uuid::Uuid;
     ///

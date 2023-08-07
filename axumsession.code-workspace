@@ -8,6 +8,7 @@
 		"rust-analyzer.linkedProjects": [
 			"./Cargo.toml",
 			"./examples/redis/Cargo.toml"
-		]
+		],
+		"rust-analyzer.showUnlinkedFileNotification": false
 	}
 }

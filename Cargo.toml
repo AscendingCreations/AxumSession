@@ -18,7 +18,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 documentation = "https://docs.rs/axum_session"
 keywords = ["Axum", "Tower", "SQLx", "Session", "surrealdb"]
-repository = "https://github.com/AscendingCreations/AxumSessions"
+repository = "https://github.com/AscendingCreations/AxumSession"
 
 [features]
 default = ["postgres-rustls"]

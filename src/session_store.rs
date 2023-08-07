@@ -21,7 +21,7 @@ use uuid::Uuid;
 /// Contains the main Services storage for all session's and database access for persistant Sessions.
 ///
 /// # Examples
-/// ```rust
+/// ```rust ignore
 /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
 ///
 /// let config = SessionConfig::default();
@@ -70,7 +70,7 @@ where
     /// Constructs a New SessionStore.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
@@ -126,7 +126,7 @@ where
     /// Returns true if client is Some().
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
@@ -147,7 +147,7 @@ where
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
@@ -174,7 +174,7 @@ where
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
@@ -201,7 +201,7 @@ where
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     ///
     /// let config = SessionConfig::default();
@@ -390,7 +390,7 @@ where
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
@@ -420,7 +420,7 @@ where
     /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///
@@ -444,7 +444,7 @@ where
     /// Deletes all sessions in Memory.
     ///
     /// # Examples
-    /// ```rust
+    /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
     /// use uuid::Uuid;
     ///

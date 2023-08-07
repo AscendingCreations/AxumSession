@@ -54,6 +54,7 @@ impl<S> Session<S>
 where
     S: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
+    #[allow(clippy::needless_pass_by_ref_mut)]
     pub(crate) async fn new(
         store: &mut SessionStore<S>,
         cookies: &CookieJar,

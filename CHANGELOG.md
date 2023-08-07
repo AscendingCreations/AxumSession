@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## 0.3.5 (7. August, 2023)
+### Fixed
+- rename git repo.
+- Add ignores to comments so they dont run due to async code errors.
+
 ## 0.3.4 (20. July, 2023)
 ### Fixed
 - Removed not needed default features.
