@@ -211,7 +211,8 @@ where
         self.store.renew_key(self.id.inner());
     }
 
-    /// Sets the Current Session to be Destroyed on the next run.
+    /// Sets the Current Session to be Destroyed.
+    /// This will Deleted the Session and Cookies upon Response Phase.
     ///
     /// # Examples
     /// ```rust ignore

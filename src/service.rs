@@ -174,19 +174,20 @@ where
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
 
-            let (renew, storable, renew_key, loaded) =
+            let (renew, storable, renew_key, destroy, loaded) =
                 if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
                     (
                         session_data.renew,
                         session_data.storable,
                         session_data.renew_key,
+                        session_data.destroy,
                         true,
                     )
                 } else {
-                    (false, false, false, false)
+                    (false, false, false, false, false)
                 };
 
-            if !store.config.session_mode.is_manual() || loaded {
+            if !destroy && (!store.config.session_mode.is_manual() || loaded) {
                 if renew {
                     // Lets change the Session ID and destory the old Session from the database.
                     let session_id = Session::generate_uuid(&store).await;
@@ -239,6 +240,34 @@ where
                         session.store.filter.remove(old_id.as_bytes());
                     }
                 }
+            } else if loaded {
+                // lets unload everything if the session data has been loaded and set to be destroyed.
+                #[cfg(feature = "key-store")]
+                if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                    session.store.filter.remove(session.id.inner().as_bytes());
+                }
+
+                if store.config.security_mode == SecurityMode::PerSession {
+                    store.keys.remove(&session_key.id.inner());
+
+                    if store.is_persistent() {
+                        session
+                            .store
+                            .destroy_session(&session_key.id.inner())
+                            .await
+                            .unwrap();
+                    }
+                }
+
+                let _ = session.store.inner.remove(&session.id.inner());
+
+                if store.is_persistent() {
+                    session
+                        .store
+                        .destroy_session(&session.id.inner())
+                        .await
+                        .unwrap();
+                }
             }
 
             // Lets make a new jar as we only want to add our cookies to the Response cookie header.
@@ -247,8 +276,8 @@ where
             // Add Per-Session encryption KeyID
             let cookie_key = match store.config.security_mode {
                 SecurityMode::PerSession => {
-                    if store.config.session_mode.is_storable() && storable
-                        || !store.config.session_mode.is_storable()
+                    if store.config.session_mode.is_storable() && storable && !destroy
+                        || !store.config.session_mode.is_storable() && !destroy
                     {
                         cookies.add_cookie(
                             create_cookie(&store.config, session_key.id.inner(), CookieType::Key),
@@ -274,8 +303,9 @@ where
             };
 
             // Add SessionID
-            if store.config.session_mode.is_storable() && storable
-                || !store.config.session_mode.is_storable()
+            if (store.config.session_mode.is_storable() && storable
+                || !store.config.session_mode.is_storable())
+                && !destroy
             {
                 cookies.add_cookie(
                     create_cookie(&store.config, session.id.inner(), CookieType::Data),
@@ -286,7 +316,7 @@ where
             }
 
             // Add Session Storable Boolean
-            if store.config.session_mode.is_storable() && storable {
+            if store.config.session_mode.is_storable() && storable && !destroy {
                 cookies.add_cookie(
                     create_cookie(&store.config, storable.to_string(), CookieType::Storable),
                     &cookie_key,
@@ -299,7 +329,10 @@ where
             }
 
             // Add the Session ID so it can link back to a Session if one exists.
-            if (!store.config.session_mode.is_storable() || storable) && store.is_persistent() {
+            if (!store.config.session_mode.is_storable() || storable)
+                && store.is_persistent()
+                && !destroy
+            {
                 let sess = if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner())
                 {
                     if store.config.always_save || sess.update || !sess.validate() {
@@ -331,7 +364,7 @@ where
                 }
             }
 
-            if store.config.session_mode.is_storable() && !storable {
+            if store.config.session_mode.is_storable() && !storable && !destroy {
                 #[cfg(feature = "key-store")]
                 if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                     session.store.filter.remove(session.id.inner().as_bytes());

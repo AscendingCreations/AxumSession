@@ -15,11 +15,11 @@ use std::borrow::Cow;
 pub enum SessionMode {
     /// Creates a SessionID Without SessionData.The End user must `session.create_data()`
     /// before running any other functions otherwise it will panic. Also Deletes SessionData
-    /// and cookie if session.storable is false, if session.storable
+    /// and cookie if `session.storable` is false, if session.storable
     /// is true saves data.
     Manual,
     /// Always Creates a Session.
-    /// Deletes Session and cookie if session.storable is false, if session.storable is
+    /// Deletes Session and cookie if `session.storable` is false, if session.storable is
     /// true saves data.
     Storable,
     /// Always Creates a Session

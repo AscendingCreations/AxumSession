@@ -97,8 +97,7 @@ impl SessionData {
     ///
     #[inline]
     pub(crate) fn service_clear(&mut self, memory_lifespan: Duration) {
-        if !self.validate() || self.destroy {
-            self.destroy = false;
+        if !self.validate() {
             self.update = true;
             self.data.clear();
         }
@@ -139,7 +138,8 @@ impl SessionData {
         self.update = true;
     }
 
-    /// Sets the Current Session to be Destroyed on the next run.
+    /// Sets the Current Session to be Destroyed.
+    /// This will Deleted the Session and Cookies upon Response Phase.
     ///
     /// # Examples
     /// ```rust ignore
@@ -149,7 +149,6 @@ impl SessionData {
     #[inline]
     pub fn destroy(&mut self) {
         self.destroy = true;
-        self.update = true;
     }
 
     /// Sets the Current Session to a long term expiration. Useful for Remember Me setups.
