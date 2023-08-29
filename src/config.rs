@@ -13,12 +13,17 @@ use std::borrow::Cow;
 ///
 #[derive(Debug, Clone)]
 pub enum SessionMode {
-    /// Does not Create a User SessionData. The End user must Create one manually otherwise functions
-    /// will panic? Manual Also does what storable does.
+    /// Creates a SessionID Without SessionData.The End user must `session.create_data()`
+    /// before running any other functions otherwise it will panic. Also Deletes SessionData
+    /// and cookie if session.storable is false, if session.storable
+    /// is true saves data.
     Manual,
-    /// Deletes Session Data if session.storable is false, if session.storable is true saves data.
+    /// Always Creates a Session.
+    /// Deletes Session and cookie if session.storable is false, if session.storable is
+    /// true saves data.
     Storable,
-    /// Always in Memory and Database. regardless of if storable.
+    /// Always Creates a Session
+    /// Always stores in Memory and Database.
     Always,
 }
 
@@ -74,24 +79,24 @@ impl SecurityMode {
 #[derive(Clone)]
 pub struct SessionConfig {
     /// The cookie name that contains a boolean for session saving.
-    /// Mostly used when session_mode is set to SessionMode::Storable.
+    /// only used when session_mode is set to SessionMode::Storable or Manual.
     pub(crate) storable_cookie_name: Cow<'static, str>,
-    /// Session cookie name
+    /// Session cookie name.
     pub(crate) cookie_name: Cow<'static, str>,
-    /// Session cookie name
+    /// Session key cookie name.
     pub(crate) key_cookie_name: Cow<'static, str>,
-    /// Session cookie domain
+    /// Session cookie domain.
     pub(crate) cookie_domain: Option<Cow<'static, str>>,
-    /// Session cookie http only flag
+    /// Session cookie http only flag.
     pub(crate) cookie_http_only: bool,
     /// Session cookie max age None means the browser deletes cookie on close.
     /// Please make sure the Duration is longer than max_lifespan.
     pub(crate) cookie_max_age: Option<Duration>,
-    /// Session cookie path
+    /// Session cookie path.
     pub(crate) cookie_path: Cow<'static, str>,
-    /// Resticts how Cookies are sent cross-site. Default is `SameSite::Lax`
+    /// Resticts how Cookies are sent cross-site. Default is `SameSite::Lax`.
     pub(crate) cookie_same_site: SameSite,
-    /// Session cookie secure flag
+    /// Session cookie secure flag.
     pub(crate) cookie_secure: bool,
     /// Disables the need to avoid session saving.
     pub(crate) session_mode: SessionMode,

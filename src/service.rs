@@ -93,7 +93,6 @@ where
 
             // Check if the session id exists if not lets check if it exists in the database or generate a new session.
             // If manual mode is enabled then do not check for a Session unless the UUID is not new.
-
             let check_database: bool = if is_new && !store.config.session_mode.is_manual() {
                 let sess = SessionData::new(session.id.0, storable, &store.config);
                 store.inner.insert(session.id.inner(), sess);
@@ -245,6 +244,7 @@ where
             // Lets make a new jar as we only want to add our cookies to the Response cookie header.
             let mut cookies = CookieJar::new();
 
+            // Add Per-Session encryption KeyID
             let cookie_key = match store.config.security_mode {
                 SecurityMode::PerSession => {
                     if store.config.session_mode.is_storable() && storable
@@ -273,6 +273,7 @@ where
                 }
             };
 
+            // Add SessionID
             if store.config.session_mode.is_storable() && storable
                 || !store.config.session_mode.is_storable()
             {
@@ -284,11 +285,18 @@ where
                 cookies.add_cookie(remove_cookie(&store.config, CookieType::Data), &cookie_key);
             }
 
-            // Always Add the Storable Cookie so we can keep track if they can store the session.
-            cookies.add_cookie(
-                create_cookie(&store.config, storable.to_string(), CookieType::Storable),
-                &cookie_key,
-            );
+            // Add Session Storable Boolean
+            if store.config.session_mode.is_storable() && storable {
+                cookies.add_cookie(
+                    create_cookie(&store.config, storable.to_string(), CookieType::Storable),
+                    &cookie_key,
+                );
+            } else {
+                cookies.add_cookie(
+                    remove_cookie(&store.config, CookieType::Storable),
+                    &cookie_key,
+                );
+            }
 
             // Add the Session ID so it can link back to a Session if one exists.
             if (!store.config.session_mode.is_storable() || storable) && store.is_persistent() {
