@@ -538,15 +538,15 @@ impl Default for SessionConfig {
         Self {
             /// Set to a 6 hour default in Database Session stores unloading.
             lifespan: Duration::hours(6),
-            cookie_name: "sqlx_session".into(),
+            cookie_name: "session".into(),
             cookie_path: "/".into(),
             cookie_max_age: Some(Duration::days(100)),
             cookie_http_only: true,
             cookie_secure: false,
             cookie_domain: None,
             cookie_same_site: SameSite::Lax,
-            storable_cookie_name: "session_acceptance".into(),
-            table_name: "async_sessions".into(),
+            storable_cookie_name: "acceptance".into(),
+            table_name: "sessions".into(),
             /// Unload memory after 60 minutes if it has not been accessed.
             memory_lifespan: Duration::minutes(60),
             /// Unload long term session after 60 days if it has not been accessed.
