@@ -51,8 +51,8 @@ impl SessionMode {
 ///
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SecurityMode {
-    /// this will create and store a per session Encryption key to encrypt the
-    /// SessionID and Storable cookies with. will get rotated upon Session renew.
+    /// Will create and store a per-session Encryption key to encrypt the
+    /// SessionID and Storable cookies with that will get rotated upon Session renew.
     /// Config's Key must be set to Some() or the system will Panic.
     PerSession,
     /// Uses the config Key to encrypt SessionID in cookies if Key is Some().
