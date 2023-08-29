@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+## Unreleased
+
+### Changed
+- (Breaking) session.destroy() Deletes Session and cookie on Response phase rather than just sessiondata on Request phase.
 
 ## 0.3.5 (7. August, 2023)
 ### Fixed
