@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
     ".",
     "examples/postgres",
@@ -33,10 +34,6 @@ mysql-native = ["sqlx/mysql", "sqlx/tls-native-tls"]
 redis-db = ["redis"]
 surrealdb-rocksdb =  ["surrealdb/kv-rocksdb", "surrealdb_tag"]
 surrealdb-tikv =  ["surrealdb/kv-tikv", "surrealdb_tag"]
-surrealdb-indxdb =  ["surrealdb/kv-indxdb", "surrealdb_tag"]
-surrealdb-fdb-5_1 =  ["surrealdb/kv-fdb-5_1", "surrealdb_tag"]
-surrealdb-fdb-5_2 =  ["surrealdb/kv-fdb-5_2", "surrealdb_tag"]
-surrealdb-fdb-6_0 =  ["surrealdb/kv-fdb-6_0", "surrealdb_tag"]
 surrealdb-fdb-6_1 =  ["surrealdb/kv-fdb-6_1", "surrealdb_tag"]
 surrealdb-fdb-6_2 =  ["surrealdb/kv-fdb-6_2", "surrealdb_tag"]
 surrealdb-fdb-6_3 =  ["surrealdb/kv-fdb-6_3", "surrealdb_tag"]
@@ -49,15 +46,15 @@ surrealdb_tag = []
 
 [dependencies]
 axum-core = {version = "0.3.4"}
-serde = { version = "1.0.166", features = ["derive"] }
-serde_json = "1.0.100"
-chrono = { version = "0.4.26", default-features = false, features = ["clock", "serde", "std"] }
-tokio = { version = "1.29.1", features = ["full"] }
-async-trait = "0.1.71"
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.105"
+chrono = { version = "0.4.28", default-features = false, features = ["clock", "serde", "std"] }
+tokio = { version = "1.32.0", features = ["full"] }
+async-trait = "0.1.73"
 tracing = "0.1.37"
-thiserror = "1.0.41"
+thiserror = "1.0.47"
 http-body = "0.4.5"
-uuid = { version = "1.4.0", features = ["v4", "serde"] }
+uuid = { version = "1.4.1", features = ["serde","v4"] }
 http = "0.2.9"
 tower-layer = "0.3.2"
 tower-service = "0.3.2"
@@ -69,13 +66,13 @@ sqlx = { version = "0.7.0", default-features = false, features = [
 cookie = { version = "0.17.0", features = ["percent-encode", "private"] }
 futures = "0.3.28"
 bytes = "1.4.0"
-dashmap = "5.4.0"
-redis = { version = "0.23.0", features = ["tokio-comp"], optional = true }
-surrealdb = { version = "1.0.0-beta.9", optional = true }
+dashmap = "5.5.3"
+redis = { version = "0.23.3", features = ["tokio-comp"], optional = true }
+surrealdb = { version = "1.0.0-beta.10", optional = true }
 aes-gcm = { version = "0.10.2"}
 base64 = { version = "0.21.2"}
 rand = { version = "0.8.5"}
-fastbloom-rs = {version = "0.5.3", optional = true }
+fastbloom-rs = {version = "0.5.6", optional = true }
 
 [dev-dependencies]
 axum = { version = "0.6.18", features = ["macros"]}
