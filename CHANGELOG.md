@@ -5,8 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.4.0 (7. August, 2023)
 ### Changed
 - (Breaking) session.destroy() Deletes Session and cookie on Response phase rather than just sessiondata on Request phase.
+- (Breaking) Removed indxdb and fdb 5.1 - 6.0 from surreal due to outdate or incompatibilities.
+- (Breaking) SurrealDB updated to 1.0.0-beta.10 Thank you (@Atila-M-Schrieber).
 
 ## 0.3.5 (7. August, 2023)
 ### Fixed
