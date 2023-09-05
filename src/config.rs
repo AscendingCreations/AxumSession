@@ -541,7 +541,7 @@ impl SessionConfig {
 impl Default for SessionConfig {
     fn default() -> Self {
         Self {
-            /// Set to a 6 hour default in Database Session stores unloading.
+            // Set to a 6 hour default in Database Session stores unloading.
             lifespan: Duration::hours(6),
             cookie_name: "session".into(),
             cookie_path: "/".into(),
@@ -552,27 +552,27 @@ impl Default for SessionConfig {
             cookie_same_site: SameSite::Lax,
             storable_cookie_name: "acceptance".into(),
             table_name: "sessions".into(),
-            /// Unload memory after 60 minutes if it has not been accessed.
+            // Unload memory after 60 minutes if it has not been accessed.
             memory_lifespan: Duration::minutes(60),
-            /// Unload long term session after 60 days if it has not been accessed.
+            // Unload long term session after 60 days if it has not been accessed.
             max_lifespan: Duration::days(60),
-            /// Default to update the database every hour if the session is still being requested.
+            // Default to update the database every hour if the session is still being requested.
             expiration_update: Duration::hours(5),
             always_save: false,
             session_mode: SessionMode::Always,
-            /// Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
+            // Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
             key: None,
-            /// Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.
+            // Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.
             database_key: None,
-            /// Default cookie name for the Key Id.
+            // Default cookie name for the Key Id.
             key_cookie_name: "session_key".into(),
-            /// Simple is the Default mode for compatibilty with older versions of the crate.
+            // Simple is the Default mode for compatibilty with older versions of the crate.
             security_mode: SecurityMode::Simple,
             filter_expected_elements: 100_000,
-            /// The probability of how many allowable false positives you want to have based on the expected elements.
-            /// 0.01 is a good starting point.
+            // The probability of how many allowable false positives you want to have based on the expected elements.
+            // 0.01 is a good starting point.
             filter_false_positive_probability: 0.01,
-            /// Always set to on.
+            // Always set to on.
             use_bloom_filters: true,
         }
     }
