@@ -99,10 +99,18 @@ where
 
                 filter
             } else {
-                FilterBuilder::new(1, 1.0).build_counting_bloom_filter()
+                FilterBuilder::new(
+                    config.filter_expected_elements,
+                    config.filter_false_positive_probability,
+                )
+                .build_counting_bloom_filter()
             }
         } else {
-            FilterBuilder::new(1, 1.0).build_counting_bloom_filter()
+            FilterBuilder::new(
+                config.filter_expected_elements,
+                config.filter_false_positive_probability,
+            )
+            .build_counting_bloom_filter()
         };
 
         Ok(Self {
