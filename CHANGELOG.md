@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Changed
 - (breaking) SessionStore::initiate() is removed. initiate has been merged into SessionStore::new(). 
 ### Fixed
+- Filter Seeding Errors due to no tables initiated.
 - Filter even on else now uses the config to set FilterBuilder.
 
 ## 0.4.0 (3. September, 2023)

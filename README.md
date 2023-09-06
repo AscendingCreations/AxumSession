@@ -88,10 +88,8 @@ async fn main() {
     let session_config = SessionConfig::default()
         .with_table_name("sessions_table");
 
+    // create SessionStore and initiate the database tables
     let session_store = SessionStore::<SessionPgPool>::new(Some(poll.clone().into()), session_config).await.unwrap();
-
-    //Create the Database table for storing our Session Data.
-    session_store.initiate().await.unwrap();
 
     // build our application with some routes
     let app = Router::new()
@@ -153,8 +151,8 @@ async fn main() {
         // This Also helps prevent impersonation attempts. 
         .with_security_mode(SecurityMode::PerSession);
 
+    // create SessionStore and initiate the database tables
     let session_store = SessionStore::<SessionPgPool>::new(None, session_config).await.unwrap();
-    session_store.initiate().await.unwrap();
 
     // build our application with some routes
     let app = Router::new()
@@ -189,6 +187,7 @@ async fn main() {
     let session_config = SessionConfig::default()
         .with_table_name("sessions_table");
 
+    // create SessionStore and initiate the database tables
     let session_store = SessionStore::<SessionNullPool>::new(None, session_config).await.unwrap();
 
     // build our application with some routes
@@ -234,8 +233,8 @@ async fn main() {
     let session_config = SessionConfig::default()
         .with_table_name("sessions_table").with_mode(SessionMode::Storable);
 
+    // create SessionStore and initiate the database tables
     let session_store = SessionStore::<SessionPgPool>::new(None, session_config).await.unwrap();
-    session_store.initiate().await.unwrap();
 
     // build our application with some routes
     let app = Router::new()
