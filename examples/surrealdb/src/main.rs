@@ -24,13 +24,11 @@ async fn main() {
     // No need here to specify a table name because redis does not support tables
     let session_config = SessionConfig::default();
 
+    // create SessionStore and initiate the database tables
     let session_store =
         SessionStore::new(Some(SessionSurrealPool::new(db.clone())), session_config)
             .await
             .unwrap();
-
-    // initiate the database tables
-    session_store.initiate().await.unwrap();
 
     // build our application with a single route
     let app = Router::new()

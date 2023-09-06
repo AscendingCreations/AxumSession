@@ -61,11 +61,10 @@ mod tests {
             .await
             .unwrap();
 
+        //create session_store and generate the table needed!
         let session_store = SessionStore::<SessionPgPool>::new(Some(pool.into()), config)
             .await
             .unwrap();
-        //generate the table needed!
-        session_store.initiate().await.unwrap();
 
         let app = Router::new()
             .route("/set_session", get(set_session))

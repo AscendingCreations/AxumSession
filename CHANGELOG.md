@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+### Changed
+- (breaking) SessionStore::initiate() is removed. initiate has been merged into SessionStore::new(). 
 ### Fixed
 - Filter even on else now uses the config to set FilterBuilder.
 

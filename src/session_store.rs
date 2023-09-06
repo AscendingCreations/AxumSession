@@ -67,7 +67,8 @@ impl<T> SessionStore<T>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    /// Constructs a New SessionStore.
+    /// Constructs a New `SessionStore` and Creates the Database Table
+    /// needed for the Session if it does not exist if client is not `None`.
     ///
     /// # Examples
     /// ```rust ignore
@@ -79,6 +80,10 @@ where
     ///
     #[inline]
     pub async fn new(client: Option<T>, config: SessionConfig) -> Result<Self, SessionError> {
+        if let Some(client) = &client {
+            client.initiate(&config.table_name).await?
+        }
+
         // If we have a database client then lets also get any SessionId's that Exist within the database
         // that are not yet expired.
         #[cfg(feature = "key-store")]
@@ -145,33 +150,6 @@ where
     #[inline]
     pub fn is_persistent(&self) -> bool {
         self.client.is_some()
-    }
-
-    /// Creates the Database Table needed for the Session if it does not exist.
-    ///
-    /// If client is None it will return Ok(()).
-    ///
-    /// # Errors
-    /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
-    ///
-    /// # Examples
-    /// ```rust ignore
-    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
-    ///
-    /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
-    /// async {
-    ///     let _ = session_store.initiate().await.unwrap();
-    /// };
-    /// ```
-    ///
-    #[inline]
-    pub async fn initiate(&self) -> Result<(), SessionError> {
-        if let Some(client) = &self.client {
-            client.initiate(&self.config.table_name).await?
-        }
-
-        Ok(())
     }
 
     /// Cleans Expired sessions from the Database based on Utc::now().

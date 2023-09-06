@@ -10,12 +10,10 @@ async fn main() {
     //To enable Private cookies for integrity, and authenticity please check the next Example.
     let session_config = SessionConfig::default().with_table_name("sessions_table");
 
+    // create SessionStore and initiate the database tables
     let session_store = SessionPgSessionStore::new(Some(poll.clone().into()), session_config)
         .await
         .unwrap();
-
-    //Create the Database table for storing our Session Data.
-    session_store.initiate().await.unwrap();
 
     // build our application with some routes
     let app = Router::new()

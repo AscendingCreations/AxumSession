@@ -13,6 +13,7 @@ async fn main() {
     // No need here to specify a table name because redis does not support tables
     let session_config = SessionConfig::default();
 
+    // create SessionStore and initiate the database tables
     let session_store =
         SessionStore::<SessionRedisPool>::new(Some(client.clone().into()), session_config)
             .await
