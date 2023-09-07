@@ -5,19 +5,19 @@ use axum_session::{Session, SessionConfig, SessionLayer, SessionRedisPool, Sessi
 async fn main() {
     // please consider using dotenvy to get this
     // please check the docker-compose file included for the redis image used here
-    let redis_url = "redis://default:YourSecretPassWord@127.0.0.1:6379/0";
+    let redis_url = "redis://default@127.0.0.1:6379/0";
 
-    let client =
-        redis::Client::open(redis_url).expect("Error while tryiong to open the redis connection");
+    let client = redis_pool::redis::Client::open(redis_url)
+        .expect("Error while tryiong to open the redis connection");
 
+    let pool = redis_pool::RedisConnectionManager::new(client, 5);
     // No need here to specify a table name because redis does not support tables
     let session_config = SessionConfig::default();
 
     // create SessionStore and initiate the database tables
-    let session_store =
-        SessionStore::<SessionRedisPool>::new(Some(client.clone().into()), session_config)
-            .await
-            .unwrap();
+    let session_store = SessionStore::<SessionRedisPool>::new(Some(pool.into()), session_config)
+        .await
+        .unwrap();
 
     // build our application with a single route
     let app = Router::new()
