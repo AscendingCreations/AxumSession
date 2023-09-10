@@ -16,10 +16,10 @@ pub enum SessionError {
     ))]
     #[error(transparent)]
     Sqlx(#[from] sqlx::Error),
-    #[cfg(feature = "redis-db")]
+    #[cfg(any(feature = "redis-db", feature = "redis-clusterdb"))]
     #[error(transparent)]
     RedisPool(#[from] redis_pool::errors::RedisPoolError),
-    #[cfg(feature = "redis-db")]
+    #[cfg(any(feature = "redis-db", feature = "redis-clusterdb"))]
     #[error(transparent)]
     Redis(#[from] redis::RedisError),
     #[error(transparent)]
