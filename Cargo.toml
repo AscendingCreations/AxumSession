@@ -22,7 +22,7 @@ keywords = ["Axum", "Tower", "SQLx", "Session", "surrealdb"]
 repository = "https://github.com/AscendingCreations/AxumSession"
 
 [features]
-default = ["postgres-rustls"]
+default = ["postgres-rustls", "redis-clusterdb"]
 
 key-store = ["fastbloom-rs"]
 sqlite-rustls = ["sqlx/sqlite", "sqlx/tls-rustls"]
@@ -31,7 +31,8 @@ postgres-rustls = ["sqlx/postgres", "sqlx/tls-rustls"]
 postgres-native = ["sqlx/postgres", "sqlx/tls-native-tls"]
 mysql-rustls = ["sqlx/mysql", "sqlx/tls-rustls"]
 mysql-native = ["sqlx/mysql", "sqlx/tls-native-tls"]
-redis-db = ["redis"]
+redis-db = ["redis_pool", "redis"]
+redis-clusterdb = ["redis_pool/cluster", "redis/cluster-async"]
 surrealdb-rocksdb =  ["surrealdb/kv-rocksdb", "surrealdb_tag"]
 surrealdb-tikv =  ["surrealdb/kv-tikv", "surrealdb_tag"]
 surrealdb-fdb-6_1 =  ["surrealdb/kv-fdb-6_1", "surrealdb_tag"]
@@ -67,7 +68,8 @@ cookie = { version = "0.17.0", features = ["percent-encode", "private"] }
 futures = "0.3.28"
 bytes = "1.5.0"
 dashmap = "5.5.3"
-redis = { version = "0.23.3", features = ["tokio-comp"], optional = true }
+redis_pool = { version = "0.2.0", optional = true }
+redis = { version = "0.23.3", features = ["aio", "tokio-comp"], optional = true }
 surrealdb = { version = "1.0.0-beta.11", optional = true }
 aes-gcm = { version = "0.10.2"}
 base64 = { version = "0.21.3"}
