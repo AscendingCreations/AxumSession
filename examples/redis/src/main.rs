@@ -1,5 +1,6 @@
 use axum::{routing::get, Router};
 use axum_session::{Session, SessionConfig, SessionLayer, SessionRedisPool, SessionStore};
+use redis_pool::RedisPool;
 
 #[tokio::main]
 async fn main() {
@@ -7,10 +8,10 @@ async fn main() {
     // please check the docker-compose file included for the redis image used here
     let redis_url = "redis://default@127.0.0.1:6379/0";
 
-    let client = redis_pool::redis::Client::open(redis_url)
-        .expect("Error while tryiong to open the redis connection");
+    let client =
+        redis::Client::open(redis_url).expect("Error while tryiong to open the redis connection");
 
-    let pool = redis_pool::RedisConnectionManager::new(client, 5);
+    let pool = RedisPool::from(client);
     // No need here to specify a table name because redis does not support tables
     let session_config = SessionConfig::default();
 

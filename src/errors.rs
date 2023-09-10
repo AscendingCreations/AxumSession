@@ -18,10 +18,10 @@ pub enum SessionError {
     Sqlx(#[from] sqlx::Error),
     #[cfg(feature = "redis-db")]
     #[error(transparent)]
-    RedisPool(#[from] redis_pool::RedisError),
+    RedisPool(#[from] redis_pool::errors::RedisPoolError),
     #[cfg(feature = "redis-db")]
     #[error(transparent)]
-    Redis(#[from] redis_pool::redis::RedisError),
+    Redis(#[from] redis::RedisError),
     #[error(transparent)]
     SerdeJson(#[from] serde_json::error::Error),
     #[error(transparent)]

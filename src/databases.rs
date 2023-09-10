@@ -18,6 +18,11 @@ mod redis_pool;
 #[cfg(feature = "redis-db")]
 pub use redis_pool::*;
 
+#[cfg(feature = "redis-clusterdb")]
+mod redis_cluster_pool;
+#[cfg(feature = "redis-clusterdb")]
+pub use redis_cluster_pool::*;
+
 #[cfg(feature = "surrealdb_tag")]
 mod surreal;
 #[cfg(feature = "surrealdb_tag")]

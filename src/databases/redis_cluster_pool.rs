@@ -1,32 +1,32 @@
 use crate::{DatabasePool, Session, SessionError, SessionStore};
 use async_trait::async_trait;
-use redis_pool::SingleRedisPool;
+use redis_pool::ClusterRedisPool;
 
 ///Redis's Session Helper type for the DatabasePool.
-pub type SessionRedisSession = Session<SessionRedisPool>;
+pub type SessionRedisClusterSession = Session<SessionRedisClusterPool>;
 ///Redis's Session Store Helper type for the DatabasePool.
-pub type SessionRedisSessionStore = SessionStore<SessionRedisPool>;
+pub type SessionRedisClusterSessionStore = SessionStore<SessionRedisClusterPool>;
 
-///Redis's Pool type for the DatabasePool. Needs a redis Client.
+///Redis's Cluster Pool type for the DatabasePool. Needs a redis ClusterClient.
 #[derive(Clone)]
-pub struct SessionRedisPool {
-    pool: SingleRedisPool,
+pub struct SessionRedisClusterPool {
+    pool: ClusterRedisPool,
 }
 
-impl From<SingleRedisPool> for SessionRedisPool {
-    fn from(pool: SingleRedisPool) -> Self {
-        SessionRedisPool { pool }
+impl From<ClusterRedisPool> for SessionRedisClusterPool {
+    fn from(pool: ClusterRedisPool) -> Self {
+        SessionRedisClusterPool { pool }
     }
 }
 
-impl std::fmt::Debug for SessionRedisPool {
+impl std::fmt::Debug for SessionRedisClusterPool {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SessionRedisPool").finish()
+        f.debug_struct("SessionRedisClusterPool").finish()
     }
 }
 
 #[async_trait]
-impl DatabasePool for SessionRedisPool {
+impl DatabasePool for SessionRedisClusterPool {
     async fn initiate(&self, _table_name: &str) -> Result<(), SessionError> {
         // Redis does not actually use Tables so there is no way we can make one.
         Ok(())
