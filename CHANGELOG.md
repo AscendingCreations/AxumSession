@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+### Changed
+- (breaking) redis to redis_pool. https://github.com/AscendingCreations/RedisPool
+- Updated Surreal to 1.0.0-beta.11
+- Added Redis ClusterClient support via feature redis_clusterdb.
 
 ## 0.5.0 (6. September, 2023)
 ### Changed
