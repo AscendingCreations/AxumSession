@@ -126,7 +126,7 @@ where
             // let's check if any sessions expired. We don't want to hog memory
             // forever by abandoned sessions (e.g. when a client lost their cookie)
             // throttle by memory lifespan - e.g. sweep every hour
-            if last_sweep <= Utc::now() {
+            if last_sweep <= Utc::now() && !store.config.memory_lifespan.is_zero() {
                 // Only unload these from filter if the Client is None as this means no database.
                 // Otherwise only unload from the filter if removed from the Database.
                 #[cfg(feature = "key-store")]
@@ -397,6 +397,7 @@ where
 
             if store.config.memory_lifespan.is_zero() {
                 store.inner.remove(&session.id.inner());
+                store.keys.remove(&session_key.id.inner());
             }
 
             set_cookies(cookies, response.headers_mut());
