@@ -147,7 +147,7 @@ where
                 store.inner.retain(|_k, v| v.autoremove > Utc::now());
                 store.keys.retain(|_k, v| v.autoremove > Utc::now());
                 store.timers.write().await.last_expiry_sweep =
-                    Utc::now() + store.config.memory_lifespan;
+                    Utc::now() + store.config.purge_update;
             }
 
             // Throttle by database lifespan - e.g. sweep every 6 hours
@@ -166,7 +166,7 @@ where
                 }
 
                 store.timers.write().await.last_database_expiry_sweep =
-                    Utc::now() + store.config.lifespan;
+                    Utc::now() + store.config.purge_database_update;
             }
 
             // Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage

@@ -105,10 +105,10 @@ pub struct SessionConfig {
     /// Sessions the maximum lifespan a session can live in the database before expiring.
     /// This is generally used when a Session is set to be Long Term.
     pub(crate) max_lifespan: Duration,
-    /// This value represents the duration for how often session's Database data gets updates per request
-    /// when a users Data has had no changes or is not set to always_save.
-    /// This helps alleviate constant Database Updates and widdles it down to a update per Duration per visit.
-    pub(crate) expiration_update: Duration,
+    /// This value represents the duration for how often session's data gets purged from memory per request.
+    pub(crate) purge_update: Duration,
+    /// This value represents the duration for how often session's data gets purged from the database per request.
+    pub(crate) purge_database_update: Duration,
     /// Ignore's the update checks and will always save the session to the database if set to true.
     pub(crate) always_save: bool,
     /// Session Memory lifespan, deturmines when to unload it from memory
@@ -156,6 +156,8 @@ impl std::fmt::Debug for SessionConfig {
             .field("security mode", &self.security_mode)
             .field("filter_expected_elements", &self.filter_expected_elements)
             .field("use_bloom_filters", &self.use_bloom_filters)
+            .field("purge_update", &self.purge_update)
+            .field("purge_database_update", &self.use_bloom_filters)
             .field(
                 "filter_false_positive_probability",
                 &self.filter_false_positive_probability,
@@ -369,21 +371,36 @@ impl SessionConfig {
         self
     }
 
-    /// This value represents the offset duration for how often session data gets updated in
-    /// the database regardless of getting changed or not.
-    /// This is leftover_expiration_duration <= expiration_update.
+    /// This value represents the offset duration for how often session purge for memory is ran.
     ///
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
     /// use chrono::Duration;
     ///
-    /// let config = SessionConfig::default().with_expiration_update(Duration::days(320));
+    /// let config = SessionConfig::default().with_purge_update(Duration::hours(1));
     /// ```
     ///
     #[must_use]
-    pub fn with_expiration_update(mut self, duration: Duration) -> Self {
-        self.expiration_update = duration;
+    pub fn with_purge_update(mut self, duration: Duration) -> Self {
+        self.purge_update = duration;
+        self
+    }
+
+    /// This value represents the offset duration for how often session purge for database is ran.
+    /// If using Redis or any auto purge database this Setting will be ignored.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    /// use chrono::Duration;
+    ///
+    /// let config = SessionConfig::default().with_purge_database_update(Duration::hours(5));
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_purge_database_update(mut self, duration: Duration) -> Self {
+        self.purge_database_update = duration;
         self
     }
 
@@ -396,7 +413,7 @@ impl SessionConfig {
     /// use axum_session::SessionConfig;
     /// use chrono::Duration;
     ///
-    /// let config = SessionConfig::default().with_expiration_update(Duration::days(320));
+    /// let config = SessionConfig::default().with_always_save(true);
     /// ```
     ///
     #[must_use]
@@ -556,8 +573,10 @@ impl Default for SessionConfig {
             memory_lifespan: Duration::minutes(60),
             // Unload long term session after 60 days if it has not been accessed.
             max_lifespan: Duration::days(60),
-            // Default to update the database every hour if the session is still being requested.
-            expiration_update: Duration::hours(5),
+            // Default to purge old sessions every 5 hours.
+            purge_update: Duration::hours(1),
+            // Default to purge old sessions in the database every 5 hours per request.
+            purge_database_update: Duration::hours(5),
             always_save: false,
             session_mode: SessionMode::Always,
             // Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
