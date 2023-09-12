@@ -195,6 +195,18 @@ where
         self.store.renew(self.id.inner());
     }
 
+    /// Sets the Session to force update the database.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.renew();
+    /// ```
+    ///
+    #[inline]
+    pub fn update(&self) {
+        self.store.update(self.id.inner());
+    }
+
     /// Sets the Session to renew its Session's Encryption Key.
     /// This renews the Session's Encryption Key in the database.
     /// Also it Generates a new Uuid for the Session's Key.

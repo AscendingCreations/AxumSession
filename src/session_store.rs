@@ -505,6 +505,15 @@ where
     }
 
     #[inline]
+    pub(crate) fn update(&self, id: String) {
+        if let Some(mut instance) = self.inner.get_mut(&id) {
+            instance.update();
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+        }
+    }
+
+    #[inline]
     pub(crate) fn get<N: serde::de::DeserializeOwned>(&self, id: String, key: &str) -> Option<N> {
         if let Some(instance) = self.inner.get_mut(&id) {
             instance.get(key)
