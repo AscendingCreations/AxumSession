@@ -97,7 +97,7 @@ impl SessionData {
     ///
     #[inline]
     pub(crate) fn service_clear(&mut self, memory_lifespan: Duration) {
-        if !self.validate() {
+        if self.autoremove < Utc::now() {
             self.update = true;
             self.data.clear();
         }
@@ -135,6 +135,18 @@ impl SessionData {
     #[inline]
     pub fn renew_key(&mut self) {
         self.renew_key = true;
+        self.update = true;
+    }
+
+    /// Sets the Session to force update the database.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.update();
+    /// ```
+    ///
+    #[inline]
+    pub fn update(&mut self) {
         self.update = true;
     }
 
