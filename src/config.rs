@@ -357,6 +357,9 @@ impl SessionConfig {
     /// This setting should be Less than lifespan and max_lifespan. This is to
     /// Unload the data from memory and allow it to stay stored in the database.
     ///
+    /// Set this to Duration::zero() if you dont want it to stay in memory.
+    /// Warning: This will cause it to be loaded from the database each request.
+    ///
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;

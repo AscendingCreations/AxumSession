@@ -395,6 +395,10 @@ where
                 }
             }
 
+            if store.config.memory_lifespan.is_zero() {
+                store.inner.remove(&session.id.inner());
+            }
+
             set_cookies(cookies, response.headers_mut());
 
             Ok(response)
