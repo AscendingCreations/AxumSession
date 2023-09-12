@@ -99,7 +99,10 @@ impl SessionData {
     pub(crate) fn service_clear(&mut self, memory_lifespan: Duration) {
         if self.autoremove < Utc::now() {
             self.update = true;
-            self.data.clear();
+
+            if !self.validate() {
+                self.data.clear();
+            }
         }
 
         self.autoremove = Utc::now() + memory_lifespan;
