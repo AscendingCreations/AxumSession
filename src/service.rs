@@ -112,6 +112,7 @@ where
                     .unwrap_or_else(|| SessionData::new(session.id.0, storable, &store.config));
 
                 sess.service_clear(store.config.memory_lifespan);
+                sess.update();
 
                 store.inner.insert(session.id.inner(), sess);
             }
