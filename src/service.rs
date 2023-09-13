@@ -382,6 +382,7 @@ where
                 store.inner.remove(&session.id.inner());
 
                 if store.config.security_mode == SecurityMode::PerSession {
+                    #[cfg(feature = "key-store")]
                     if !store.auto_handles_expiry() && store.config.use_bloom_filters {
                         session
                             .store
