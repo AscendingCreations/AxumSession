@@ -7,6 +7,8 @@ use axum_core::extract::FromRequestParts;
 use chrono::{Duration, Utc};
 use dashmap::DashMap;
 #[cfg(feature = "key-store")]
+use fastbloom_rs::Deletable;
+#[cfg(feature = "key-store")]
 use fastbloom_rs::{CountingBloomFilter, FilterBuilder, Membership};
 use http::{self, request::Parts, StatusCode};
 use serde::Serialize;
@@ -33,17 +35,18 @@ pub struct SessionStore<T>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    // Client for the database
+    /// Client for the database.
     pub client: Option<T>,
-    /// locked Hashmap containing UserID and their session data
+    /// locked Hashmap containing UserID and their session data.
     pub(crate) inner: Arc<DashMap<String, SessionData>>,
-    /// locked Hashmap containing KeyID and their Key data
+    /// locked Hashmap containing KeyID and their Key data.
     pub(crate) keys: Arc<DashMap<String, SessionKey>>,
-    //move this to creation upon layer
+    /// Session Configuration.
     pub config: SessionConfig,
-    //move this to creation on layer.
+    /// Session Timers used for Clearing Memory and Database.
     pub(crate) timers: Arc<RwLock<SessionTimers>>,
     #[cfg(feature = "key-store")]
+    /// Filter used to keep track of what uuid's exist.
     pub(crate) filter: CountingBloomFilter,
 }
 
@@ -87,36 +90,7 @@ where
         // If we have a database client then lets also get any SessionId's that Exist within the database
         // that are not yet expired.
         #[cfg(feature = "key-store")]
-        let filter = if config.use_bloom_filters {
-            // If client doesnt exist and config is allowing filter to be used then lets give it a manageable size!
-            if let Some(client) = &client {
-                let mut filter = FilterBuilder::new(
-                    config.filter_expected_elements,
-                    config.filter_false_positive_probability,
-                )
-                .build_counting_bloom_filter();
-
-                let ids = client.get_ids(&config.table_name).await?;
-
-                for id in ids {
-                    filter.add(id.as_bytes());
-                }
-
-                filter
-            } else {
-                FilterBuilder::new(
-                    config.filter_expected_elements,
-                    config.filter_false_positive_probability,
-                )
-                .build_counting_bloom_filter()
-            }
-        } else {
-            FilterBuilder::new(
-                config.filter_expected_elements,
-                config.filter_false_positive_probability,
-            )
-            .build_counting_bloom_filter()
-        };
+        let filter = Self::create_filter(&client, &config).await?;
 
         Ok(Self {
             client,
@@ -132,6 +106,29 @@ where
             #[cfg(feature = "key-store")]
             filter,
         })
+    }
+
+    /// Used to create and Fill the Filter.
+    pub(crate) async fn create_filter(
+        client: &Option<T>,
+        config: &SessionConfig,
+    ) -> Result<CountingBloomFilter, SessionError> {
+        let mut filter = FilterBuilder::new(
+            config.filter_expected_elements,
+            config.filter_false_positive_probability,
+        )
+        .build_counting_bloom_filter();
+
+        if config.use_bloom_filters {
+            // If client exist then lets preload the id's within the database so the filter is accurate.
+            if let Some(client) = &client {
+                let ids = client.get_ids(&config.table_name).await?;
+
+                ids.iter().for_each(|id| filter.add(id.as_bytes()));
+            }
+        }
+
+        Ok(filter)
     }
 
     /// Checks if the database is in persistent mode.
@@ -428,6 +425,7 @@ where
     }
 
     /// Deletes all sessions in Memory.
+    /// This will also Clear those keys from the filter cache if a persistent database does not exist.
     ///
     /// # Examples
     /// ```rust ignore
@@ -438,13 +436,24 @@ where
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
     ///
     /// async {
-    ///     let _ = session_store.clear_store().await.unwrap();
+    ///     let _ = session_store.clear().await.unwrap();
     /// };
     /// ```
     ///
     #[inline]
-    pub fn clear(&self) {
+    pub fn clear(&mut self) {
+        #[cfg(feature = "key-store")]
+        if self.client.is_none() {
+            self.inner
+                .iter()
+                .for_each(|value| self.filter.remove(value.key().as_bytes()));
+            self.keys
+                .iter()
+                .for_each(|value| self.filter.remove(value.key().as_bytes()));
+        }
+
         self.inner.clear();
+        self.keys.clear();
     }
 
     /// Attempts to load check and clear Data.

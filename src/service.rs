@@ -11,7 +11,7 @@ use bytes::Bytes;
 use chrono::Utc;
 use cookie::{Cookie, CookieJar, Key};
 #[cfg(feature = "key-store")]
-use fastbloom_rs::Deletable;
+use fastbloom_rs::{Deletable, Membership};
 use futures::future::BoxFuture;
 use http::{
     self,
@@ -249,6 +249,14 @@ where
                 }
 
                 if store.config.security_mode == SecurityMode::PerSession {
+                    #[cfg(feature = "key-store")]
+                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                        session
+                            .store
+                            .filter
+                            .remove(session_key.id.inner().as_bytes());
+                    }
+
                     store.keys.remove(&session_key.id.inner());
 
                     if store.is_persistent() {
@@ -374,6 +382,13 @@ where
                 store.inner.remove(&session.id.inner());
 
                 if store.config.security_mode == SecurityMode::PerSession {
+                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                        session
+                            .store
+                            .filter
+                            .remove(session_key.id.inner().as_bytes());
+                    }
+
                     store.keys.remove(&session_key.id.inner());
                 }
 
@@ -396,6 +411,11 @@ where
             }
 
             if store.config.memory_lifespan.is_zero() {
+                #[cfg(feature = "key-store")]
+                if store.client.is_none() {
+                    store.filter.clear();
+                }
+
                 store.inner.remove(&session.id.inner());
                 store.keys.remove(&session_key.id.inner());
             }
