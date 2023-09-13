@@ -109,6 +109,7 @@ where
     }
 
     /// Used to create and Fill the Filter.
+    #[cfg(feature = "key-store")]
     pub(crate) async fn create_filter(
         client: &Option<T>,
         config: &SessionConfig,
