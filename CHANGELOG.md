@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 ### Changed
 - (breaking) redis to redis_pool. https://github.com/AscendingCreations/RedisPool
-- Updated Surreal to 1.0.0-beta.11
+- Updated Surreal to 1.0.0
 - Added Redis ClusterClient support via feature redis_clusterdb.
 - (breaking) Memory and Database purge runner no longer uses memory lifetime. it instead uses its own purge_update and purge_database_update times.
 - Sessions now no longer unload data if they are in memory and not expired but database is expired.
