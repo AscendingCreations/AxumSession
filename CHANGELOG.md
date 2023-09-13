@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - (breaking) Memory and Database purge runner no longer uses memory lifetime. it instead uses its own purge_update and purge_database_update times.
 - Sessions now no longer unload data if they are in memory and not expired but database is expired.
 
+### Fixed
+- Filter now removes keys if client doesnt Exist for database and keys get cleared.
+
 ## 0.5.0 (6. September, 2023)
 ### Changed
 - (breaking) SessionStore::initiate() is removed. initiate has been merged into SessionStore::new(). 
