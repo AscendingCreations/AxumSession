@@ -56,7 +56,6 @@ impl DatabasePool for SessionMongoPool {
         Ok(())
     }
 
-    // TODO
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
         let mut ids: Vec<String> = Vec::new();
         match &self.client.default_database() {
@@ -68,7 +67,7 @@ impl DatabasePool for SessionMongoPool {
                 let result = db
                     .collection::<MongoSessionData>(&table_name)
                     .find(filter.clone(), None)
-                    .await?; // add filter for expiration
+                    .await?;
 
                 for item in result.deserialize_current().iter() {
                     if !&item.id.is_empty() {
