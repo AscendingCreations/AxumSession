@@ -23,9 +23,9 @@ mod redis_cluster_pool;
 #[cfg(feature = "redis-clusterdb")]
 pub use self::redis_cluster_pool::*;
 
-//#[cfg(feature = "mongodb")]
+#[cfg(feature = "mongo")]
 mod mongodb;
-//#[cfg(feature = "mongodb")]
+#[cfg(feature = "mongo")]
 pub use self::mongodb::*;
 
 #[cfg(feature = "surrealdb_tag")]
