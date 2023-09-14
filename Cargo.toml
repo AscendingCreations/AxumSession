@@ -22,7 +22,7 @@ keywords = ["Axum", "Tower", "SQLx", "Session", "surrealdb"]
 repository = "https://github.com/AscendingCreations/AxumSession"
 
 [features]
-default = ["postgres-rustls", "mongo"]
+default = ["postgres-rustls"]
 
 key-store = ["fastbloom-rs"]
 sqlite-rustls = ["sqlx/sqlite", "sqlx/tls-rustls"]

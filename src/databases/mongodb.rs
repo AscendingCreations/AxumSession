@@ -26,7 +26,7 @@ impl MongoSessionData {
     }
 }
 
-///Redis's Pool type for the DatabasePool. Needs a redis Client.
+///Mongodb's Pool type for the DatabasePool. Needs a mongodb Client.
 #[derive(Debug, Clone)]
 pub struct SessionMongoPool {
     client: Client,
