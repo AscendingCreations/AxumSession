@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use chrono::Utc;
 use mongodb::{
     bson::{doc, Document},
-    error::Error,
     Client,
 };
 use serde::{Deserialize, Serialize};
