@@ -15,7 +15,7 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 - Convenient API for `Session` no need to mark as Read or Write making Usage Easier. 
 - Uses `dashmap` for internal memory lookup and storage to achieve high throughput.
 - Uses Serdes for Data Serialization so it can store any Serdes supported type's into the Sessions data.
-- Supports Redis, SurrealDB and SQLx optional Databases out of the Box.
+- Supports Redis, SurrealDB, MongoDB and SQLx optional Databases out of the Box.
 - Supports Memory Only usage. No need to use a persistant database.
 - Supports Per Session SessionID cookie Encryption for enhanced Security.
 - Supports SessionID renewal for enhanced Security.
@@ -68,6 +68,8 @@ axum_session = { version = "0.5.0", features = [ "postgres-rustls"] }
 `surrealdb-fdb-?_?` : `surrealdb 1.0.0-beta.10` support for fdb versions 6_1, 6_2, 6_3, 7_0, 7_1. Replace ?_? with version.
 
 `surrealdb-mem` : `surrealdb 1.0.0-beta.10` support for mem.
+
+`mongo` : `mongodb 2.6.1` support for mongo.
 
 # Example
 
