@@ -182,8 +182,10 @@ where
 
     /// Sets the Session to renew its Session ID.
     /// This Deletes Session data from the database
-    /// associated with the old key. This helps to enhance
+    /// associated with the old UUID. This helps to enhance
     /// Security when logging into Secure area's across a website.
+    /// The current sessions data will be pushed to the database
+    /// with the new UUID.
     ///
     /// # Examples
     /// ```rust ignore
@@ -196,6 +198,8 @@ where
     }
 
     /// Sets the Session to force update the database.
+    /// This will increase the Timer on the sessions store
+    /// making the session live longer in the persistant database.
     ///
     /// # Examples
     /// ```rust ignore
@@ -207,11 +211,16 @@ where
         self.store.update(self.id.inner());
     }
 
-    /// Sets the Session to renew its Session's Encryption Key.
-    /// This renews the Session's Encryption Key in the database.
-    /// Also it Generates a new Uuid for the Session's Key.
-    /// This helps to enhance Security when logging into Secure
-    /// area's across a website.
+    /// Sets the Session to renew its Session Key ID and Encryption Key.
+    /// This Deletes Session key data from the database
+    /// associated with the old Key UUID. This helps to enhance
+    /// Security when logging into Secure area's across a website much further than
+    /// renew() would. Will only work if SecurityMode::PerSession is Set.
+    /// The new key data will be pushed to the database
+    /// with the new key UUID.
+    ///
+    /// It is recommended to use both renew() and renew_key together to better
+    /// cycle the UUID's.
     ///
     /// # Examples
     /// ```rust ignore
@@ -237,6 +246,7 @@ where
     }
 
     /// Sets the Current Session to a long term expiration. Useful for Remember Me setups.
+    /// This will also update the database on Response Phase.
     ///
     /// # Examples
     /// ```rust ignore
@@ -249,9 +259,11 @@ where
     }
 
     /// Sets the Current Session to be storable.
+    /// This will also update the database on Response Phase.
     ///
-    /// This will allow the Session to save its data for the lifetime if set to true.
-    /// If this is set to false it will unload the stored session.
+    /// This is only used when `SessionMode` is Manual or Storable.
+    /// This will allow the Session to be stored if true.
+    /// This will delete and not allow a session to be stored if false.
     ///
     /// # Examples
     /// ```rust ignore
@@ -298,6 +310,7 @@ where
     }
 
     /// Sets data to the Current Session's HashMap.
+    /// This will also update the database on Response Phase.
     ///
     /// # Examples
     /// ```rust ignore
@@ -311,6 +324,7 @@ where
 
     /// Removes a Key from the Current Session's HashMap.
     /// Does not process the String into a Type, Just removes it.
+    /// This will also update the database on Response Phase.
     ///
     /// # Examples
     /// ```rust ignore
@@ -322,7 +336,8 @@ where
         self.store.remove(self.id.inner(), key);
     }
 
-    /// Clears all data from the Current Session's HashMap.
+    /// Clears all data from the Current Session's HashMap instantly.
+    /// This will also update the database on Response Phase.
     ///
     /// # Examples
     /// ```rust ignore
