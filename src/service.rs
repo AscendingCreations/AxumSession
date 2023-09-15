@@ -414,7 +414,10 @@ where
             if store.config.memory_lifespan.is_zero() {
                 #[cfg(feature = "key-store")]
                 if store.client.is_none() {
-                    store.filter.clear();
+                    if store.config.use_bloom_filters {
+                        store.filter.remove(session.id.inner().as_bytes());
+                        store.filter.remove(session_key.id.inner().as_bytes());
+                    }
                 }
 
                 store.inner.remove(&session.id.inner());
