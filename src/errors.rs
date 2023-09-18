@@ -22,7 +22,7 @@ pub enum SessionError {
     #[cfg(any(feature = "redis-db", feature = "redis-clusterdb"))]
     #[error(transparent)]
     Redis(#[from] redis::RedisError),
-    #[cfg(any(feature = "mongodb"))]
+    #[cfg(feature = "mongodb")]
     #[error(transparent)]
     Mongodb(#[from] mongodb::error::Error),
     #[error(transparent)]
