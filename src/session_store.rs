@@ -234,12 +234,18 @@ where
             let result: Option<String> =
                 client.load(&cookie_value, &self.config.table_name).await?;
 
-            Ok(result
-                .map(|session| serde_json::from_str(&session))
-                .transpose()?)
-        } else {
-            Ok(None)
+            if let Ok(uuid) = Uuid::parse_str(&cookie_value) {
+                if let Some(mut session) = result
+                    .map(|session| serde_json::from_str::<SessionData>(&session))
+                    .transpose()?
+                {
+                    session.id = uuid;
+                    return Ok(Some(session));
+                }
+            }
         }
+
+        Ok(None)
     }
 
     /// private internal function that loads an encryption key for the session's cookie from the database using a UUID string.

@@ -86,7 +86,9 @@ where
                 SecurityMode::PerSession => SessionKey::get_or_create(&store, &cookies).await,
                 SecurityMode::Simple => SessionKey::new(),
             };
+
             let (mut session, is_new) = Session::new(&mut store, &cookies, &session_key).await;
+
             let storable = cookies
                 .get_cookie(&store.config.storable_cookie_name, &store.config.key)
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
@@ -111,8 +113,9 @@ where
                     .flatten()
                     .unwrap_or_else(|| SessionData::new(session.id.0, storable, &store.config));
 
-                sess.service_clear(store.config.memory_lifespan);
-                sess.update();
+                sess.autoremove = Utc::now() + store.config.memory_lifespan;
+                sess.storable = storable;
+                sess.update = true;
 
                 store.inner.insert(session.id.inner(), sess);
             }

@@ -21,15 +21,23 @@ use uuid::Uuid;
 ///
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SessionData {
+    #[serde(skip)]
     pub(crate) id: Uuid,
     pub(crate) data: HashMap<String, String>,
+    #[serde(skip)]
     pub(crate) expires: DateTime<Utc>,
+    #[serde(skip)]
     pub(crate) autoremove: DateTime<Utc>,
+    #[serde(skip)]
     pub(crate) destroy: bool,
+    #[serde(skip)]
     pub(crate) renew: bool,
     pub(crate) longterm: bool,
+    #[serde(skip)]
     pub(crate) storable: bool,
+    #[serde(skip)]
     pub(crate) update: bool,
+    #[serde(skip)]
     pub(crate) renew_key: bool,
 }
 
