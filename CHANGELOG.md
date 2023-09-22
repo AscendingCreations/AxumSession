@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.6.1 (22. September, 2023)
+### Changed
+- Reduced Data sent to persistent database and gathered from persistent database.
+
 ## 0.6.0 (18. September, 2023)
 ### Added
 - MongoDB support by @MohenjoDaro
