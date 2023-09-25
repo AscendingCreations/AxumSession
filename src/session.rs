@@ -75,8 +75,11 @@ where
         };
 
         #[cfg(feature = "key-store")]
-        if store.config.use_bloom_filters && !store.filter.contains(id.inner().as_bytes()) {
-            store.filter.add(id.inner().as_bytes());
+        {
+            let mut filter = store.filter.write().await;
+            if store.config.use_bloom_filters && !filter.contains(id.inner().as_bytes()) {
+                filter.add(id.inner().as_bytes());
+            }
         }
 
         (Self { id, store }, is_new)
@@ -105,8 +108,12 @@ where
                 } else {
                     return SessionID(token);
                 }
-            } else if !store.filter.contains(token.to_string().as_bytes()) {
-                return SessionID(token);
+            } else {
+                let filter = store.filter.read().await;
+
+                if !filter.contains(token.to_string().as_bytes()) {
+                    return SessionID(token);
+                }
             }
         }
     }

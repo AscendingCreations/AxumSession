@@ -47,7 +47,7 @@ where
     pub(crate) timers: Arc<RwLock<SessionTimers>>,
     #[cfg(feature = "key-store")]
     /// Filter used to keep track of what uuid's exist.
-    pub(crate) filter: CountingBloomFilter,
+    pub(crate) filter: Arc<RwLock<CountingBloomFilter>>,
 }
 
 #[async_trait]
@@ -106,7 +106,7 @@ where
                 last_database_expiry_sweep: Utc::now() + Duration::hours(6),
             })),
             #[cfg(feature = "key-store")]
-            filter,
+            filter: Arc::new(RwLock::new(filter)),
         })
     }
 
@@ -450,15 +450,16 @@ where
     /// ```
     ///
     #[inline]
-    pub fn clear(&mut self) {
+    pub async fn clear(&mut self) {
         #[cfg(feature = "key-store")]
         if self.client.is_none() {
+            let mut filter = self.filter.write().await;
             self.inner
                 .iter()
-                .for_each(|value| self.filter.remove(value.key().as_bytes()));
+                .for_each(|value| filter.remove(value.key().as_bytes()));
             self.keys
                 .iter()
-                .for_each(|value| self.filter.remove(value.key().as_bytes()));
+                .for_each(|value| filter.remove(value.key().as_bytes()));
         }
 
         self.inner.clear();

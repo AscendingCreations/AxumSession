@@ -145,19 +145,20 @@ where
                     && session.store.auto_handles_expiry()
                     && session.store.config.use_bloom_filters
                 {
+                    let mut filter = session.store.filter.write().await;
                     session
                         .store
                         .inner
                         .iter()
                         .filter(|r| r.autoremove < current_time)
-                        .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
+                        .for_each(|r| filter.remove(r.key().as_bytes()));
 
                     session
                         .store
                         .keys
                         .iter()
                         .filter(|r| r.autoremove < current_time)
-                        .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
+                        .for_each(|r| filter.remove(r.key().as_bytes()));
                 }
 
                 session
@@ -182,9 +183,8 @@ where
 
                 #[cfg(feature = "key-store")]
                 if !session.store.auto_handles_expiry() {
-                    expired
-                        .iter()
-                        .for_each(|id| session.store.filter.remove(id.as_bytes()));
+                    let mut filter = session.store.filter.write().await;
+                    expired.iter().for_each(|id| filter.remove(id.as_bytes()));
                 }
 
                 session
@@ -232,7 +232,8 @@ where
                     //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
                     #[cfg(feature = "key-store")]
                     if session.store.config.use_bloom_filters {
-                        session.store.filter.remove(session.id.inner().as_bytes());
+                        let mut filter = session.store.filter.write().await;
+                        filter.remove(session.id.inner().as_bytes());
                     }
 
                     // Lets remove update and reinsert.
@@ -265,7 +266,8 @@ where
 
                     #[cfg(feature = "key-store")]
                     if session.store.config.use_bloom_filters {
-                        session.store.filter.remove(old_id.as_bytes());
+                        let mut filter = session.store.filter.write().await;
+                        filter.remove(old_id.as_bytes());
                     }
                 }
             }
@@ -366,10 +368,8 @@ where
                 if session.store.config.security_mode == SecurityMode::PerSession {
                     #[cfg(feature = "key-store")]
                     if session.store.config.use_bloom_filters {
-                        session
-                            .store
-                            .filter
-                            .remove(session_key.id.inner().as_bytes());
+                        let mut filter = session.store.filter.write().await;
+                        filter.remove(session_key.id.inner().as_bytes());
                     }
 
                     let _ = session.store.keys.remove(&session_key.id.inner());
@@ -385,7 +385,8 @@ where
 
                 #[cfg(feature = "key-store")]
                 if session.store.config.use_bloom_filters {
-                    session.store.filter.remove(session.id.inner().as_bytes());
+                    let mut filter = session.store.filter.write().await;
+                    filter.remove(session.id.inner().as_bytes());
                 }
 
                 let _ = session.store.inner.remove(&session.id.inner());
@@ -404,11 +405,9 @@ where
             if session.store.config.memory_lifespan.is_zero() {
                 #[cfg(feature = "key-store")]
                 if !session.store.is_persistent() && session.store.config.use_bloom_filters {
-                    session.store.filter.remove(session.id.inner().as_bytes());
-                    session
-                        .store
-                        .filter
-                        .remove(session_key.id.inner().as_bytes());
+                    let mut filter = session.store.filter.write().await;
+                    filter.remove(session.id.inner().as_bytes());
+                    filter.remove(session_key.id.inner().as_bytes());
                 }
 
                 session.store.inner.remove(&session.id.inner());
