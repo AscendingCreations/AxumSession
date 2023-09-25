@@ -403,14 +403,12 @@ where
             // if user is using this without a database then it will only work as a per request data store.
             if session.store.config.memory_lifespan.is_zero() {
                 #[cfg(feature = "key-store")]
-                if !session.store.is_persistent() {
-                    if session.store.config.use_bloom_filters {
-                        session.store.filter.remove(session.id.inner().as_bytes());
-                        session
-                            .store
-                            .filter
-                            .remove(session_key.id.inner().as_bytes());
-                    }
+                if !session.store.is_persistent() && session.store.config.use_bloom_filters {
+                    session.store.filter.remove(session.id.inner().as_bytes());
+                    session
+                        .store
+                        .filter
+                        .remove(session_key.id.inner().as_bytes());
                 }
 
                 session.store.inner.remove(&session.id.inner());
