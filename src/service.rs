@@ -318,10 +318,7 @@ where
             };
 
             // Add SessionID
-            if (store.config.session_mode.is_storable() && storable
-                || !store.config.session_mode.is_storable())
-                && !destroy
-            {
+            if (storable || !store.config.session_mode.is_storable()) && !destroy {
                 cookies.add_cookie(
                     create_cookie(&store.config, session.id.inner(), CookieType::Data),
                     &cookie_key,
