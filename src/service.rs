@@ -370,7 +370,7 @@ where
 
             if store.config.session_mode.is_storable() && !storable && !destroy {
                 #[cfg(feature = "key-store")]
-                if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                if store.config.use_bloom_filters {
                     session.store.filter.remove(session.id.inner().as_bytes());
                 }
 
@@ -378,7 +378,7 @@ where
 
                 if store.config.security_mode == SecurityMode::PerSession {
                     #[cfg(feature = "key-store")]
-                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                    if store.config.use_bloom_filters {
                         session
                             .store
                             .filter
