@@ -245,7 +245,7 @@ where
                     let _ = session_key.renew(&store).await.unwrap();
 
                     #[cfg(feature = "key-store")]
-                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                    if store.config.use_bloom_filters {
                         session.store.filter.remove(old_id.as_bytes());
                     }
                 }
