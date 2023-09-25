@@ -368,6 +368,34 @@ where
     pub fn get_session_id(&self) -> SessionID {
         self.id
     }
+
+    /// Returns the store for this Session.
+    ///
+    /// The store contains everything that all sessions need.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// let store = session.get_store();
+    /// ```
+    ///
+    #[inline]
+    pub fn get_store(&self) -> &SessionStore<S> {
+        &self.store
+    }
+
+    /// Returns a mutable store for this Session.
+    ///
+    /// The store contains everything that all sessions need.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// let store = session.get_store_mut();
+    /// ```
+    ///
+    #[inline]
+    pub fn get_store_mut(&mut self) -> &mut SessionStore<S> {
+        &mut self.store
+    }
 }
 
 #[derive(Debug, Clone)]
