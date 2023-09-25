@@ -252,13 +252,13 @@ where
             } else if loaded {
                 // lets unload everything if the session data has been loaded and set to be destroyed.
                 #[cfg(feature = "key-store")]
-                if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                if store.config.use_bloom_filters {
                     session.store.filter.remove(session.id.inner().as_bytes());
                 }
 
                 if store.config.security_mode == SecurityMode::PerSession {
                     #[cfg(feature = "key-store")]
-                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                    if store.config.use_bloom_filters {
                         session
                             .store
                             .filter
@@ -498,7 +498,8 @@ fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: CookieT
 fn remove_cookie<'a>(config: &SessionConfig, cookie_type: CookieType) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build(cookie_type.get_name(config), "")
         .path(config.cookie_path.clone())
-        .http_only(config.cookie_http_only);
+        .http_only(config.cookie_http_only)
+        .same_site(cookie::SameSite::None);
 
     if let Some(domain) = &config.cookie_domain {
         cookie_builder = cookie_builder.domain(domain.clone());
