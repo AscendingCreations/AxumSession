@@ -361,11 +361,11 @@ where
     ///
     /// # Examples
     /// ```rust ignore
-    /// let session_id = session.get_session_id().await;
+    /// let session_id = session.get_session_id();
     /// ```
     ///
     #[inline]
-    pub async fn get_session_id(&self) -> SessionID {
+    pub fn get_session_id(&self) -> SessionID {
         self.id
     }
 }
