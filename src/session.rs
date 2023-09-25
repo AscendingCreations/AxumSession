@@ -56,7 +56,7 @@ where
 {
     #[allow(clippy::needless_pass_by_ref_mut)]
     pub(crate) async fn new(
-        mut store: SessionStore<S>,
+        store: SessionStore<S>,
         cookies: &CookieJar,
         session_key: &SessionKey,
     ) -> (Self, bool) {
