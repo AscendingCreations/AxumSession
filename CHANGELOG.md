@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.6.2 (25. September, 2023)
+### Changed
+- Reduced amount of internal clones to half.
+- Cleaned up way Data gets destroyed or deleted.
+- (Breaking) clean is async now due to filter needing to be arc/rwlocked
+
+### Fixed
+- Removal cookies should now contain a SameSite::None to avoid browser warnings.
+- key-store not removing keys due to having it require if the database should auto clean or not.
+- Session key store not getting updated correctly due to filter not updating across threads as it should be Arc.
+
+### Added
+- get_store and get_mut_store to Session
+
 ## 0.6.1 (22. September, 2023)
 ### Changed
 - Reduced Data sent to persistent database and gathered from persistent database.

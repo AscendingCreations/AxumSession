@@ -75,9 +75,14 @@ where
         };
 
         #[cfg(feature = "key-store")]
-        {
-            let mut filter = store.filter.write().await;
-            if store.config.use_bloom_filters && !filter.contains(id.inner().as_bytes()) {
+        if store.config.use_bloom_filters {
+            let contained = {
+                let filter = store.filter.read().await;
+                filter.contains(id.inner().as_bytes())
+            };
+
+            if !contained {
+                let mut filter = store.filter.write().await;
                 filter.add(id.inner().as_bytes());
             }
         }
