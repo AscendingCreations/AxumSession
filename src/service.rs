@@ -11,7 +11,7 @@ use bytes::Bytes;
 use chrono::Utc;
 use cookie::{Cookie, CookieJar, Key};
 #[cfg(feature = "key-store")]
-use fastbloom_rs::{Deletable, Membership};
+use fastbloom_rs::Deletable;
 use futures::future::BoxFuture;
 use http::{
     self,
@@ -76,7 +76,7 @@ where
     }
 
     fn call(&mut self, mut req: Request<ReqBody>) -> Self::Future {
-        let mut store = self.session_store.clone();
+        let store = self.session_store.clone();
         let not_ready_inner = self.inner.clone();
         let mut ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
 
@@ -87,41 +87,47 @@ where
                 SecurityMode::Simple => SessionKey::new(),
             };
 
-            let (mut session, is_new) = Session::new(&mut store, &cookies, &session_key).await;
+            let (mut session, is_new) = Session::new(store, &cookies, &session_key).await;
 
             let storable = cookies
-                .get_cookie(&store.config.storable_cookie_name, &store.config.key)
+                .get_cookie(
+                    &session.store.config.storable_cookie_name,
+                    &session.store.config.key,
+                )
                 .map_or(false, |c| c.value().parse().unwrap_or(false));
 
             // Check if the session id exists if not lets check if it exists in the database or generate a new session.
             // If manual mode is enabled then do not check for a Session unless the UUID is not new.
-            let check_database: bool = if is_new && !store.config.session_mode.is_manual() {
-                let sess = SessionData::new(session.id.0, storable, &store.config);
-                store.inner.insert(session.id.inner(), sess);
+            let check_database: bool = if is_new && !session.store.config.session_mode.is_manual() {
+                let sess = SessionData::new(session.id.0, storable, &session.store.config);
+                session.store.inner.insert(session.id.inner(), sess);
                 false
-            } else if !is_new || !store.config.session_mode.is_manual() {
-                !store.service_session_data(&session)
+            } else if !is_new || !session.store.config.session_mode.is_manual() {
+                !session.store.service_session_data(&session)
             } else {
                 false
             };
 
             if check_database {
-                let mut sess = store
+                let mut sess = session
+                    .store
                     .load_session(session.id.inner())
                     .await
                     .ok()
                     .flatten()
-                    .unwrap_or_else(|| SessionData::new(session.id.0, storable, &store.config));
+                    .unwrap_or_else(|| {
+                        SessionData::new(session.id.0, storable, &session.store.config)
+                    });
 
-                sess.autoremove = Utc::now() + store.config.memory_lifespan;
+                sess.autoremove = Utc::now() + session.store.config.memory_lifespan;
                 sess.storable = storable;
                 sess.update = true;
 
-                store.inner.insert(session.id.inner(), sess);
+                session.store.inner.insert(session.id.inner(), sess);
             }
 
             let (last_sweep, last_database_sweep) = {
-                let timers = store.timers.read().await;
+                let timers = session.store.timers.read().await;
                 (timers.last_expiry_sweep, timers.last_database_expiry_sweep)
             };
 
@@ -131,54 +137,67 @@ where
             // throttle by memory lifespan - e.g. sweep every hour
             let current_time = Utc::now();
 
-            if last_sweep <= current_time && !store.config.memory_lifespan.is_zero() {
+            if last_sweep <= current_time && !session.store.config.memory_lifespan.is_zero() {
                 // Only unload these from filter if the Client is None as this means no database.
                 // Otherwise only unload from the filter if removed from the Database.
                 #[cfg(feature = "key-store")]
-                if store.is_persistent()
-                    && store.auto_handles_expiry()
-                    && store.config.use_bloom_filters
+                if session.store.is_persistent()
+                    && session.store.auto_handles_expiry()
+                    && session.store.config.use_bloom_filters
                 {
-                    store
+                    session
+                        .store
                         .inner
                         .iter()
                         .filter(|r| r.autoremove < current_time)
                         .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
 
-                    store
+                    session
+                        .store
                         .keys
                         .iter()
                         .filter(|r| r.autoremove < current_time)
                         .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
                 }
 
-                store.inner.retain(|_k, v| v.autoremove > current_time);
-                store.keys.retain(|_k, v| v.autoremove > current_time);
-                store.timers.write().await.last_expiry_sweep =
-                    Utc::now() + store.config.purge_update;
+                session
+                    .store
+                    .inner
+                    .retain(|_k, v| v.autoremove > current_time);
+                session
+                    .store
+                    .keys
+                    .retain(|_k, v| v.autoremove > current_time);
+                session.store.timers.write().await.last_expiry_sweep =
+                    Utc::now() + session.store.config.purge_update;
             }
 
             // Throttle by database lifespan - e.g. sweep every 6 hours
-            if last_database_sweep <= current_time && store.is_persistent() {
+            if last_database_sweep <= current_time && session.store.is_persistent() {
                 //Remove any old keys that expired and Remove them from our loaded filter.
                 #[cfg(feature = "key-store")]
-                let expired = store.cleanup().await.unwrap();
+                let expired = session.store.cleanup().await.unwrap();
                 #[cfg(not(feature = "key-store"))]
-                let _ = store.cleanup().await.unwrap();
+                let _ = session.store.cleanup().await.unwrap();
 
                 #[cfg(feature = "key-store")]
-                if !store.auto_handles_expiry() {
+                if !session.store.auto_handles_expiry() {
                     expired
                         .iter()
                         .for_each(|id| session.store.filter.remove(id.as_bytes()));
                 }
 
-                store.timers.write().await.last_database_expiry_sweep =
-                    Utc::now() + store.config.purge_database_update;
+                session
+                    .store
+                    .timers
+                    .write()
+                    .await
+                    .last_database_expiry_sweep =
+                    Utc::now() + session.store.config.purge_database_update;
             }
 
             // Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage
-            req.extensions_mut().insert(store.clone());
+            //req.extensions_mut().insert(store.clone());
             req.extensions_mut().insert(session.clone());
 
             let mut response = ready_inner.call(req).await?.map(body::boxed);
@@ -196,13 +215,13 @@ where
                     (false, false, false, false, false)
                 };
 
-            if !destroy && (!store.config.session_mode.is_manual() || loaded) {
+            if !destroy && (!session.store.config.session_mode.is_manual() || loaded) {
                 if renew {
                     // Lets change the Session ID and destory the old Session from the database.
-                    let session_id = Session::generate_uuid(&store).await;
+                    let session_id = Session::generate_uuid(&session.store).await;
 
                     // Lets remove it from the database first.
-                    if store.is_persistent() {
+                    if session.store.is_persistent() {
                         session
                             .store
                             .destroy_session(&session.id.inner())
@@ -212,7 +231,7 @@ where
 
                     //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
                     #[cfg(feature = "key-store")]
-                    if store.config.use_bloom_filters {
+                    if session.store.config.use_bloom_filters {
                         session.store.filter.remove(session.id.inner().as_bytes());
                     }
 
@@ -223,13 +242,13 @@ where
                         session_data.id = session_id.0;
                         session_data.renew = false;
                         session.id = session_id;
-                        store.inner.insert(session.id.inner(), session_data);
+                        session.store.inner.insert(session.id.inner(), session_data);
                     }
                 }
 
-                if renew_key && store.config.security_mode == SecurityMode::PerSession {
+                if renew_key && session.store.config.security_mode == SecurityMode::PerSession {
                     // Lets remove it from the database first.
-                    if store.is_persistent() {
+                    if session.store.is_persistent() {
                         session
                             .store
                             .destroy_session(&session_key.id.inner())
@@ -239,51 +258,15 @@ where
 
                     // Lets remove update and reinsert.
                     #[cfg(feature = "key-store")]
-                    let old_id = session_key.renew(&store).await.unwrap();
+                    let old_id = session_key.renew(&session.store).await.unwrap();
 
                     #[cfg(not(feature = "key-store"))]
-                    let _ = session_key.renew(&store).await.unwrap();
+                    let _ = session_key.renew(&session.store).await.unwrap();
 
                     #[cfg(feature = "key-store")]
-                    if store.config.use_bloom_filters {
+                    if session.store.config.use_bloom_filters {
                         session.store.filter.remove(old_id.as_bytes());
                     }
-                }
-            } else if loaded {
-                // lets unload everything if the session data has been loaded and set to be destroyed.
-                #[cfg(feature = "key-store")]
-                if store.config.use_bloom_filters {
-                    session.store.filter.remove(session.id.inner().as_bytes());
-                }
-
-                if store.config.security_mode == SecurityMode::PerSession {
-                    #[cfg(feature = "key-store")]
-                    if store.config.use_bloom_filters {
-                        session
-                            .store
-                            .filter
-                            .remove(session_key.id.inner().as_bytes());
-                    }
-
-                    store.keys.remove(&session_key.id.inner());
-
-                    if store.is_persistent() {
-                        session
-                            .store
-                            .destroy_session(&session_key.id.inner())
-                            .await
-                            .unwrap();
-                    }
-                }
-
-                let _ = session.store.inner.remove(&session.id.inner());
-
-                if store.is_persistent() {
-                    session
-                        .store
-                        .destroy_session(&session.id.inner())
-                        .await
-                        .unwrap();
                 }
             }
 
@@ -291,18 +274,22 @@ where
             let mut cookies = CookieJar::new();
 
             // Add Per-Session encryption KeyID
-            let cookie_key = match store.config.security_mode {
+            let cookie_key = match session.store.config.security_mode {
                 SecurityMode::PerSession => {
-                    if (storable || !store.config.session_mode.is_storable()) && !destroy {
+                    if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
                         cookies.add_cookie(
-                            create_cookie(&store.config, session_key.id.inner(), CookieType::Key),
-                            &store.config.key,
+                            create_cookie(
+                                &session.store.config,
+                                session_key.id.inner(),
+                                CookieType::Key,
+                            ),
+                            &session.store.config.key,
                         );
                     } else {
                         //If not Storable we still remove the encryption key since there is no session.
                         cookies.add_cookie(
-                            remove_cookie(&store.config, CookieType::Key),
-                            &store.config.key,
+                            remove_cookie(&session.store.config, CookieType::Key),
+                            &session.store.config.key,
                         );
                     }
 
@@ -310,54 +297,61 @@ where
                 }
                 SecurityMode::Simple => {
                     cookies.add_cookie(
-                        remove_cookie(&store.config, CookieType::Key),
-                        &store.config.key,
+                        remove_cookie(&session.store.config, CookieType::Key),
+                        &session.store.config.key,
                     );
-                    store.config.key.clone()
+                    session.store.config.key.clone()
                 }
             };
 
             // Add SessionID
-            if (storable || !store.config.session_mode.is_storable()) && !destroy {
+            if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
                 cookies.add_cookie(
-                    create_cookie(&store.config, session.id.inner(), CookieType::Data),
+                    create_cookie(&session.store.config, session.id.inner(), CookieType::Data),
                     &cookie_key,
                 );
             } else {
-                cookies.add_cookie(remove_cookie(&store.config, CookieType::Data), &cookie_key);
+                cookies.add_cookie(
+                    remove_cookie(&session.store.config, CookieType::Data),
+                    &cookie_key,
+                );
             }
 
             // Add Session Storable Boolean
-            if store.config.session_mode.is_storable() && storable && !destroy {
+            if session.store.config.session_mode.is_storable() && storable && !destroy {
                 cookies.add_cookie(
-                    create_cookie(&store.config, storable.to_string(), CookieType::Storable),
+                    create_cookie(
+                        &session.store.config,
+                        storable.to_string(),
+                        CookieType::Storable,
+                    ),
                     &cookie_key,
                 );
             } else {
                 cookies.add_cookie(
-                    remove_cookie(&store.config, CookieType::Storable),
+                    remove_cookie(&session.store.config, CookieType::Storable),
                     &cookie_key,
                 );
             }
 
             // Add the Session ID so it can link back to a Session if one exists.
-            if (!store.config.session_mode.is_storable() || storable)
-                && store.is_persistent()
+            if (!session.store.config.session_mode.is_storable() || storable)
+                && session.store.is_persistent()
                 && !destroy
             {
                 if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner()) {
                     // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
-                    if store.config.always_save || sess.update || !sess.validate() {
+                    if session.store.config.always_save || sess.update || !sess.validate() {
                         if sess.longterm {
-                            sess.expires = Utc::now() + store.config.max_lifespan;
+                            sess.expires = Utc::now() + session.store.config.max_lifespan;
                         } else {
-                            sess.expires = Utc::now() + store.config.lifespan;
+                            sess.expires = Utc::now() + session.store.config.lifespan;
                         };
 
                         sess.update = false;
                         session.store.store_session(&sess).await.unwrap();
 
-                        if store.config.security_mode == SecurityMode::PerSession {
+                        if session.store.config.security_mode == SecurityMode::PerSession {
                             session
                                 .store
                                 .store_key(&session_key, sess.expires.timestamp())
@@ -368,35 +362,19 @@ where
                 }
             }
 
-            if store.config.session_mode.is_storable() && !storable && !destroy {
-                #[cfg(feature = "key-store")]
-                if store.config.use_bloom_filters {
-                    session.store.filter.remove(session.id.inner().as_bytes());
-                }
-
-                store.inner.remove(&session.id.inner());
-
-                if store.config.security_mode == SecurityMode::PerSession {
+            if (session.store.config.session_mode.is_storable() && !storable) || destroy {
+                if session.store.config.security_mode == SecurityMode::PerSession {
                     #[cfg(feature = "key-store")]
-                    if store.config.use_bloom_filters {
+                    if session.store.config.use_bloom_filters {
                         session
                             .store
                             .filter
                             .remove(session_key.id.inner().as_bytes());
                     }
 
-                    store.keys.remove(&session_key.id.inner());
-                }
+                    let _ = session.store.keys.remove(&session_key.id.inner());
 
-                // Also run this just in case it was stored in the database and they rejected storability.
-                if store.is_persistent() {
-                    session
-                        .store
-                        .destroy_session(&session.id.inner())
-                        .await
-                        .unwrap();
-
-                    if store.config.security_mode == SecurityMode::PerSession {
+                    if session.store.is_persistent() {
                         session
                             .store
                             .destroy_session(&session_key.id.inner())
@@ -404,19 +382,39 @@ where
                             .unwrap();
                     }
                 }
+
+                #[cfg(feature = "key-store")]
+                if session.store.config.use_bloom_filters {
+                    session.store.filter.remove(session.id.inner().as_bytes());
+                }
+
+                let _ = session.store.inner.remove(&session.id.inner());
+
+                if session.store.is_persistent() {
+                    session
+                        .store
+                        .destroy_session(&session.id.inner())
+                        .await
+                        .unwrap();
+                }
             }
 
-            if store.config.memory_lifespan.is_zero() {
+            // We will Deleted the data in memory as it should be stored in the database instead.
+            // if user is using this without a database then it will only work as a per request data store.
+            if session.store.config.memory_lifespan.is_zero() {
                 #[cfg(feature = "key-store")]
-                if store.client.is_none() {
-                    if store.config.use_bloom_filters {
-                        store.filter.remove(session.id.inner().as_bytes());
-                        store.filter.remove(session_key.id.inner().as_bytes());
+                if !session.store.is_persistent() {
+                    if session.store.config.use_bloom_filters {
+                        session.store.filter.remove(session.id.inner().as_bytes());
+                        session
+                            .store
+                            .filter
+                            .remove(session_key.id.inner().as_bytes());
                     }
                 }
 
-                store.inner.remove(&session.id.inner());
-                store.keys.remove(&session_key.id.inner());
+                session.store.inner.remove(&session.id.inner());
+                session.store.keys.remove(&session_key.id.inner());
             }
 
             set_cookies(cookies, response.headers_mut());

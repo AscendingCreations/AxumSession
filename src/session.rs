@@ -56,7 +56,7 @@ where
 {
     #[allow(clippy::needless_pass_by_ref_mut)]
     pub(crate) async fn new(
-        store: &mut SessionStore<S>,
+        mut store: SessionStore<S>,
         cookies: &CookieJar,
         session_key: &SessionKey,
     ) -> (Self, bool) {
@@ -71,24 +71,15 @@ where
 
         let (id, is_new) = match value {
             Some(v) => (SessionID(v), false),
-            None => (Self::generate_uuid(store).await, true),
+            None => (Self::generate_uuid(&store).await, true),
         };
 
         #[cfg(feature = "key-store")]
-        if store.config.use_bloom_filters
-            && !store.auto_handles_expiry()
-            && !store.filter.contains(id.inner().as_bytes())
-        {
+        if store.config.use_bloom_filters && !store.filter.contains(id.inner().as_bytes()) {
             store.filter.add(id.inner().as_bytes());
         }
 
-        (
-            Self {
-                id,
-                store: store.clone(),
-            },
-            is_new,
-        )
+        (Self { id, store }, is_new)
     }
 
     #[cfg(feature = "key-store")]
