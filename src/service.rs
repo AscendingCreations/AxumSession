@@ -293,9 +293,7 @@ where
             // Add Per-Session encryption KeyID
             let cookie_key = match store.config.security_mode {
                 SecurityMode::PerSession => {
-                    if store.config.session_mode.is_storable() && storable && !destroy
-                        || !store.config.session_mode.is_storable() && !destroy
-                    {
+                    if (storable || !store.config.session_mode.is_storable()) && !destroy {
                         cookies.add_cookie(
                             create_cookie(&store.config, session_key.id.inner(), CookieType::Key),
                             &store.config.key,
