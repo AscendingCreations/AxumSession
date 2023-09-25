@@ -129,32 +129,37 @@ where
             // let's check if any sessions expired. We don't want to hog memory
             // forever by abandoned sessions (e.g. when a client lost their cookie)
             // throttle by memory lifespan - e.g. sweep every hour
-            if last_sweep <= Utc::now() && !store.config.memory_lifespan.is_zero() {
+            let current_time = Utc::now();
+
+            if last_sweep <= current_time && !store.config.memory_lifespan.is_zero() {
                 // Only unload these from filter if the Client is None as this means no database.
                 // Otherwise only unload from the filter if removed from the Database.
                 #[cfg(feature = "key-store")]
-                if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                if store.is_persistent()
+                    && store.auto_handles_expiry()
+                    && store.config.use_bloom_filters
+                {
                     store
                         .inner
                         .iter()
-                        .filter(|r| r.autoremove < Utc::now())
+                        .filter(|r| r.autoremove < current_time)
                         .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
 
                     store
                         .keys
                         .iter()
-                        .filter(|r| r.autoremove < Utc::now())
+                        .filter(|r| r.autoremove < current_time)
                         .for_each(|r| session.store.filter.remove(r.key().as_bytes()));
                 }
 
-                store.inner.retain(|_k, v| v.autoremove > Utc::now());
-                store.keys.retain(|_k, v| v.autoremove > Utc::now());
+                store.inner.retain(|_k, v| v.autoremove > current_time);
+                store.keys.retain(|_k, v| v.autoremove > current_time);
                 store.timers.write().await.last_expiry_sweep =
                     Utc::now() + store.config.purge_update;
             }
 
             // Throttle by database lifespan - e.g. sweep every 6 hours
-            if last_database_sweep <= Utc::now() && store.is_persistent() {
+            if last_database_sweep <= current_time && store.is_persistent() {
                 //Remove any old keys that expired and Remove them from our loaded filter.
                 #[cfg(feature = "key-store")]
                 let expired = store.cleanup().await.unwrap();
