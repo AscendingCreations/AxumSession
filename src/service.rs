@@ -354,8 +354,7 @@ where
                             sess.expires = Utc::now() + store.config.lifespan;
                         };
 
-                        sess.update = true;
-
+                        sess.update = false;
                         session.store.store_session(&sess).await.unwrap();
 
                         if store.config.security_mode == SecurityMode::PerSession {
