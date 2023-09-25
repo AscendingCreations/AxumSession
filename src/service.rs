@@ -212,7 +212,7 @@ where
 
                     //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
                     #[cfg(feature = "key-store")]
-                    if !store.auto_handles_expiry() && store.config.use_bloom_filters {
+                    if store.config.use_bloom_filters {
                         session.store.filter.remove(session.id.inner().as_bytes());
                     }
 
