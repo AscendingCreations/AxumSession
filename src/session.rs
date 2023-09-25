@@ -393,7 +393,7 @@ where
     /// ```
     ///
     #[inline]
-    pub fn get_store_mut(&mut self) -> &mut SessionStore<S> {
+    pub fn get_mut_store(&mut self) -> &mut SessionStore<S> {
         &mut self.store
     }
 }
