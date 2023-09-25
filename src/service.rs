@@ -345,8 +345,8 @@ where
                 && store.is_persistent()
                 && !destroy
             {
-                let sess = if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner())
-                {
+                if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner()) {
+                    // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
                     if store.config.always_save || sess.update || !sess.validate() {
                         if sess.longterm {
                             sess.expires = Utc::now() + store.config.max_lifespan;
@@ -354,24 +354,17 @@ where
                             sess.expires = Utc::now() + store.config.lifespan;
                         };
 
-                        sess.update = false;
-                        Some(sess.clone())
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                };
+                        sess.update = true;
 
-                if let Some(sess) = sess {
-                    session.store.store_session(&sess).await.unwrap();
+                        session.store.store_session(&sess).await.unwrap();
 
-                    if store.config.security_mode == SecurityMode::PerSession {
-                        session
-                            .store
-                            .store_key(&session_key, sess.expires.timestamp())
-                            .await
-                            .unwrap();
+                        if store.config.security_mode == SecurityMode::PerSession {
+                            session
+                                .store
+                                .store_key(&session_key, sess.expires.timestamp())
+                                .await
+                                .unwrap();
+                        }
                     }
                 }
             }
