@@ -10,8 +10,9 @@ use cookie::Key;
 use cookie::{Cookie, CookieJar};
 #[cfg(not(feature = "rest_mode"))]
 use http::header::{COOKIE, SET_COOKIE};
-use http::HeaderValue;
-use http::{self, header::HeaderName, HeaderMap};
+use http::{self, HeaderMap};
+#[cfg(feature = "rest_mode")]
+use http::{header::HeaderName, HeaderValue};
 use rand::RngCore;
 use std::{
     collections::HashMap,
@@ -22,8 +23,11 @@ use uuid::Uuid;
 
 // Keep these in sync, and keep the key len synced with the `private` docs as
 // well as the `KEYS_INFO` const in secure::Key. from cookie-rs
+#[cfg(feature = "rest_mode")]
 pub(crate) const NONCE_LEN: usize = 12;
+#[cfg(feature = "rest_mode")]
 pub(crate) const TAG_LEN: usize = 16;
+#[cfg(feature = "rest_mode")]
 pub(crate) const KEY_LEN: usize = 32;
 
 enum NameType {
@@ -76,6 +80,7 @@ where
     (session_key, value, storable)
 }
 
+#[cfg(feature = "rest_mode")]
 pub async fn get_headers_and_key<T>(
     store: &SessionStore<T>,
     headers: HashMap<String, String>,
@@ -217,6 +222,7 @@ pub(crate) fn get_cookies(headers: &HeaderMap) -> CookieJar {
     jar
 }
 
+#[cfg(feature = "rest_mode")]
 /// This will get a Hashmap of all the headers that Exist.
 pub(crate) fn get_headers<T>(
     store: &SessionStore<T>,
@@ -384,6 +390,7 @@ pub(crate) fn set_headers<T>(
     }
 }
 
+#[cfg(feature = "rest_mode")]
 ///Used to encrypt the Header Values and key values
 pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> String {
     let val = value.as_bytes();
@@ -410,6 +417,7 @@ pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> String {
     general_purpose::STANDARD.encode(&data)
 }
 
+#[cfg(feature = "rest_mode")]
 ///Used to deencrypt the Header Values and key values.
 pub(crate) fn decrypt(name: &str, value: &str, key: &Key) -> Result<String, SessionError> {
     let data = general_purpose::STANDARD.decode(value)?;
