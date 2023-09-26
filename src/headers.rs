@@ -60,8 +60,8 @@ where
     };
 
     let key = match store.config.security_mode {
-        SecurityMode::PerSession => Some(session_key.key.clone()),
-        SecurityMode::Simple => store.config.key.clone(),
+        SecurityMode::PerSession => Some(&session_key.key),
+        SecurityMode::Simple => store.config.key.as_ref(),
     };
 
     let value = cookies
@@ -100,15 +100,15 @@ where
     };
 
     let key = match store.config.security_mode {
-        SecurityMode::PerSession => Some(session_key.key.clone()),
-        SecurityMode::Simple => store.config.key.clone(),
+        SecurityMode::PerSession => Some(&session_key.key),
+        SecurityMode::Simple => store.config.key.as_ref(),
     };
 
     let name = store.config.cookie_name.to_string();
     let value = headers
         .get(&name)
         .and_then(|c| {
-            if let Some(key) = &key {
+            if let Some(key) = key {
                 decrypt(&name, c, key).ok()
             } else {
                 Some(c.to_owned())
@@ -120,7 +120,7 @@ where
     let storable = headers
         .get(&name)
         .and_then(|c| {
-            if let Some(key) = &key {
+            if let Some(key) = key {
                 decrypt(&name, c, key).ok()
             } else {
                 Some(c.to_owned())
@@ -132,12 +132,12 @@ where
 }
 
 pub(crate) trait CookiesExt {
-    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<Cookie<'static>>;
+    fn get_cookie(&self, name: &str, key: Option<&Key>) -> Option<Cookie<'static>>;
     fn add_cookie(&mut self, cookie: Cookie<'static>, key: &Option<Key>);
 }
 
 impl CookiesExt for CookieJar {
-    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<Cookie<'static>> {
+    fn get_cookie(&self, name: &str, key: Option<&Key>) -> Option<Cookie<'static>> {
         if let Some(key) = key {
             self.private(key).get(name)
         } else {
