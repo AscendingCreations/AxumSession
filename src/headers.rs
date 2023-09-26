@@ -321,7 +321,7 @@ pub(crate) fn set_headers<T>(
     set_cookies(cookies, headers);
 }
 
-///Used to encrypt the Header Values
+///Used to encrypt the Header Values and key values
 pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> String {
     let val = value.as_bytes();
 
@@ -347,7 +347,7 @@ pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> String {
     general_purpose::STANDARD.encode(&data)
 }
 
-///Used to deencrypt the Header Values
+///Used to deencrypt the Header Values and key values.
 pub(crate) fn decrypt(name: &str, value: &str, key: &Key) -> Result<String, SessionError> {
     let data = general_purpose::STANDARD.decode(value)?;
     if data.len() <= NONCE_LEN {
