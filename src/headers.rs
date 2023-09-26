@@ -5,12 +5,13 @@ use crate::{
 use aes_gcm::aead::{generic_array::GenericArray, Aead, AeadInPlace, KeyInit, Payload};
 use aes_gcm::Aes256Gcm;
 use base64::{engine::general_purpose, Engine as _};
-use cookie::{Cookie, CookieJar, Key};
-use http::{
-    self,
-    header::{COOKIE, SET_COOKIE},
-    HeaderMap,
-};
+use cookie::Key;
+#[cfg(not(feature = "rest_mode"))]
+use cookie::{Cookie, CookieJar};
+#[cfg(not(feature = "rest_mode"))]
+use http::header::{COOKIE, SET_COOKIE};
+use http::HeaderValue;
+use http::{self, header::HeaderName, HeaderMap};
 use rand::RngCore;
 use std::{
     collections::HashMap,
@@ -25,19 +26,19 @@ pub(crate) const NONCE_LEN: usize = 12;
 pub(crate) const TAG_LEN: usize = 16;
 pub(crate) const KEY_LEN: usize = 32;
 
-enum CookieType {
+enum NameType {
     Storable,
     Data,
     Key,
 }
 
-impl CookieType {
+impl NameType {
     #[inline]
     pub(crate) fn get_name(&self, config: &SessionConfig) -> String {
         match self {
-            CookieType::Data => config.cookie_name.to_string(),
-            CookieType::Storable => config.storable_cookie_name.to_string(),
-            CookieType::Key => config.key_cookie_name.to_string(),
+            NameType::Data => config.cookie_name.to_string(),
+            NameType::Storable => config.storable_cookie_name.to_string(),
+            NameType::Key => config.key_cookie_name.to_string(),
         }
     }
 }
@@ -95,7 +96,7 @@ where
         .and_then(|c| Uuid::parse_str(&c).ok());
 
     let session_key = match store.config.security_mode {
-        SecurityMode::PerSession => SessionKey::get_or_create(&store, value).await,
+        SecurityMode::PerSession => SessionKey::get_or_create(store, value).await,
         SecurityMode::Simple => SessionKey::new(),
     };
 
@@ -126,16 +127,18 @@ where
                 Some(c.to_owned())
             }
         })
-        .and_then(|c| Some(c.parse().unwrap_or(false)));
+        .map(|c| c.parse().unwrap_or(false));
 
     (session_key, value, storable.unwrap_or(false))
 }
 
+#[cfg(not(feature = "rest_mode"))]
 pub(crate) trait CookiesExt {
     fn get_cookie(&self, name: &str, key: Option<&Key>) -> Option<Cookie<'static>>;
     fn add_cookie(&mut self, cookie: Cookie<'static>, key: &Option<Key>);
 }
 
+#[cfg(not(feature = "rest_mode"))]
 impl CookiesExt for CookieJar {
     fn get_cookie(&self, name: &str, key: Option<&Key>) -> Option<Cookie<'static>> {
         if let Some(key) = key {
@@ -154,7 +157,8 @@ impl CookiesExt for CookieJar {
     }
 }
 
-fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: CookieType) -> Cookie<'a> {
+#[cfg(not(feature = "rest_mode"))]
+fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: NameType) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build(cookie_type.get_name(config), value)
         .path(config.cookie_path.clone())
         .secure(config.cookie_secure)
@@ -174,7 +178,8 @@ fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: CookieT
     cookie_builder.finish()
 }
 
-fn remove_cookie<'a>(config: &SessionConfig, cookie_type: CookieType) -> Cookie<'a> {
+#[cfg(not(feature = "rest_mode"))]
+fn remove_cookie<'a>(config: &SessionConfig, cookie_type: NameType) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build(cookie_type.get_name(config), "")
         .path(config.cookie_path.clone())
         .http_only(config.cookie_http_only)
@@ -193,6 +198,7 @@ fn remove_cookie<'a>(config: &SessionConfig, cookie_type: CookieType) -> Cookie<
     cookie
 }
 
+#[cfg(not(feature = "rest_mode"))]
 /// This will get a CookieJar from the Headers.
 pub(crate) fn get_cookies(headers: &HeaderMap) -> CookieJar {
     let mut jar = CookieJar::new();
@@ -227,7 +233,7 @@ where
         store.config.storable_cookie_name.to_string(),
     ] {
         if let Some(value) = headers.get(&name) {
-            if let Some(val) = value.to_str().ok() {
+            if let Ok(val) = value.to_str() {
                 map.insert(name, val.to_owned());
             }
         }
@@ -236,6 +242,7 @@ where
     map
 }
 
+#[cfg(not(feature = "rest_mode"))]
 fn set_cookies(jar: CookieJar, headers: &mut HeaderMap) {
     for cookie in jar.delta() {
         if let Ok(header_value) = cookie.encoded().to_string().parse() {
@@ -254,71 +261,127 @@ pub(crate) fn set_headers<T>(
 ) where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    // Lets make a new jar as we only want to add our cookies to the Response cookie header.
-    let mut cookies = CookieJar::new();
+    // Lets make a new jar as we only want to add our cookies to the Response cookie header.\
+    #[cfg(not(feature = "rest_mode"))]
+    {
+        let mut cookies = CookieJar::new();
 
-    // Add Per-Session encryption KeyID
-    let cookie_key = match session.store.config.security_mode {
-        SecurityMode::PerSession => {
-            if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
-                cookies.add_cookie(
-                    create_cookie(
-                        &session.store.config,
-                        session_key.id.inner(),
-                        CookieType::Key,
-                    ),
-                    &session.store.config.key,
-                );
-            } else {
-                //If not Storable we still remove the encryption key since there is no session.
-                cookies.add_cookie(
-                    remove_cookie(&session.store.config, CookieType::Key),
-                    &session.store.config.key,
-                );
+        // Add Per-Session encryption KeyID
+        let cookie_key = match session.store.config.security_mode {
+            SecurityMode::PerSession => {
+                if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
+                    cookies.add_cookie(
+                        create_cookie(&session.store.config, session_key.id.inner(), NameType::Key),
+                        &session.store.config.key,
+                    );
+                } else {
+                    //If not Storable we still remove the encryption key since there is no session.
+                    cookies.add_cookie(
+                        remove_cookie(&session.store.config, NameType::Key),
+                        &session.store.config.key,
+                    );
+                }
+
+                Some(session_key.key.clone())
             }
+            SecurityMode::Simple => {
+                cookies.add_cookie(
+                    remove_cookie(&session.store.config, NameType::Key),
+                    &session.store.config.key,
+                );
+                session.store.config.key.clone()
+            }
+        };
 
-            Some(session_key.key.clone())
-        }
-        SecurityMode::Simple => {
+        // Add SessionID
+        if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
             cookies.add_cookie(
-                remove_cookie(&session.store.config, CookieType::Key),
-                &session.store.config.key,
+                create_cookie(&session.store.config, session.id.inner(), NameType::Data),
+                &cookie_key,
             );
-            session.store.config.key.clone()
+        } else {
+            cookies.add_cookie(
+                remove_cookie(&session.store.config, NameType::Data),
+                &cookie_key,
+            );
         }
-    };
 
-    // Add SessionID
-    if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
-        cookies.add_cookie(
-            create_cookie(&session.store.config, session.id.inner(), CookieType::Data),
-            &cookie_key,
-        );
-    } else {
-        cookies.add_cookie(
-            remove_cookie(&session.store.config, CookieType::Data),
-            &cookie_key,
-        );
+        // Add Session Storable Boolean
+        if session.store.config.session_mode.is_storable() && storable && !destroy {
+            cookies.add_cookie(
+                create_cookie(
+                    &session.store.config,
+                    storable.to_string(),
+                    NameType::Storable,
+                ),
+                &cookie_key,
+            );
+        } else {
+            cookies.add_cookie(
+                remove_cookie(&session.store.config, NameType::Storable),
+                &cookie_key,
+            );
+        }
+
+        set_cookies(cookies, headers);
     }
+    #[cfg(feature = "rest_mode")]
+    {
+        // Add Per-Session encryption KeyID
+        let cookie_key = match session.store.config.security_mode {
+            SecurityMode::PerSession => {
+                if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
+                    let name = NameType::Key.get_name(&session.store.config);
+                    let value = if let Some(key) = session.store.config.key.as_ref() {
+                        encrypt(&name, &session_key.id.inner(), key)
+                    } else {
+                        session_key.id.inner()
+                    };
 
-    // Add Session Storable Boolean
-    if session.store.config.session_mode.is_storable() && storable && !destroy {
-        cookies.add_cookie(
-            create_cookie(
-                &session.store.config,
-                storable.to_string(),
-                CookieType::Storable,
-            ),
-            &cookie_key,
-        );
-    } else {
-        cookies.add_cookie(
-            remove_cookie(&session.store.config, CookieType::Storable),
-            &cookie_key,
-        );
+                    if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {
+                        if let Ok(value) = HeaderValue::from_str(&value) {
+                            headers.insert(name, value);
+                        }
+                    }
+                }
+
+                Some(&session_key.key)
+            }
+            SecurityMode::Simple => session.store.config.key.as_ref(),
+        };
+
+        // Add SessionID
+        if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
+            let name = NameType::Data.get_name(&session.store.config);
+            let value = if let Some(key) = cookie_key {
+                encrypt(&name, &session.id.inner(), key)
+            } else {
+                session.id.inner()
+            };
+
+            if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {
+                if let Ok(value) = HeaderValue::from_str(&value) {
+                    headers.insert(name, value);
+                }
+            }
+        }
+
+        // Add Session Storable Boolean
+        if session.store.config.session_mode.is_storable() && storable && !destroy {
+            let name = NameType::Storable.get_name(&session.store.config);
+            let value = if let Some(key) = cookie_key {
+                encrypt(&name, &storable.to_string(), key)
+            } else {
+                storable.to_string()
+            };
+
+            if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {
+                if let Ok(value) = HeaderValue::from_str(&value) {
+                    headers.insert(name, value);
+                }
+            }
+        }
     }
-
-    set_cookies(cookies, headers);
 }
 
 ///Used to encrypt the Header Values and key values
