@@ -1,9 +1,8 @@
-use crate::{CookiesExt, DatabasePool, Session, SessionError, SessionID, SessionStore};
+use crate::{DatabasePool, Session, SessionError, SessionID, SessionStore};
 use aes_gcm::aead::{generic_array::GenericArray, Aead, AeadInPlace, KeyInit, Payload};
 use aes_gcm::Aes256Gcm;
 use base64::{engine::general_purpose, Engine as _};
 use chrono::{DateTime, Duration, Utc};
-use cookie::CookieJar;
 pub use cookie::Key;
 use rand::RngCore;
 use std::fmt::{self, Debug, Formatter};
@@ -40,14 +39,10 @@ impl SessionKey {
     /// Uses the Cookie Value to check if the key Exists or not.
     /// If the key does not Exist in the inner memory table then we load it from the database.
     /// if neither work then we make a new key.
-    pub(crate) async fn get_or_create<S>(store: &SessionStore<S>, cookies: &CookieJar) -> Self
+    pub(crate) async fn get_or_create<S>(store: &SessionStore<S>, value: Option<Uuid>) -> Self
     where
         S: DatabasePool + Clone + Debug + Sync + Send + 'static,
     {
-        let value = cookies
-            .get_cookie(&store.config.key_cookie_name, &store.config.key)
-            .and_then(|c| Uuid::parse_str(c.value()).ok());
-
         if let Some(v) = value {
             let id: SessionID = SessionID(v);
 

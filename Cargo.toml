@@ -22,7 +22,7 @@ keywords = ["Axum", "Tower", "SQLx", "Session", "surrealdb"]
 repository = "https://github.com/AscendingCreations/AxumSession"
 
 [features]
-default = ["postgres-rustls", "key-store"]
+default = ["postgres-rustls", "key-store", "rest_mode"]
 
 key-store = ["fastbloom-rs"]
 sqlite-rustls = ["sqlx/sqlite", "sqlx/tls-rustls"]
@@ -42,6 +42,7 @@ surrealdb-fdb-7_0 =  ["surrealdb/kv-fdb-7_0", "surrealdb_tag"]
 surrealdb-fdb-7_1 =  ["surrealdb/kv-fdb-7_1", "surrealdb_tag"]
 surrealdb-mem =  ["surrealdb/kv-mem", "surrealdb_tag"]
 mongo = ["mongodb"]
+rest_mode = []
 
 #private features.
 surrealdb_tag = []

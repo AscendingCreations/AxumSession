@@ -4,6 +4,7 @@
 mod config;
 pub mod databases;
 mod errors;
+pub(crate) mod headers;
 mod key;
 mod layer;
 mod service;
@@ -19,7 +20,7 @@ pub use layer::SessionLayer;
 pub use session::{ReadOnlySession, Session};
 pub use session_store::SessionStore;
 
-pub(crate) use service::{CookiesExt, SessionService};
+pub(crate) use service::SessionService;
 pub(crate) use session_data::{SessionData, SessionID, SessionTimers};
 
 #[cfg(test)]

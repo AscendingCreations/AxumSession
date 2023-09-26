@@ -1,7 +1,4 @@
-use crate::{
-    config::SecurityMode, DatabasePool, Session, SessionConfig, SessionData, SessionKey,
-    SessionStore,
-};
+use crate::{config::SecurityMode, headers::*, DatabasePool, Session, SessionData, SessionStore};
 use axum_core::{
     body::{self, BoxBody},
     response::Response,
@@ -9,15 +6,10 @@ use axum_core::{
 };
 use bytes::Bytes;
 use chrono::Utc;
-use cookie::{Cookie, CookieJar, Key};
 #[cfg(feature = "key-store")]
 use fastbloom_rs::Deletable;
 use futures::future::BoxFuture;
-use http::{
-    self,
-    header::{COOKIE, SET_COOKIE},
-    HeaderMap, Request,
-};
+use http::{self, Request};
 use http_body::Body as HttpBody;
 use std::{
     boxed::Box,
@@ -27,23 +19,6 @@ use std::{
     task::{Context, Poll},
 };
 use tower_service::Service;
-
-enum CookieType {
-    Storable,
-    Data,
-    Key,
-}
-
-impl CookieType {
-    #[inline]
-    pub(crate) fn get_name(&self, config: &SessionConfig) -> String {
-        match self {
-            CookieType::Data => config.cookie_name.to_string(),
-            CookieType::Storable => config.storable_cookie_name.to_string(),
-            CookieType::Key => config.key_cookie_name.to_string(),
-        }
-    }
-}
 
 #[derive(Clone)]
 pub struct SessionService<S, T>
@@ -81,20 +56,21 @@ where
         let mut ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
 
         Box::pin(async move {
-            let cookies = get_cookies(&req);
-            let mut session_key = match store.config.security_mode {
-                SecurityMode::PerSession => SessionKey::get_or_create(&store, &cookies).await,
-                SecurityMode::Simple => SessionKey::new(),
-            };
+            #[cfg(not(feature = "rest_mode"))]
+            let cookies = get_cookies(req.headers());
 
-            let (mut session, is_new) = Session::new(store, &cookies, &session_key).await;
+            #[cfg(not(feature = "rest_mode"))]
+            let (mut session_key, session_uuid, storable) =
+                get_headers_and_key(&store, cookies).await;
 
-            let storable = cookies
-                .get_cookie(
-                    &session.store.config.storable_cookie_name,
-                    &session.store.config.key,
-                )
-                .map_or(false, |c| c.value().parse().unwrap_or(false));
+            #[cfg(feature = "rest_mode")]
+            let headers = get_headers(&store, req.headers());
+
+            #[cfg(feature = "rest_mode")]
+            let (mut session_key, session_uuid, storable) =
+                get_headers_and_key(&store, headers).await;
+
+            let (mut session, is_new) = Session::new(store, session_uuid).await;
 
             // Check if the session id exists if not lets check if it exists in the database or generate a new session.
             // If manual mode is enabled then do not check for a Session unless the UUID is not new.
@@ -272,70 +248,6 @@ where
                 }
             }
 
-            // Lets make a new jar as we only want to add our cookies to the Response cookie header.
-            let mut cookies = CookieJar::new();
-
-            // Add Per-Session encryption KeyID
-            let cookie_key = match session.store.config.security_mode {
-                SecurityMode::PerSession => {
-                    if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
-                        cookies.add_cookie(
-                            create_cookie(
-                                &session.store.config,
-                                session_key.id.inner(),
-                                CookieType::Key,
-                            ),
-                            &session.store.config.key,
-                        );
-                    } else {
-                        //If not Storable we still remove the encryption key since there is no session.
-                        cookies.add_cookie(
-                            remove_cookie(&session.store.config, CookieType::Key),
-                            &session.store.config.key,
-                        );
-                    }
-
-                    Some(session_key.key.clone())
-                }
-                SecurityMode::Simple => {
-                    cookies.add_cookie(
-                        remove_cookie(&session.store.config, CookieType::Key),
-                        &session.store.config.key,
-                    );
-                    session.store.config.key.clone()
-                }
-            };
-
-            // Add SessionID
-            if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
-                cookies.add_cookie(
-                    create_cookie(&session.store.config, session.id.inner(), CookieType::Data),
-                    &cookie_key,
-                );
-            } else {
-                cookies.add_cookie(
-                    remove_cookie(&session.store.config, CookieType::Data),
-                    &cookie_key,
-                );
-            }
-
-            // Add Session Storable Boolean
-            if session.store.config.session_mode.is_storable() && storable && !destroy {
-                cookies.add_cookie(
-                    create_cookie(
-                        &session.store.config,
-                        storable.to_string(),
-                        CookieType::Storable,
-                    ),
-                    &cookie_key,
-                );
-            } else {
-                cookies.add_cookie(
-                    remove_cookie(&session.store.config, CookieType::Storable),
-                    &cookie_key,
-                );
-            }
-
             // Add the Session ID so it can link back to a Session if one exists.
             if (!session.store.config.session_mode.is_storable() || storable)
                 && session.store.is_persistent()
@@ -414,7 +326,13 @@ where
                 session.store.keys.remove(&session_key.id.inner());
             }
 
-            set_cookies(cookies, response.headers_mut());
+            set_headers(
+                &session,
+                &session_key,
+                response.headers_mut(),
+                destroy,
+                storable,
+            );
 
             Ok(response)
         })
@@ -431,93 +349,5 @@ where
             .field("session_store", &self.session_store)
             .field("inner", &self.inner)
             .finish()
-    }
-}
-
-pub(crate) trait CookiesExt {
-    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<Cookie<'static>>;
-    fn add_cookie(&mut self, cookie: Cookie<'static>, key: &Option<Key>);
-}
-
-impl CookiesExt for CookieJar {
-    fn get_cookie(&self, name: &str, key: &Option<Key>) -> Option<Cookie<'static>> {
-        if let Some(key) = key {
-            self.private(key).get(name)
-        } else {
-            self.get(name).cloned()
-        }
-    }
-
-    fn add_cookie(&mut self, cookie: Cookie<'static>, key: &Option<Key>) {
-        if let Some(key) = key {
-            self.private_mut(key).add(cookie)
-        } else {
-            self.add(cookie)
-        }
-    }
-}
-
-fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: CookieType) -> Cookie<'a> {
-    let mut cookie_builder = Cookie::build(cookie_type.get_name(config), value)
-        .path(config.cookie_path.clone())
-        .secure(config.cookie_secure)
-        .http_only(config.cookie_http_only)
-        .same_site(config.cookie_same_site);
-
-    if let Some(domain) = &config.cookie_domain {
-        cookie_builder = cookie_builder.domain(domain.clone());
-    }
-
-    if let Some(max_age) = config.cookie_max_age {
-        let time_duration = max_age.to_std().expect("Max Age out of bounds");
-        cookie_builder =
-            cookie_builder.expires(Some((std::time::SystemTime::now() + time_duration).into()));
-    }
-
-    cookie_builder.finish()
-}
-
-fn remove_cookie<'a>(config: &SessionConfig, cookie_type: CookieType) -> Cookie<'a> {
-    let mut cookie_builder = Cookie::build(cookie_type.get_name(config), "")
-        .path(config.cookie_path.clone())
-        .http_only(config.cookie_http_only)
-        .same_site(cookie::SameSite::None);
-
-    if let Some(domain) = &config.cookie_domain {
-        cookie_builder = cookie_builder.domain(domain.clone());
-    }
-
-    if let Some(domain) = &config.cookie_domain {
-        cookie_builder = cookie_builder.domain(domain.clone());
-    }
-
-    let mut cookie = cookie_builder.finish();
-    cookie.make_removal();
-    cookie
-}
-
-fn get_cookies<ReqBody>(req: &Request<ReqBody>) -> CookieJar {
-    let mut jar = CookieJar::new();
-
-    let cookie_iter = req
-        .headers()
-        .get_all(COOKIE)
-        .into_iter()
-        .filter_map(|value| value.to_str().ok())
-        .flat_map(|value| value.split(';'))
-        .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok());
-
-    for cookie in cookie_iter {
-        jar.add_original(cookie);
-    }
-
-    jar
-}
-
-fn set_cookies(jar: CookieJar, headers: &mut HeaderMap) {
-    for cookie in jar.delta() {
-        if let Ok(header_value) = cookie.encoded().to_string().parse() {
-            headers.append(SET_COOKIE, header_value);
-        }
     }
 }
