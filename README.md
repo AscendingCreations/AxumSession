@@ -3,8 +3,9 @@ Axum Session
 </h1>
 
 <p>
-`axum_session` provide's a Session management middleware that stores all session data within a MemoryStore internally. It can also save data to an optional persistent database.
-It uses a Cookie inserted UUID to sync back to the memory store. Formally known as Axum Database Sessions.
+📝 `axum_session` provide's a Session management middleware that stores all session data within a MemoryStore internally. 
+Optionally it can save data to a persistent database for long term storage.
+It uses Cookie or Header stored UUID's to sync back to the session store.
 </p>
 
 [![https://crates.io/crates/axum_session](https://img.shields.io/crates/v/axum_session?style=plastic)](https://crates.io/crates/axum_session)
@@ -23,11 +24,11 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 - Optional Rest Mode that Disables Cookies and uses the Header values instead.
 - uses #![forbid(unsafe_code)] to ensure everything is implemented as safe rust.
 
-## Help
+## 🚨 Help
 
 If you need help with this library or have suggestions please go to our [Discord Group](https://discord.gg/gVXNDwpS3Z)
 
-## Install
+## 📦 Install
 
 Axum Session uses [`tokio`]. 
 By Default Axum Session uses `postgres-rustls` so if you need tokio native TLS please add `default-features = false` 
@@ -42,7 +43,7 @@ to your cargo include for Axum Session.
 axum_session = { version = "0.6.0", features = [ "postgres-rustls"] }
 ```
 
-#### Cargo Feature Flags
+## 📱 Cargo Feature Flags
 `default`: [`postgres-rustls`]
 
 `rest_mode`: Disables Cookie Handlering In place of Header only usage for Rest API Requests and Responses.
@@ -75,7 +76,7 @@ axum_session = { version = "0.6.0", features = [ "postgres-rustls"] }
 
 `mongo` : `mongodb 2.6.1` support for mongo.
 
-# Example
+## 🔎 Example Default Setup
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
@@ -128,10 +129,8 @@ async fn connect_to_database() -> anyhow::Result<sqlx::Pool<sqlx::Postgres>> {
 }
 ```
 
-To enable private cookies for confidentiality, integrity, and authenticity.
-When a Key is set it will automatically set the Cookie into an encypted Private cookie which
-both protects the cookies data from prying eye's it also ensures the authenticity of the cookie.
-# Example
+## 🔐 Example Encryption.
+### Enable Cookie and Header UUID Encryption and Database Key encryption for Per_session Keys.
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
@@ -177,9 +176,7 @@ async fn main() {
 }
 ```
 
-To use axum_session in non_persistant mode Set the client to None and import SessionNullPool.
-SessionNullPool is always loaded and can be used where you do not want to include any database within the build.
-# Example
+## 💿 Example SessionNullPool for non_persistant Memory store only.
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
@@ -223,9 +220,7 @@ async fn greet(session: Session<SessionNullPool>) -> String {
 
 ```
 
-
-To use axum_session with session mode set as Storable.
-# Example
+## 📒 Example session mode set as Storable
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
@@ -271,6 +266,7 @@ async fn greet(session: Session<SessionPgPool>) -> String {
 }
 
 ```
+## 🔑 Key Store Details
 
 To enable and use fastbloom key storage for less database lookups. 
 Add the feature `"key-store"` to the crate’s features. This feature will increase the ram usage server side.
@@ -283,6 +279,6 @@ Otherwise stick with the default settings which should work in most situations. 
 could possibly occur when comparing a UUID to what currently exists, which means it will keep trying till it finds none that match. 
 Higher values decrease the chance of a false positive but increase ram usage.
 
-## Session Login and Authentication via `axum_session_auth`
+## 😎 Session Login and Authentication via `axum_session_auth`
 
 For user login, login caching and authentication please see [`axum_session_auth`](https://github.com/AscendingCreations/AxumSessionAuth).
