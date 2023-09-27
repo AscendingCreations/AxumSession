@@ -24,7 +24,7 @@ Uses Cookie or Header stored UUID's to sync back to the session store.
 - Supports SessionID renewal for enhanced Security.
 - Optional Fastbloom key storage for reduced Database lookups during new UUID generation. Boosting Bandwidth.
 - Optional Rest Mode that Disables Cookies and uses the Header values instead.
-- uses #![forbid(unsafe_code)] to ensure everything is implemented as safe rust.
+- uses `#![forbid(unsafe_code)]` to ensure everything is implemented as safe rust.
 
 ## 🚨 Help
 
