@@ -222,7 +222,7 @@ async fn greet(session: Session<SessionNullPool>) -> String {
 
 ```
 
-## 📒 Example session mode set as Storable
+## 🗃️ Example session mode set as Storable
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
