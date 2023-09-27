@@ -31,6 +31,8 @@ pub enum SessionError {
     HTTP(#[from] http::Error),
     #[error(transparent)]
     UUID(#[from] uuid::Error),
+    #[error(transparent)]
+    UTF8(#[from] std::string::FromUtf8Error),
     #[cfg(feature = "surrealdb_tag")]
     #[error(transparent)]
     SurrealDBError(#[from] surrealdb::Error),

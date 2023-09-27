@@ -1,9 +1,7 @@
-use crate::{
-    CookiesExt, DatabasePool, SecurityMode, SessionData, SessionID, SessionKey, SessionStore,
-};
+use crate::{DatabasePool, SessionData, SessionID, SessionStore};
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
-use cookie::CookieJar;
+
 #[cfg(feature = "key-store")]
 use fastbloom_rs::Membership;
 use http::{self, request::Parts, StatusCode};
@@ -55,20 +53,7 @@ where
     S: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     #[allow(clippy::needless_pass_by_ref_mut)]
-    pub(crate) async fn new(
-        store: SessionStore<S>,
-        cookies: &CookieJar,
-        session_key: &SessionKey,
-    ) -> (Self, bool) {
-        let key = match store.config.security_mode {
-            SecurityMode::PerSession => Some(session_key.key.clone()),
-            SecurityMode::Simple => store.config.key.clone(),
-        };
-
-        let value = cookies
-            .get_cookie(&store.config.cookie_name, &key)
-            .and_then(|c| Uuid::parse_str(c.value()).ok());
-
+    pub(crate) async fn new(store: SessionStore<S>, value: Option<Uuid>) -> (Self, bool) {
         let (id, is_new) = match value {
             Some(v) => (SessionID(v), false),
             None => (Self::generate_uuid(&store).await, true),

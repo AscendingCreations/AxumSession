@@ -78,13 +78,13 @@ impl SecurityMode {
 ///
 #[derive(Clone)]
 pub struct SessionConfig {
-    /// The cookie name that contains a boolean for session saving.
+    /// The Cookie or Header name that contains a boolean for session saving.
     /// only used when session_mode is set to SessionMode::Storable or Manual.
-    pub(crate) storable_cookie_name: Cow<'static, str>,
-    /// Session cookie name.
-    pub(crate) cookie_name: Cow<'static, str>,
-    /// Session key cookie name.
-    pub(crate) key_cookie_name: Cow<'static, str>,
+    pub(crate) storable_name: Cow<'static, str>,
+    /// Session Cookie or Header name.
+    pub(crate) session_name: Cow<'static, str>,
+    /// Session key Cookie or Header name.
+    pub(crate) key_name: Cow<'static, str>,
     /// Session cookie domain.
     pub(crate) cookie_domain: Option<Cow<'static, str>>,
     /// Session cookie http only flag.
@@ -139,12 +139,12 @@ pub struct SessionConfig {
 impl std::fmt::Debug for SessionConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SessionConfig")
-            .field("storable_cookie_name", &self.storable_cookie_name)
-            .field("key_cookie_name", &self.key_cookie_name)
+            .field("storable_name", &self.storable_name)
+            .field("key_name", &self.key_name)
             .field("cookie_domain", &self.cookie_domain)
             .field("cookie_http_only", &self.cookie_http_only)
             .field("cookie_max_age", &self.cookie_max_age)
-            .field("cookie_name", &self.cookie_name)
+            .field("session_name", &self.session_name)
             .field("cookie_path", &self.cookie_path)
             .field("cookie_same_site", &self.cookie_same_site)
             .field("cookie_secure", &self.cookie_secure)
@@ -176,18 +176,18 @@ impl SessionConfig {
         Default::default()
     }
 
-    /// Set the session's storable cookie name.
+    /// Set the session's storable Cookie or Header name.
     ///
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
     ///
-    /// let config = SessionConfig::default().with_storable_cookie_name("my_stored_cookie".to_owned());
+    /// let config = SessionConfig::default().with_storable_name("my_stored_cookie".to_owned());
     /// ```
     ///
     #[must_use]
-    pub fn with_storable_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
-        self.storable_cookie_name = name.into();
+    pub fn with_storable_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+        self.storable_name = name.into();
         self
     }
 
@@ -206,33 +206,33 @@ impl SessionConfig {
         self
     }
 
-    /// Set's the session's cookie's name.
+    /// Set's the session's Cookie or Header name.
     ///
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
     ///
-    /// let config = SessionConfig::default().with_cookie_name("my_cookie");
+    /// let config = SessionConfig::default().with_session_name("my_cookie");
     /// ```
     ///
     #[must_use]
-    pub fn with_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
-        self.cookie_name = name.into();
+    pub fn with_session_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+        self.session_name = name.into();
         self
     }
 
-    /// Set's the session's key cookie's name.
+    /// Set's the session's key Cookie or Header name.
     ///
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
     ///
-    /// let config = SessionConfig::default().with_key_cookie_name("my_key_cookie");
+    /// let config = SessionConfig::default().with_key_name("my_key_cookie");
     /// ```
     ///
     #[must_use]
-    pub fn with_key_cookie_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
-        self.key_cookie_name = name.into();
+    pub fn with_key_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+        self.key_name = name.into();
         self
     }
 
@@ -556,6 +556,45 @@ impl SessionConfig {
         self.use_bloom_filters = enable;
         self
     }
+
+    /// Get's the session's Cookie/Header name
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let name = SessionConfig::default().get_session_name();
+    /// ```
+    ///
+    pub fn get_session_name(&self) -> String {
+        self.session_name.to_string()
+    }
+
+    /// Get's the session's Key Cookie/Header name
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let name = SessionConfig::default().get_key_name();
+    /// ```
+    ///
+    pub fn get_key_name(&self) -> String {
+        self.key_name.to_string()
+    }
+
+    /// Get's the session's storable Cookie/Header name
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let name = SessionConfig::default().get_storable_name();
+    /// ```
+    ///
+    pub fn get_storable_name(&self) -> String {
+        self.storable_name.to_string()
+    }
 }
 
 impl Default for SessionConfig {
@@ -563,14 +602,14 @@ impl Default for SessionConfig {
         Self {
             // Set to a 6 hour default in Database Session stores unloading.
             lifespan: Duration::hours(6),
-            cookie_name: "session".into(),
+            session_name: "session".into(),
             cookie_path: "/".into(),
             cookie_max_age: Some(Duration::days(100)),
             cookie_http_only: true,
             cookie_secure: false,
             cookie_domain: None,
             cookie_same_site: SameSite::Lax,
-            storable_cookie_name: "acceptance".into(),
+            storable_name: "acceptance".into(),
             table_name: "sessions".into(),
             // Unload memory after 60 minutes if it has not been accessed.
             memory_lifespan: Duration::minutes(60),
@@ -587,7 +626,7 @@ impl Default for SessionConfig {
             // Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.
             database_key: None,
             // Default cookie name for the Key Id.
-            key_cookie_name: "session_key".into(),
+            key_name: "session_key".into(),
             // Simple is the Default mode for compatibilty with older versions of the crate.
             security_mode: SecurityMode::Simple,
             filter_expected_elements: 100_000,
