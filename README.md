@@ -2,16 +2,16 @@
 Axum Session
 </h1>
 
+[![https://crates.io/crates/axum_session](https://img.shields.io/crates/v/axum_session?style=plastic)](https://crates.io/crates/axum_session)
+[![Docs](https://docs.rs/axum_session/badge.svg)](https://docs.rs/axum_session)
+
 ## 📑 Overview
 
 <p align="center">
-📝 `axum_session` provide's a Session management middleware that stores all session data within a MemoryStore internally. 
+`axum_session` provide's a Session management middleware that stores all session data within a MemoryStore internally. 
 Optionally it can save data to a persistent database for long term storage.
 Uses Cookie or Header stored UUID's to sync back to the session store.
 </p>
-
-[![https://crates.io/crates/axum_session](https://img.shields.io/crates/v/axum_session?style=plastic)](https://crates.io/crates/axum_session)
-[![Docs](https://docs.rs/axum_session/badge.svg)](https://docs.rs/axum_session)
 
 - Cookies or Header Store of Generated Session UUID and a Storable Boolean.
 - Uses a DatabasePool Trait so you can implement your own Sub Storage Layer.
