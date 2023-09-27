@@ -1,9 +1,11 @@
-use crate::{
-    config::SecurityMode, DatabasePool, Session, SessionConfig, SessionError, SessionKey,
-    SessionStore,
-};
+#[cfg(feature = "rest_mode")]
+use crate::SessionError;
+use crate::{config::SecurityMode, DatabasePool, Session, SessionConfig, SessionKey, SessionStore};
+#[cfg(feature = "rest_mode")]
 use aes_gcm::aead::{generic_array::GenericArray, Aead, AeadInPlace, KeyInit, Payload};
+#[cfg(feature = "rest_mode")]
 use aes_gcm::Aes256Gcm;
+#[cfg(feature = "rest_mode")]
 use base64::{engine::general_purpose, Engine as _};
 use cookie::Key;
 #[cfg(not(feature = "rest_mode"))]
@@ -13,9 +15,11 @@ use http::header::{COOKIE, SET_COOKIE};
 use http::{self, HeaderMap};
 #[cfg(feature = "rest_mode")]
 use http::{header::HeaderName, HeaderValue};
+#[cfg(feature = "rest_mode")]
 use rand::RngCore;
+#[cfg(feature = "rest_mode")]
+use std::collections::HashMap;
 use std::{
-    collections::HashMap,
     fmt::Debug,
     marker::{Send, Sync},
 };
@@ -56,11 +60,11 @@ where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     let value = cookies
-        .get_cookie(&store.config.key_cookie_name, &store.config.key)
+        .get_cookie(&store.config.key_name, store.config.key.as_ref())
         .and_then(|c| Uuid::parse_str(c.value()).ok());
 
     let session_key = match store.config.security_mode {
-        SecurityMode::PerSession => SessionKey::get_or_create(&store, value).await,
+        SecurityMode::PerSession => SessionKey::get_or_create(store, value).await,
         SecurityMode::Simple => SessionKey::new(),
     };
 
@@ -70,11 +74,11 @@ where
     };
 
     let value = cookies
-        .get_cookie(&store.config.cookie_name, &key)
+        .get_cookie(&store.config.session_name, key)
         .and_then(|c| Uuid::parse_str(c.value()).ok());
 
     let storable = cookies
-        .get_cookie(&store.config.storable_cookie_name, &key)
+        .get_cookie(&store.config.storable_name, key)
         .map_or(false, |c| c.value().parse().unwrap_or(false));
 
     (session_key, value, storable)
