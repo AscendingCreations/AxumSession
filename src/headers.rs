@@ -40,9 +40,9 @@ impl NameType {
     #[inline]
     pub(crate) fn get_name(&self, config: &SessionConfig) -> String {
         match self {
-            NameType::Data => config.cookie_name.to_string(),
-            NameType::Storable => config.storable_cookie_name.to_string(),
-            NameType::Key => config.key_cookie_name.to_string(),
+            NameType::Data => config.session_name.to_string(),
+            NameType::Storable => config.storable_name.to_string(),
+            NameType::Key => config.key_name.to_string(),
         }
     }
 }
@@ -88,7 +88,7 @@ pub async fn get_headers_and_key<T>(
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    let name = store.config.key_cookie_name.to_string();
+    let name = store.config.key_name.to_string();
     let value = headers
         .get(&name)
         .and_then(|c| {
@@ -110,7 +110,7 @@ where
         SecurityMode::Simple => store.config.key.as_ref(),
     };
 
-    let name = store.config.cookie_name.to_string();
+    let name = store.config.session_name.to_string();
     let value = headers
         .get(&name)
         .and_then(|c| {
@@ -122,7 +122,7 @@ where
         })
         .and_then(|c| Uuid::parse_str(&c).ok());
 
-    let name = store.config.storable_cookie_name.to_string();
+    let name = store.config.storable_name.to_string();
     let storable = headers
         .get(&name)
         .and_then(|c| {
@@ -234,9 +234,9 @@ where
     let mut map = HashMap::new();
 
     for name in [
-        store.config.key_cookie_name.to_string(),
-        store.config.cookie_name.to_string(),
-        store.config.storable_cookie_name.to_string(),
+        store.config.key_name.to_string(),
+        store.config.session_name.to_string(),
+        store.config.storable_name.to_string(),
     ] {
         if let Some(value) = headers.get(&name) {
             if let Ok(val) = value.to_str() {

@@ -7,6 +7,7 @@ members = [
     "examples/redis",
     "examples/surrealdb",
     "examples/middleware_layer",
+    "examples/rest_test",
 ]
 
 [package]
@@ -22,7 +23,7 @@ keywords = ["Axum", "Tower", "SQLx", "Session", "surrealdb"]
 repository = "https://github.com/AscendingCreations/AxumSession"
 
 [features]
-default = ["postgres-rustls", "key-store", "rest_mode"]
+default = ["postgres-rustls"]
 
 key-store = ["fastbloom-rs"]
 sqlite-rustls = ["sqlx/sqlite", "sqlx/tls-rustls"]

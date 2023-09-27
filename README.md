@@ -10,7 +10,7 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 [![https://crates.io/crates/axum_session](https://img.shields.io/crates/v/axum_session?style=plastic)](https://crates.io/crates/axum_session)
 [![Docs](https://docs.rs/axum_session/badge.svg)](https://docs.rs/axum_session)
 
-- Cookies only Store a Generated Session UUID and a Storable Boolean.
+- Cookies or Header Store of Generated Session UUID and a Storable Boolean.
 - Uses a DatabasePool Trait so you can implement your own Sub Storage Layer.
 - Convenient API for `Session` no need to mark as Read or Write making Usage Easier. 
 - Uses `dashmap` for internal memory lookup and storage to achieve high throughput.
@@ -20,6 +20,7 @@ It uses a Cookie inserted UUID to sync back to the memory store. Formally known 
 - Supports Per Session SessionID cookie Encryption for enhanced Security.
 - Supports SessionID renewal for enhanced Security.
 - Optional Fastbloom key storage for reduced Database lookups during new UUID generation. Boosting Bandwidth.
+- Optional Rest Mode that Disables Cookies and uses the Header values instead.
 
 ## Help
 
@@ -42,6 +43,8 @@ axum_session = { version = "0.6.0", features = [ "postgres-rustls"] }
 
 #### Cargo Feature Flags
 `default`: [`postgres-rustls`]
+
+`rest_mode`: Disables Cookie Handlering In place of Header only usage for Rest API Requests and Responses.
 
 `key-store`: Enabled the optional key storage. Will increase ram usage based on Fastbloom settings.
 
