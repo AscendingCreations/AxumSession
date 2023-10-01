@@ -53,6 +53,7 @@ impl DatabasePool for SessionRedisPool {
     ) -> Result<(), SessionError> {
         let mut con = self.pool.aquire().await?;
         redis::pipe()
+            .atomic() //makes this a transation.
             .set(id, session)
             .ignore()
             .expire_at(id, expires as usize)

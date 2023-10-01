@@ -53,6 +53,7 @@ impl DatabasePool for SessionRedisClusterPool {
     ) -> Result<(), SessionError> {
         let mut con = self.pool.aquire().await?;
         redis::pipe()
+            .atomic()
             .set(id, session)
             .ignore()
             .expire_at(id, expires as usize)
