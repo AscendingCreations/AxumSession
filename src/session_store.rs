@@ -471,7 +471,7 @@ where
     /// If no session is found returns false.
     pub(crate) fn service_session_data(&self, session: &Session<T>) -> bool {
         if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
-            inner.service_clear(self.config.memory_lifespan);
+            inner.service_clear(self.config.memory_lifespan, self.config.clear_check_on_load);
             inner.set_request();
             return true;
         }

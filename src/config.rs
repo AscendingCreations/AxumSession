@@ -134,6 +134,8 @@ pub struct SessionConfig {
     /// the false positives it can give you can disable it by setting it to false. This will reduce memory usage.
     /// By default this is enabled unless the specific database cant function with it then disabled.
     pub(crate) use_bloom_filters: bool,
+    /// This is to be used when your handling multiple Parallel Sessions to prevent the next one from unloaded data.
+    pub(crate) clear_check_on_load: bool,
 }
 
 impl std::fmt::Debug for SessionConfig {
@@ -158,6 +160,7 @@ impl std::fmt::Debug for SessionConfig {
             .field("use_bloom_filters", &self.use_bloom_filters)
             .field("purge_update", &self.purge_update)
             .field("purge_database_update", &self.use_bloom_filters)
+            .field("clear_check_on_load", &self.clear_check_on_load)
             .field(
                 "filter_false_positive_probability",
                 &self.filter_false_positive_probability,
@@ -595,6 +598,21 @@ impl SessionConfig {
     pub fn get_storable_name(&self) -> String {
         self.storable_name.to_string()
     }
+
+    /// Set's the session's loading to either true: unload data if checks fail or false: bypass.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_bloom_filter(true);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_clear_check_on_load(mut self, enable: bool) -> Self {
+        self.clear_check_on_load = enable;
+        self
+    }
 }
 
 impl Default for SessionConfig {
@@ -635,6 +653,7 @@ impl Default for SessionConfig {
             filter_false_positive_probability: 0.01,
             // Always set to on.
             use_bloom_filters: true,
+            clear_check_on_load: true,
         }
     }
 }
