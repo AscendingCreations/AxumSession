@@ -393,6 +393,46 @@ where
     pub fn get_mut_store(&mut self) -> &mut SessionStore<S> {
         &mut self.store
     }
+
+    /// Removes a Request from the request counter
+    /// used to deturmine if parallel requests exist.
+    /// prevents data deletion until requests == 0.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.remove_request();
+    /// ```
+    ///
+    #[inline]
+    pub(crate) fn remove_request(&mut self) {
+        self.store.remove_session_request(self.id.inner());
+    }
+
+    /// Removes a Request from the request counter
+    /// used to deturmine if parallel requests exist.
+    /// prevents data deletion until requests == 0.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.set_request();
+    /// ```
+    ///
+    #[inline]
+    pub(crate) fn set_request(&mut self) {
+        self.store.set_session_request(self.id.inner());
+    }
+
+    /// checks if a session has more than one request.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.is_parallel();
+    /// ```
+    ///
+    #[inline]
+    pub(crate) fn is_parallel(&mut self) -> bool {
+        self.store.is_session_parallel(self.id.inner())
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -98,7 +98,7 @@ where
                 sess.autoremove = Utc::now() + session.store.config.memory_lifespan;
                 sess.storable = storable;
                 sess.update = true;
-
+                sess.requests = 1;
                 session.store.inner.insert(session.id.inner(), sess);
             }
 
@@ -276,7 +276,13 @@ where
                 }
             }
 
-            if (session.store.config.session_mode.is_storable() && !storable) || destroy {
+            //lets tell the system we can unload this request now.
+            //If there are still more left the bottom wont unload anything.
+            session.remove_request();
+
+            if ((session.store.config.session_mode.is_storable() && !storable) || destroy)
+                && !session.is_parallel()
+            {
                 if session.store.config.security_mode == SecurityMode::PerSession {
                     #[cfg(feature = "key-store")]
                     if session.store.config.use_bloom_filters {
@@ -314,7 +320,7 @@ where
 
             // We will Deleted the data in memory as it should be stored in the database instead.
             // if user is using this without a database then it will only work as a per request data store.
-            if session.store.config.memory_lifespan.is_zero() {
+            if session.store.config.memory_lifespan.is_zero() && !session.is_parallel() {
                 #[cfg(feature = "key-store")]
                 if !session.store.is_persistent() && session.store.config.use_bloom_filters {
                     let mut filter = session.store.filter.write().await;

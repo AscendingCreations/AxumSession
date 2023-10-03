@@ -39,6 +39,8 @@ pub struct SessionData {
     pub(crate) update: bool,
     #[serde(skip)]
     pub(crate) renew_key: bool,
+    #[serde(skip)]
+    pub(crate) requests: usize,
 }
 
 impl SessionData {
@@ -67,6 +69,7 @@ impl SessionData {
             longterm: false,
             storable,
             update: true,
+            requests: 1,
         }
     }
 
@@ -295,6 +298,46 @@ impl SessionData {
     pub fn clear(&mut self) {
         self.data.clear();
         self.update = true;
+    }
+
+    /// Removes a Request from the request counter
+    /// used to deturmine if parallel requests exist.
+    /// prevents data deletion until requests == 0.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.remove_request();
+    /// ```
+    ///
+    #[inline]
+    pub(crate) fn remove_request(&mut self) {
+        self.requests = self.requests.saturating_sub(1);
+    }
+
+    /// Removes a Request from the request counter
+    /// used to deturmine if parallel requests exist.
+    /// prevents data deletion until requests == 0.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.set_request();
+    /// ```
+    ///
+    #[inline]
+    pub(crate) fn set_request(&mut self) {
+        self.requests = self.requests.saturating_add(1);
+    }
+
+    /// checks if a session has a request still.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.is_parallel();
+    /// ```
+    ///
+    #[inline]
+    pub(crate) fn is_parallel(&mut self) -> bool {
+        self.requests >= 1
     }
 }
 

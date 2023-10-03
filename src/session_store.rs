@@ -472,6 +472,7 @@ where
     pub(crate) fn service_session_data(&self, session: &Session<T>) -> bool {
         if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
             inner.service_clear(self.config.memory_lifespan);
+            inner.set_request();
             return true;
         }
 
@@ -580,6 +581,34 @@ where
             instance.clear();
         } else {
             tracing::warn!("Session data unexpectedly missing");
+        }
+    }
+
+    #[inline]
+    pub(crate) fn set_session_request(&self, id: String) {
+        if let Some(mut instance) = self.inner.get_mut(&id) {
+            instance.set_request();
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+        }
+    }
+
+    #[inline]
+    pub(crate) fn remove_session_request(&self, id: String) {
+        if let Some(mut instance) = self.inner.get_mut(&id) {
+            instance.remove_request();
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+        }
+    }
+
+    #[inline]
+    pub(crate) fn is_session_parallel(&self, id: String) -> bool {
+        if let Some(mut instance) = self.inner.get_mut(&id) {
+            instance.is_parallel()
+        } else {
+            tracing::warn!("Session data unexpectedly missing");
+            false
         }
     }
 
