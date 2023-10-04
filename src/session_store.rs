@@ -535,7 +535,7 @@ where
 
     #[inline]
     pub(crate) fn get<N: serde::de::DeserializeOwned>(&self, id: String, key: &str) -> Option<N> {
-        if let Some(instance) = self.inner.get_mut(&id) {
+        if let Some(instance) = self.inner.get(&id) {
             instance.get(key)
         } else {
             tracing::warn!("Session data unexpectedly missing");
@@ -604,7 +604,7 @@ where
 
     #[inline]
     pub(crate) fn is_session_parallel(&self, id: String) -> bool {
-        if let Some(mut instance) = self.inner.get_mut(&id) {
+        if let Some(instance) = self.inner.get(&id) {
             instance.is_parallel()
         } else {
             tracing::warn!("Session data unexpectedly missing");

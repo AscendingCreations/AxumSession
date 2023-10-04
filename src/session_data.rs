@@ -336,7 +336,7 @@ impl SessionData {
     /// ```
     ///
     #[inline]
-    pub(crate) fn is_parallel(&mut self) -> bool {
+    pub(crate) fn is_parallel(&self) -> bool {
         self.requests >= 1
     }
 }
