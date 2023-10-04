@@ -264,7 +264,7 @@ where
                             };
 
                             sess.update = false;
-                            session.store.store_session(&sess).await.unwrap();
+
                             Some(sess.clone())
                         } else {
                             None
