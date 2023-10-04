@@ -253,25 +253,35 @@ where
                 && session.store.is_persistent()
                 && !destroy
             {
-                if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner()) {
-                    // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
-                    if session.store.config.always_save || sess.update || !sess.validate() {
-                        if sess.longterm {
-                            sess.expires = Utc::now() + session.store.config.max_lifespan;
+                let clone_session =
+                    if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner()) {
+                        // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
+                        if session.store.config.always_save || sess.update || !sess.validate() {
+                            if sess.longterm {
+                                sess.expires = Utc::now() + session.store.config.max_lifespan;
+                            } else {
+                                sess.expires = Utc::now() + session.store.config.lifespan;
+                            };
+
+                            sess.update = false;
+                            session.store.store_session(&sess).await.unwrap();
+                            Some(sess.clone())
                         } else {
-                            sess.expires = Utc::now() + session.store.config.lifespan;
-                        };
-
-                        sess.update = false;
-                        session.store.store_session(&sess).await.unwrap();
-
-                        if session.store.config.security_mode == SecurityMode::PerSession {
-                            session
-                                .store
-                                .store_key(&session_key, sess.expires.timestamp())
-                                .await
-                                .unwrap();
+                            None
                         }
+                    } else {
+                        None
+                    };
+
+                if let Some(sess) = clone_session {
+                    session.store.store_session(&sess).await.unwrap();
+
+                    if session.store.config.security_mode == SecurityMode::PerSession {
+                        session
+                            .store
+                            .store_key(&session_key, sess.expires.timestamp())
+                            .await
+                            .unwrap();
                     }
                 }
             }
