@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+
+## 0.7.0 (4. October, 2023)
 ### Changed
 - Reduced amount of internal clones to half and other Optimizations.
 - Cleaned up way Data gets destroyed or deleted.
@@ -11,16 +13,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - (Breaking) Renamed `storable_cookie_name` to `storable_name` changing `with_storable_cookie_name` to `with_storable_name`.
 - (Breaking) Renamed `cookie_name` to `session_name` changing `with_cookie_name` to `with_session_name`.
 - (Breaking) Renamed `key_cookie_name` to `key_name` changing `with_key_cookie_name` to `with_key_name`.
+- (Breaking) `get_session_id` is now not async.
 
 ### Fixed
 - Removal cookies should now contain a SameSite::None to avoid browser warnings.
 - key-store not removing keys due to having it require if the database should auto clean or not.
 - Session key store not getting updated correctly due to filter not updating across threads as it should be Arc.
+- Dead Locking during an await within database saves. thanks to KrisCarr for finding it!
 
 ### Added
 - `get_store` and `get_mut_store` to Session.
 - Rest Mode. Pulls Data from Request Headers and places Data back into Response Headers. No cookies are used.
 - `get_session_name`, `get_key_name` and `get_storable_name` to SessionConfig.
+- `clear_check_on_load` to config. This will allow you to bypass the Clear check before the Request.
+- is_parallel Requests counter to prevent unloading of data till all requests have finished.
 
 ## 0.6.1 (22. September, 2023)
 ### Changed

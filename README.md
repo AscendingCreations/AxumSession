@@ -42,7 +42,7 @@ to your cargo include for Axum Session.
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.6.0", features = [ "postgres-rustls"] }
+axum_session = { version = "0.7.0", features = [ "postgres-rustls"] }
 ```
 
 ## 📱 Cargo Feature Flags
