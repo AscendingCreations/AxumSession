@@ -1,3 +1,5 @@
+#[cfg(feature = "advanced")]
+use crate::SessionError;
 use crate::{DatabasePool, SessionData, SessionID, SessionStore};
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
@@ -404,7 +406,7 @@ where
     /// ```
     ///
     #[inline]
-    pub(crate) fn remove_request(&mut self) {
+    pub(crate) fn remove_request(&self) {
         self.store.remove_session_request(self.id.inner());
     }
 
@@ -418,7 +420,7 @@ where
     /// ```
     ///
     #[inline]
-    pub(crate) fn set_request(&mut self) {
+    pub(crate) fn set_request(&self) {
         self.store.set_session_request(self.id.inner());
     }
 
@@ -430,8 +432,101 @@ where
     /// ```
     ///
     #[inline]
-    pub(crate) fn is_parallel(&mut self) -> bool {
+    pub(crate) fn is_parallel(&self) -> bool {
         self.store.is_session_parallel(self.id.inner())
+    }
+
+    /// checks if a session exists and if it is outdated.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.verify();
+    /// ```
+    ///
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub fn verify(&self) -> Result<(), SessionError> {
+        self.store.verify(self.id.inner())
+    }
+
+    /// Updates the sessions stored database expire time.
+    /// Use this before forcing a update to the database store.
+    /// will update the database expires based on
+    /// if the session is longterm then configs max_lifespan.
+    /// if not then configs lifespan.
+    ///
+    /// THIS WILL NOT UPDATE THE DATABASE SIDE.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.update_database_expires();
+    /// ```
+    ///
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub fn update_database_expires(&self) -> Result<(), SessionError> {
+        self.store.update_database_expires(self.id.inner())
+    }
+
+    /// Updates the Sessions In memory auto remove timer.
+    /// Will prevent it from being removed for the configs set memory_lifespan.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.update_memory_expires();
+    /// ```
+    ///
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub fn update_memory_expires(&self) -> Result<(), SessionError> {
+        self.store.update_memory_expires(self.id.inner())
+    }
+
+    /// forces a update to the databases stored data for the session.
+    /// Make sure to update the databases expire time before running this or
+    /// the data could be unloaded by a request checking for outdated sessions.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.force_database_update().await;
+    /// ```
+    ///
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub async fn force_database_update(&self) -> Result<(), SessionError> {
+        self.store.force_database_update(self.id.inner()).await
+    }
+
+    /// Removes the session from the memory store if it is not parallel.
+    /// If it is parallel then each parallel session will need to call this once.
+    /// when all parallel sessions are dead this gets unloaded.
+    ///
+    /// THIS DOES NOT CLEAR THE KEY STORE.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.memory_remove_session();
+    /// ```
+    ///
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub fn memory_remove_session(&self) -> Result<(), SessionError> {
+        self.store.memory_remove_session(self.id.inner())
+    }
+
+    /// Removes the session from the Database store.
+    ///
+    /// THIS DOES NOT REMOVE THE KEY STORE.
+    ///
+    /// # Examples
+    /// ```rust ignore
+    /// session.database_remove_session().await;
+    /// ```
+    ///
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub async fn database_remove_session(&self) -> Result<(), SessionError> {
+        self.store.database_remove_session(self.id.inner()).await
     }
 }
 

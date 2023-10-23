@@ -44,6 +44,7 @@ surrealdb-fdb-7_1 =  ["surrealdb/kv-fdb-7_1", "surrealdb_tag"]
 surrealdb-mem =  ["surrealdb/kv-mem", "surrealdb_tag"]
 mongo = ["mongodb"]
 rest_mode = []
+advanced = []
 
 #private features.
 surrealdb_tag = []

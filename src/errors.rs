@@ -51,4 +51,11 @@ pub enum SessionError {
     GenericDeleteError(String),
     #[error("{0}")]
     GenericNotSupportedError(String),
+    #[error("Session was not found. Either the session was unloaded or was never created.")]
+    NoSessionError,
+    #[error(
+        "The Session Exists but is outdated, either renew it or remove it. \n
+    Session will get removed on next Session request purge update if no changes are done."
+    )]
+    OldSessionError,
 }

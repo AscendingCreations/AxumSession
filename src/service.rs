@@ -200,7 +200,7 @@ where
                     if session.store.is_persistent() {
                         session
                             .store
-                            .destroy_session(&session.id.inner())
+                            .database_remove_session(session.id.inner())
                             .await
                             .unwrap();
                     }
@@ -228,7 +228,7 @@ where
                     if session.store.is_persistent() {
                         session
                             .store
-                            .destroy_session(&session_key.id.inner())
+                            .database_remove_session(session_key.id.inner())
                             .await
                             .unwrap();
                     }
@@ -305,7 +305,7 @@ where
                     if session.store.is_persistent() {
                         session
                             .store
-                            .destroy_session(&session_key.id.inner())
+                            .database_remove_session(session_key.id.inner())
                             .await
                             .unwrap();
                     }
@@ -322,7 +322,7 @@ where
                 if session.store.is_persistent() {
                     session
                         .store
-                        .destroy_session(&session.id.inner())
+                        .database_remove_session(session.id.inner())
                         .await
                         .unwrap();
                 }

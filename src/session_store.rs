@@ -374,36 +374,6 @@ where
         Ok(())
     }
 
-    /// Deletes a session's data from the database by its UUID.
-    ///
-    /// If client is None it will return Ok(()).
-    ///
-    /// # Errors
-    /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
-    ///
-    /// # Examples
-    /// ```rust ignore
-    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
-    /// use uuid::Uuid;
-    ///
-    /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
-    /// let token = Uuid::new_v4();
-    ///
-    /// async {
-    ///     let _ = session_store.destroy_session(&token.to_string()).await.unwrap();
-    /// };
-    /// ```
-    ///
-    #[inline]
-    pub async fn destroy_session(&self, id: &str) -> Result<(), SessionError> {
-        if let Some(client) = &self.client {
-            client.delete_one_by_id(id, &self.config.table_name).await?;
-        }
-
-        Ok(())
-    }
-
     /// Deletes all sessions in the database.
     ///
     /// If client is None it will return Ok(()).
@@ -628,5 +598,87 @@ where
         } else {
             false
         }
+    }
+
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub(crate) fn verify(&self, id: String) -> Result<(), SessionError> {
+        if let Some(instance) = self.inner.get(&id) {
+            if instance.expires < Utc::now() {
+                Err(SessionError::OldSessionError)
+            } else {
+                Ok(())
+            }
+        } else {
+            Err(SessionError::NoSessionError)
+        }
+    }
+
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub(crate) fn update_database_expires(&self, id: String) -> Result<(), SessionError> {
+        if let Some(mut instance) = self.inner.get_mut(&id) {
+            if instance.longterm {
+                instance.expires = Utc::now() + self.config.max_lifespan;
+            } else {
+                instance.expires = Utc::now() + self.config.lifespan;
+            }
+
+            Ok(())
+        } else {
+            Err(SessionError::NoSessionError)
+        }
+    }
+
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub(crate) fn update_memory_expires(&self, id: String) -> Result<(), SessionError> {
+        if let Some(mut instance) = self.inner.get_mut(&id) {
+            instance.autoremove = Utc::now() + self.config.memory_lifespan;
+
+            Ok(())
+        } else {
+            Err(SessionError::NoSessionError)
+        }
+    }
+
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub(crate) async fn force_database_update(&self, id: String) -> Result<(), SessionError> {
+        let session = if let Some(instance) = self.inner.get(&id) {
+            instance.clone()
+        } else {
+            return Err(SessionError::NoSessionError);
+        };
+
+        self.store_session(&session).await
+    }
+
+    #[cfg(feature = "advanced")]
+    #[inline]
+    pub(crate) fn memory_remove_session(&self, id: String) -> Result<(), SessionError> {
+        let is_parallel = if let Some(mut instance) = self.inner.get_mut(&id) {
+            instance.remove_request();
+            instance.is_parallel()
+        } else {
+            return Err(SessionError::NoSessionError);
+        };
+
+        if is_parallel {
+            let _ = self.inner.remove(&id);
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    pub(crate) async fn database_remove_session(&self, id: String) -> Result<(), SessionError> {
+        if let Some(client) = &self.client {
+            client
+                .delete_one_by_id(&id, &self.config.table_name)
+                .await?;
+        }
+
+        Ok(())
     }
 }
