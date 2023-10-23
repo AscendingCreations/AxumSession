@@ -25,6 +25,7 @@ Uses Cookie or Header stored UUID's to sync back to the session store.
 - Optional Fastbloom key storage for reduced Database lookups during new UUID generation. Boosting Bandwidth.
 - Optional Rest Mode that Disables Cookies and uses the Header values instead.
 - uses `#![forbid(unsafe_code)]` to ensure everything is implemented as safe rust.
+- has an `advanced` API to allow further control of a session.
 
 ## 🚨 Help
 
@@ -42,7 +43,7 @@ to your cargo include for Axum Session.
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.7.0", features = [ "postgres-rustls"] }
+axum_session = { version = "0.8.0", features = [ "postgres-rustls"] }
 ```
 
 ## 📱 Cargo Feature Flags
