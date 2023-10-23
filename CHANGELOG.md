@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+### Changed
+- (Breaking) renamed destroy_session to database_remove_session Also made it (crate) level as this needs to be behind the advanced feature.
+
+### Added
+- Advanced feature and functions though Session.
 
 ## 0.7.0 (4. October, 2023)
 ### Changed

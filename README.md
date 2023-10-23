@@ -48,6 +48,8 @@ axum_session = { version = "0.7.0", features = [ "postgres-rustls"] }
 ## 📱 Cargo Feature Flags
 `default`: [`postgres-rustls`]
 
+`advanced`: Enable functions allowing more direct control over the sessions.
+
 `rest_mode`: Disables Cookie Handlering In place of Header only usage for Rest API Requests and Responses.
 
 `key-store`: Enabled the optional key storage. Will increase ram usage based on Fastbloom settings.
