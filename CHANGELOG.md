@@ -6,12 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
 ### Added
-- (Breaking) __HOST- appending to increase Security to cookies on supported browsers. On by default. This will Append __HOST- to the front of cookie names.
-  This will break some old Sessions as it changes the cookies names.
+- __HOST- appending to increase Security to cookies on supported browsers. Off by default. This will Append __HOST- to the front of cookie names.
+  You must Set the Domain in order to enable this or cookies will not get Set.
+- SessionAnyPool Added Thanks too @smessmer
 
 ### Changed
 - (Breaking) SessionMode::Always Renamed to SessionMode::OptIn.
 - (Breaking) SessionMode::Always Storable to SessionMode::Persistent.
+- (Breaking) Renamed with_storable_name to with_store_name.
 
 ## 0.8.0 (23. October, 2023)
 ### Changed

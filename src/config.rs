@@ -623,6 +623,9 @@ impl SessionConfig {
 
     /// Set's the session's prefix_with_host to either true: __Host- gets prefixed to the cookie names false: __Host- does not get prepended.
     ///
+    /// __Host- prefix: Cookies with names starting with __Host- must be set with the secure flag, must be from a secure page (HTTPS),
+    /// must not have a domain specified (and therefore, are not sent to subdomains), and the path must be /.
+    ///
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
@@ -676,7 +679,7 @@ impl Default for SessionConfig {
             // Always set to on.
             use_bloom_filters: true,
             clear_check_on_load: true,
-            prefix_with_host: true,
+            prefix_with_host: false,
         }
     }
 }

@@ -1,7 +1,12 @@
-use crate::{databases::DatabasePool, SessionError};
+use crate::{databases::DatabasePool, Session, SessionError, SessionStore};
 use async_trait::async_trait;
 use std::fmt::Debug;
 use std::sync::Arc;
+
+///Any Session Helper type for the DatabasePool.
+pub type SessionAnySession = Session<SessionAnyPool>;
+///Any Session Store Helper type for the DatabasePool.
+pub type SessionAnySessionStore = SessionStore<SessionAnyPool>;
 
 /// [SessionAnyPool] is effectively a `dyn DatabasePool`. It can be useful if your application
 /// requires a runtime decision between multiple database backends. For example using `sqlite`
@@ -12,8 +17,13 @@ pub struct SessionAnyPool {
 }
 
 impl SessionAnyPool {
-    pub fn new(pool: Arc<dyn DatabasePool + Send + Sync>) -> Self {
-        Self { pool }
+    pub fn new<Pool>(pool: Pool) -> Self
+    where
+        Pool: 'static + DatabasePool + Send + Sync,
+    {
+        Self {
+            pool: Arc::new(pool),
+        }
     }
 }
 

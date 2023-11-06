@@ -33,9 +33,7 @@ mod surreal;
 #[cfg(feature = "surrealdb_tag")]
 pub use self::surreal::*;
 
-#[cfg(feature = "session-any-pool")]
 mod any;
-#[cfg(feature = "session-any-pool")]
 pub use self::any::*;
 
 mod database;

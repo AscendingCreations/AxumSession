@@ -1,10 +1,9 @@
 use axum::{routing::get, Router};
 use axum_session::{
-    SessionAnyPool, SessionConfig, SessionLayer, SessionPgSession, SessionSqlitePool, SessionStore,
+    SessionAnyPool, SessionAnySession, SessionConfig, SessionLayer, SessionSqlitePool, SessionStore,
 };
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::str::FromStr;
-use std::sync::Arc;
 
 #[tokio::main]
 async fn main() {
@@ -15,10 +14,9 @@ async fn main() {
     let session_config = SessionConfig::default().with_table_name("sessions_table");
 
     // create SessionStore and initiate the database tables
-    let session_store =
-        SessionStore::<SessionAnyPool>::new(Some(poll.clone().into()), session_config)
-            .await
-            .unwrap();
+    let session_store = SessionStore::<SessionAnyPool>::new(Some(poll), session_config)
+        .await
+        .unwrap();
 
     // build our application with some routes
     let app = Router::new()
@@ -31,7 +29,7 @@ async fn main() {
         .unwrap();
 }
 
-async fn greet(session: SessionPgSession) -> String {
+async fn greet(session: SessionAnySession) -> String {
     let mut count: usize = session.get("count").unwrap_or(0);
 
     count += 1;
@@ -50,5 +48,5 @@ async fn connect_to_database() -> SessionAnyPool {
             .await
             .unwrap(),
     );
-    SessionAnyPool::new(Arc::new(sqlite_pool))
+    SessionAnyPool::new(sqlite_pool)
 }
