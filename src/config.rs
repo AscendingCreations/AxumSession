@@ -136,6 +136,9 @@ pub struct SessionConfig {
     pub(crate) use_bloom_filters: bool,
     /// This is to be used when your handling multiple Parallel Sessions to prevent the next one from unloaded data.
     pub(crate) clear_check_on_load: bool,
+    /// This is used to append __Host- to the front of all Cookie names to prevent sub domain usage.
+    /// This will not append to Headers only Cookies. It is enabled by default.
+    pub(crate) prefix_with_host: bool,
 }
 
 impl std::fmt::Debug for SessionConfig {
@@ -161,6 +164,7 @@ impl std::fmt::Debug for SessionConfig {
             .field("purge_update", &self.purge_update)
             .field("purge_database_update", &self.use_bloom_filters)
             .field("clear_check_on_load", &self.clear_check_on_load)
+            .field("prefix_with_host", &self.prefix_with_host)
             .field(
                 "filter_false_positive_probability",
                 &self.filter_false_positive_probability,
@@ -613,6 +617,21 @@ impl SessionConfig {
         self.clear_check_on_load = enable;
         self
     }
+
+    /// Set's the session's prefix_with_host to either true: __Host- gets prefixed to the cookie names false: __Host- does not get prepended.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_prefix_with_host(true);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_prefix_with_host(mut self, enable: bool) -> Self {
+        self.prefix_with_host = enable;
+        self
+    }
 }
 
 impl Default for SessionConfig {
@@ -654,6 +673,7 @@ impl Default for SessionConfig {
             // Always set to on.
             use_bloom_filters: true,
             clear_check_on_load: true,
+            prefix_with_host: true,
         }
     }
 }

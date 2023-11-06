@@ -43,10 +43,18 @@ enum NameType {
 impl NameType {
     #[inline]
     pub(crate) fn get_name(&self, config: &SessionConfig) -> String {
-        match self {
+        let name = match self {
             NameType::Data => config.session_name.to_string(),
             NameType::Storable => config.storable_name.to_string(),
             NameType::Key => config.key_name.to_string(),
+        };
+
+        if config.prefix_with_host {
+            let mut prefixed = "__Host-".to_owned();
+            prefixed.push_str(&name);
+            prefixed
+        } else {
+            name
         }
     }
 }
