@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     ".",
+    "examples/any",
     "examples/postgres",
     "examples/sqlite",
     "examples/redis",
@@ -34,6 +35,7 @@ mysql-rustls = ["sqlx/mysql", "sqlx/tls-rustls"]
 mysql-native = ["sqlx/mysql", "sqlx/tls-native-tls"]
 redis-db = ["redis_pool", "redis"]
 redis-clusterdb = ["redis_pool/cluster", "redis/cluster-async"]
+session-any-pool = []
 surrealdb-rocksdb =  ["surrealdb/kv-rocksdb", "surrealdb_tag"]
 surrealdb-tikv =  ["surrealdb/kv-tikv", "surrealdb_tag"]
 surrealdb-fdb-6_1 =  ["surrealdb/kv-fdb-6_1", "surrealdb_tag"]
@@ -88,5 +90,5 @@ tower = "0.4.13"
 log = { version = "0.4.20", default-features = false }
 
 [package.metadata.docs.rs]
-features = ["sqlite-rustls", "mysql-rustls", "redis-db", "surrealdb-rocksdb", "surrealdb-mem", "key-store", "advanced"]
+features = ["sqlite-rustls", "mysql-rustls", "redis-db", "surrealdb-rocksdb", "surrealdb-mem", "key-store", "advanced", "session-any-pool"]
 rustdoc-args = ["--document-private-items"]
