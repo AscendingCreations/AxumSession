@@ -35,7 +35,7 @@ pub(crate) const TAG_LEN: usize = 16;
 pub(crate) const KEY_LEN: usize = 32;
 
 enum NameType {
-    Storable,
+    Store,
     Data,
     Key,
 }
@@ -45,7 +45,7 @@ impl NameType {
     pub(crate) fn get_name(&self, config: &SessionConfig) -> String {
         let name = match self {
             NameType::Data => config.session_name.to_string(),
-            NameType::Storable => config.storable_name.to_string(),
+            NameType::Store => config.store_name.to_string(),
             NameType::Key => config.key_name.to_string(),
         };
 
@@ -86,7 +86,7 @@ where
         .and_then(|c| Uuid::parse_str(c.value()).ok());
 
     let storable = cookies
-        .get_cookie(&store.config.storable_name, key)
+        .get_cookie(&store.config.store_name, key)
         .map_or(false, |c| c.value().parse().unwrap_or(false));
 
     (session_key, value, storable)
@@ -134,7 +134,7 @@ where
         })
         .and_then(|c| Uuid::parse_str(&c).ok());
 
-    let name = store.config.storable_name.to_string();
+    let name = store.config.store_name.to_string();
     let storable = headers
         .get(&name)
         .and_then(|c| {
@@ -248,7 +248,7 @@ where
     for name in [
         store.config.key_name.to_string(),
         store.config.session_name.to_string(),
-        store.config.storable_name.to_string(),
+        store.config.store_name.to_string(),
     ] {
         if let Some(value) = headers.get(&name) {
             if let Ok(val) = value.to_str() {
@@ -287,7 +287,7 @@ pub(crate) fn set_headers<T>(
         // Add Per-Session encryption KeyID
         let cookie_key = match session.store.config.security_mode {
             SecurityMode::PerSession => {
-                if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
+                if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
                     cookies.add_cookie(
                         create_cookie(&session.store.config, session_key.id.inner(), NameType::Key),
                         &session.store.config.key,
@@ -312,7 +312,7 @@ pub(crate) fn set_headers<T>(
         };
 
         // Add SessionID
-        if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
+        if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
             cookies.add_cookie(
                 create_cookie(&session.store.config, session.id.inner(), NameType::Data),
                 &cookie_key,
@@ -324,19 +324,15 @@ pub(crate) fn set_headers<T>(
             );
         }
 
-        // Add Session Storable Boolean
-        if session.store.config.session_mode.is_storable() && storable && !destroy {
+        // Add Session Store Boolean
+        if session.store.config.session_mode.is_opt_in() && storable && !destroy {
             cookies.add_cookie(
-                create_cookie(
-                    &session.store.config,
-                    storable.to_string(),
-                    NameType::Storable,
-                ),
+                create_cookie(&session.store.config, storable.to_string(), NameType::Store),
                 &cookie_key,
             );
         } else {
             cookies.add_cookie(
-                remove_cookie(&session.store.config, NameType::Storable),
+                remove_cookie(&session.store.config, NameType::Store),
                 &cookie_key,
             );
         }
@@ -348,7 +344,7 @@ pub(crate) fn set_headers<T>(
         // Add Per-Session encryption KeyID
         let cookie_key = match session.store.config.security_mode {
             SecurityMode::PerSession => {
-                if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
+                if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
                     let name = NameType::Key.get_name(&session.store.config);
                     let value = if let Some(key) = session.store.config.key.as_ref() {
                         encrypt(&name, &session_key.id.inner(), key)
@@ -369,7 +365,7 @@ pub(crate) fn set_headers<T>(
         };
 
         // Add SessionID
-        if (storable || !session.store.config.session_mode.is_storable()) && !destroy {
+        if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
             let name = NameType::Data.get_name(&session.store.config);
             let value = if let Some(key) = cookie_key {
                 encrypt(&name, &session.id.inner(), key)
@@ -384,9 +380,9 @@ pub(crate) fn set_headers<T>(
             }
         }
 
-        // Add Session Storable Boolean
-        if session.store.config.session_mode.is_storable() && storable && !destroy {
-            let name = NameType::Storable.get_name(&session.store.config);
+        // Add Session Store Boolean
+        if session.store.config.session_mode.is_opt_in() && storable && !destroy {
+            let name = NameType::Store.get_name(&session.store.config);
             let value = if let Some(key) = cookie_key {
                 encrypt(&name, &storable.to_string(), key)
             } else {

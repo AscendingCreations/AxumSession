@@ -34,7 +34,7 @@ pub struct SessionData {
     pub(crate) renew: bool,
     pub(crate) longterm: bool,
     #[serde(skip)]
-    pub(crate) storable: bool,
+    pub(crate) store: bool,
     #[serde(skip)]
     pub(crate) update: bool,
     #[serde(skip)]
@@ -67,7 +67,7 @@ impl SessionData {
             renew_key: false,
             autoremove: Utc::now() + config.memory_lifespan,
             longterm: false,
-            storable,
+            store: storable,
             update: true,
             requests: 1,
         }
@@ -213,8 +213,8 @@ impl SessionData {
     /// ```
     ///
     #[inline]
-    pub fn set_store(&mut self, storable: bool) {
-        self.storable = storable;
+    pub fn set_store(&mut self, can_store: bool) {
+        self.store = can_store;
         self.update = true;
     }
 

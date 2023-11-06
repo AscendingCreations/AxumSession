@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - (Breaking) __HOST- appending to increase Security to cookies on supported browsers. On by default. This will Append __HOST- to the front of cookie names.
   This will break some old Sessions as it changes the cookies names.
 
+### Changed
+- (Breaking) SessionMode::Always Renamed to SessionMode::OptIn.
+- (Breaking) SessionMode::Always Storable to SessionMode::Persistent.
+
 ## 0.8.0 (23. October, 2023)
 ### Changed
 - (Breaking) renamed destroy_session to database_remove_session Also made it (crate) level as this needs to be behind the advanced feature.

@@ -8,30 +8,33 @@ use std::borrow::Cow;
 /// ```rust
 /// use axum_session::{SessionConfig, SessionMode};
 ///
-/// let config = SessionConfig::default().with_mode(SessionMode::Always);
+/// let config = SessionConfig::default().with_mode(SessionMode::Persistent);
 /// ```
 ///
 #[derive(Debug, Clone)]
 pub enum SessionMode {
-    /// Creates a SessionID Without SessionData.The End user must `session.create_data()`
-    /// functions will emit a Info warning and do nothing until Created.
-    /// Deletes SessionData and cookie if `session.storable` is false.
-    /// if session.storable is true retains SessionData and Syncs with Database.
+    /// Creates a SessionID Without SessionData.The End user must run `session.create_data()`
+    /// to create the SessionData.
+    /// Functions will emit a Info warning and do nothing until Created.
+    /// Deletes SessionData and cookie if `session.store` is false.
+    /// if SessionData.store is true retains SessionData and Syncs with Database.
+    /// You can Set SessionData.store to true using 'session.set_store(true)'
     Manual,
     /// Always Creates a Session.
-    /// Deletes SessionData and cookie if `session.storable` is false.
-    /// if session.storable is true retains SessionData and Syncs with Database.
-    Storable,
+    /// Deletes SessionData and cookie if `session.store` is false.
+    /// if SessionData.store is true retains SessionData and Syncs with Database.
+    /// You can Set SessionData.store to true using 'session.set_store(true)'
+    OptIn,
     /// Always Creates a Session
     /// Always retains in Memory and syncs with Database.
-    Always,
+    Persistent,
 }
 
 impl SessionMode {
-    /// Checks if the Mode is set to only if Storable.
+    /// Checks if the Mode is set to only if OptIn or Manual.
     ///
-    pub fn is_storable(&self) -> bool {
-        matches!(self, SessionMode::Storable | SessionMode::Manual)
+    pub fn is_opt_in(&self) -> bool {
+        matches!(self, SessionMode::OptIn | SessionMode::Manual)
     }
     /// Checks if the user needs to manually create the SessionData per user.
     /// When created the Session will get Set to loaded.
@@ -46,13 +49,13 @@ impl SessionMode {
 /// ```rust
 /// use axum_session::{SessionConfig, SessionMode};
 ///
-/// let config = SessionConfig::default().with_mode(SessionMode::Always);
+/// let config = SessionConfig::default().with_mode(SessionMode::Persistent);
 /// ```
 ///
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SecurityMode {
     /// Will create and store a per-session Encryption key to encrypt the
-    /// SessionID and Storable cookies with that will get rotated upon Session renew.
+    /// SessionID and Store cookies with that will get rotated upon Session renew.
     /// Config's Key must be set to Some() or the system will Panic.
     PerSession,
     /// Uses the config Key to encrypt SessionID in cookies if Key is Some().
@@ -79,8 +82,8 @@ impl SecurityMode {
 #[derive(Clone)]
 pub struct SessionConfig {
     /// The Cookie or Header name that contains a boolean for session saving.
-    /// only used when session_mode is set to SessionMode::Storable or Manual.
-    pub(crate) storable_name: Cow<'static, str>,
+    /// only used when session_mode is set to SessionMode::OptIn or Manual.
+    pub(crate) store_name: Cow<'static, str>,
     /// Session Cookie or Header name.
     pub(crate) session_name: Cow<'static, str>,
     /// Session key Cookie or Header name.
@@ -144,7 +147,7 @@ pub struct SessionConfig {
 impl std::fmt::Debug for SessionConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SessionConfig")
-            .field("storable_name", &self.storable_name)
+            .field("store_name", &self.store_name)
             .field("key_name", &self.key_name)
             .field("cookie_domain", &self.cookie_domain)
             .field("cookie_http_only", &self.cookie_http_only)
@@ -183,18 +186,18 @@ impl SessionConfig {
         Default::default()
     }
 
-    /// Set the session's storable Cookie or Header name.
+    /// Set the session's store Cookie or Header name.
     ///
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
     ///
-    /// let config = SessionConfig::default().with_storable_name("my_stored_cookie".to_owned());
+    /// let config = SessionConfig::default().with_store_name("my_stored_cookie".to_owned());
     /// ```
     ///
     #[must_use]
-    pub fn with_storable_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
-        self.storable_name = name.into();
+    pub fn with_store_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
+        self.store_name = name.into();
         self
     }
 
@@ -277,14 +280,14 @@ impl SessionConfig {
         self
     }
 
-    /// Set's whether the session Always stores data or on stores if storable.
+    /// Set's whether the session Persistantly stores data or on stores if storable.
     ///
     /// # Examples
     /// ```rust
     /// use axum_session::{SessionMode, SessionConfig};
     /// use cookie::SameSite;
     ///
-    /// let config = SessionConfig::default().with_mode(SessionMode::Always);
+    /// let config = SessionConfig::default().with_mode(SessionMode::Persistent);
     /// ```
     ///
     #[must_use]
@@ -590,17 +593,17 @@ impl SessionConfig {
         self.key_name.to_string()
     }
 
-    /// Get's the session's storable Cookie/Header name
+    /// Get's the session's store booleans Cookie/Header name
     ///
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
     ///
-    /// let name = SessionConfig::default().get_storable_name();
+    /// let name = SessionConfig::default().get_store_name();
     /// ```
     ///
-    pub fn get_storable_name(&self) -> String {
-        self.storable_name.to_string()
+    pub fn get_store_name(&self) -> String {
+        self.store_name.to_string()
     }
 
     /// Set's the session's loading to either true: unload data if checks fail or false: bypass.
@@ -646,7 +649,7 @@ impl Default for SessionConfig {
             cookie_secure: false,
             cookie_domain: None,
             cookie_same_site: SameSite::Lax,
-            storable_name: "acceptance".into(),
+            store_name: "store".into(),
             table_name: "sessions".into(),
             // Unload memory after 60 minutes if it has not been accessed.
             memory_lifespan: Duration::minutes(60),
@@ -657,7 +660,7 @@ impl Default for SessionConfig {
             // Default to purge old sessions in the database every 5 hours per request.
             purge_database_update: Duration::hours(5),
             always_save: false,
-            session_mode: SessionMode::Always,
+            session_mode: SessionMode::Persistent,
             // Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
             key: None,
             // Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.

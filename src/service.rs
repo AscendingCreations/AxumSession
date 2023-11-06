@@ -96,7 +96,7 @@ where
                     });
 
                 sess.autoremove = Utc::now() + session.store.config.memory_lifespan;
-                sess.storable = storable;
+                sess.store = storable;
                 sess.update = true;
                 sess.requests = 1;
                 session.store.inner.insert(session.id.inner(), sess);
@@ -182,7 +182,7 @@ where
                 if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
                     (
                         session_data.renew,
-                        session_data.storable,
+                        session_data.store,
                         session_data.renew_key,
                         session_data.destroy,
                         true,
@@ -249,7 +249,7 @@ where
             }
 
             // Add the Session ID so it can link back to a Session if one exists.
-            if (!session.store.config.session_mode.is_storable() || storable)
+            if (!session.store.config.session_mode.is_opt_in() || storable)
                 && session.store.is_persistent()
                 && !destroy
             {
@@ -290,7 +290,7 @@ where
             //If there are still more left the bottom wont unload anything.
             session.remove_request();
 
-            if ((session.store.config.session_mode.is_storable() && !storable) || destroy)
+            if ((session.store.config.session_mode.is_opt_in() && !storable) || destroy)
                 && !session.is_parallel()
             {
                 if session.store.config.security_mode == SecurityMode::PerSession {

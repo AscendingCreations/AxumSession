@@ -248,10 +248,10 @@ where
         self.store.set_longterm(self.id.inner(), longterm);
     }
 
-    /// Sets the Current Session to be storable.
+    /// Allows the Current Session to store.
     /// This will also update the database on Response Phase.
     ///
-    /// This is only used when `SessionMode` is Manual or Storable.
+    /// This is only used when `SessionMode` is Manual or OptIn.
     /// This will allow the Session to be stored if true.
     /// This will delete and not allow a session to be stored if false.
     ///
@@ -261,8 +261,8 @@ where
     /// ```
     ///
     #[inline]
-    pub fn set_store(&self, storable: bool) {
-        self.store.set_store(self.id.inner(), storable);
+    pub fn set_store(&self, can_store: bool) {
+        self.store.set_store(self.id.inner(), can_store);
     }
 
     /// Gets data from the Session's HashMap

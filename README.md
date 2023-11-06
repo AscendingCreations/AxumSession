@@ -13,7 +13,7 @@ Optionally it can save data to a persistent database for long term storage.
 Uses Cookie or Header stored UUID's to sync back to the session store.
 </p>
 
-- Cookies or Header Store of Generated Session UUID and a Storable Boolean.
+- Cookies or Header Store of Generated Session UUID and a Store Boolean.
 - Uses a DatabasePool Trait so you can implement your own Sub Storage Layer.
 - Convenient API for `Session` no need to mark as Read or Write making Usage Easier. 
 - Uses `dashmap` for internal memory lookup and storage to achieve high throughput.
@@ -225,7 +225,7 @@ async fn greet(session: Session<SessionNullPool>) -> String {
 
 ```
 
-## 🗃️ Example session mode set as Storable
+## 🗃️ Example session mode set as OptIn
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
@@ -239,7 +239,7 @@ use axum::{
 #[tokio::main]
 async fn main() {
     let session_config = SessionConfig::default()
-        .with_table_name("sessions_table").with_mode(SessionMode::Storable);
+        .with_table_name("sessions_table").with_mode(SessionMode::OptIn);
 
     // create SessionStore and initiate the database tables
     let session_store = SessionStore::<SessionPgPool>::new(None, session_config).await.unwrap();
@@ -258,7 +258,6 @@ async fn main() {
         .unwrap();
 }
 
-//No need to set the sessions accepted or not with gdpr mode disabled
 async fn greet(session: Session<SessionPgPool>) -> String {
     let mut count: usize = session.get("count").unwrap_or(0);
 
