@@ -33,8 +33,8 @@ mod surreal;
 #[cfg(feature = "surrealdb_tag")]
 pub use self::surreal::*;
 
-mod any;
-pub use self::any::*;
+mod any_db;
+pub use self::any_db::*;
 
 mod database;
 mod null;

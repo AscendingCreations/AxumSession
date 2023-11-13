@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+
+## 0.9.0 (13. November, 2023)
 ### Added
 - __HOST- appending to increase Security to cookies on supported browsers. Off by default. This will Append __HOST- to the front of cookie names.
   You must Set the Domain in order to enable this or cookies will not get Set.
@@ -14,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - (Breaking) SessionMode::Storable Renamed to SessionMode::OptIn.
 - (Breaking) SessionMode::Always Renamed to SessionMode::Persistent.
 - (Breaking) Renamed with_storable_name to with_store_name.
+
+### Updated
+- cookie from 0.17.0 to 0.18.0
 
 ## 0.8.0 (23. October, 2023)
 ### Changed

@@ -176,7 +176,7 @@ impl CookiesExt for CookieJar {
 
 #[cfg(not(feature = "rest_mode"))]
 fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: NameType) -> Cookie<'a> {
-    let mut cookie_builder = Cookie::build(cookie_type.get_name(config), value)
+    let mut cookie_builder = Cookie::build((cookie_type.get_name(config), value))
         .path(config.cookie_path.clone())
         .secure(config.cookie_secure)
         .http_only(config.cookie_http_only)
@@ -192,12 +192,12 @@ fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: NameTyp
             cookie_builder.expires(Some((std::time::SystemTime::now() + time_duration).into()));
     }
 
-    cookie_builder.finish()
+    cookie_builder.build()
 }
 
 #[cfg(not(feature = "rest_mode"))]
 fn remove_cookie<'a>(config: &SessionConfig, cookie_type: NameType) -> Cookie<'a> {
-    let mut cookie_builder = Cookie::build(cookie_type.get_name(config), "")
+    let mut cookie_builder = Cookie::build((cookie_type.get_name(config), ""))
         .path(config.cookie_path.clone())
         .http_only(config.cookie_http_only)
         .same_site(cookie::SameSite::None);
@@ -210,7 +210,7 @@ fn remove_cookie<'a>(config: &SessionConfig, cookie_type: NameType) -> Cookie<'a
         cookie_builder = cookie_builder.domain(domain.clone());
     }
 
-    let mut cookie = cookie_builder.finish();
+    let mut cookie = cookie_builder.build();
     cookie.make_removal();
     cookie
 }
