@@ -11,8 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - SessionAnyPool Added Thanks too @smessmer
 
 ### Changed
-- (Breaking) SessionMode::Always Renamed to SessionMode::OptIn.
-- (Breaking) SessionMode::Always Storable to SessionMode::Persistent.
+- (Breaking) SessionMode::Storable Renamed to SessionMode::OptIn.
+- (Breaking) SessionMode::Always Renamed to SessionMode::Persistent.
 - (Breaking) Renamed with_storable_name to with_store_name.
 
 ## 0.8.0 (23. October, 2023)
