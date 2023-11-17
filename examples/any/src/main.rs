@@ -1,13 +1,17 @@
 use axum::{routing::get, Router};
 use axum_session::{
-    SessionAnyPool, SessionAnySession, SessionConfig, SessionLayer, SessionSqlitePool, SessionStore,
+    SessionAnyPool, SessionAnySession, SessionConfig, SessionLayer, SessionPgPool,
+    SessionSqlitePool, SessionStore,
 };
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+use sqlx::{
+    postgres::{PgConnectOptions, PgPoolOptions},
+    sqlite::{SqliteConnectOptions, SqlitePoolOptions},
+};
 use std::str::FromStr;
 
 #[tokio::main]
 async fn main() {
-    let poll = connect_to_database().await;
+    let poll = connect_to_database(false).await;
 
     //This Defaults as normal Cookies.
     //To enable Private cookies for integrity, and authenticity please check the next Example.
@@ -38,15 +42,33 @@ async fn greet(session: SessionAnySession) -> String {
     count.to_string()
 }
 
-async fn connect_to_database() -> SessionAnyPool {
-    let connect_opts = SqliteConnectOptions::from_str("sqlite::memory:").unwrap();
+async fn connect_to_database(is_production: bool) -> SessionAnyPool {
+    if is_production {
+        let mut connect_opts = PgConnectOptions::new();
 
-    let sqlite_pool = SessionSqlitePool::from(
-        SqlitePoolOptions::new()
-            .max_connections(5)
-            .connect_with(connect_opts)
-            .await
-            .unwrap(),
-    );
-    SessionAnyPool::new(sqlite_pool)
+        connect_opts = connect_opts
+            .database("test")
+            .username("test")
+            .password("password")
+            .host("127.0.0.1")
+            .port(5432);
+
+        SessionAnyPool::new(SessionPgPool::from(
+            PgPoolOptions::new()
+                .max_connections(5)
+                .connect_with(connect_opts)
+                .await
+                .unwrap(),
+        ))
+    } else {
+        let connect_opts = SqliteConnectOptions::from_str("sqlite::memory:").unwrap();
+
+        SessionAnyPool::new(SessionSqlitePool::from(
+            SqlitePoolOptions::new()
+                .max_connections(5)
+                .connect_with(connect_opts)
+                .await
+                .unwrap(),
+        ))
+    }
 }
