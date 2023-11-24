@@ -35,32 +35,25 @@ mysql-rustls = ["sqlx/mysql", "sqlx/tls-rustls"]
 mysql-native = ["sqlx/mysql", "sqlx/tls-native-tls"]
 redis-db = ["redis_pool", "redis"]
 redis-clusterdb = ["redis_pool/cluster", "redis/cluster-async"]
-surrealdb-rocksdb =  ["surrealdb/kv-rocksdb", "surrealdb_tag"]
-surrealdb-tikv =  ["surrealdb/kv-tikv", "surrealdb_tag"]
-surrealdb-fdb-6_1 =  ["surrealdb/kv-fdb-6_1", "surrealdb_tag"]
-surrealdb-fdb-6_2 =  ["surrealdb/kv-fdb-6_2", "surrealdb_tag"]
-surrealdb-fdb-6_3 =  ["surrealdb/kv-fdb-6_3", "surrealdb_tag"]
-surrealdb-fdb-7_0 =  ["surrealdb/kv-fdb-7_0", "surrealdb_tag"]
-surrealdb-fdb-7_1 =  ["surrealdb/kv-fdb-7_1", "surrealdb_tag"]
-surrealdb-mem =  ["surrealdb/kv-mem", "surrealdb_tag"]
+surreal = ["dep:surrealdb"]
 mongo = ["mongodb"]
 rest_mode = []
 advanced = []
 
-#private features.
-surrealdb_tag = []
-
 [dependencies]
-axum-core = {version = "0.3.4"}
+axum-core = { version = "0.3.4" }
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
-chrono = { version = "0.4.31", default-features = false, features = ["clock", "serde"] }
+chrono = { version = "0.4.31", default-features = false, features = [
+    "clock",
+    "serde",
+] }
 tokio = { version = "1.34.0", features = ["full"] }
 async-trait = "0.1.74"
 tracing = "0.1.40"
 thiserror = "1.0.50"
 http-body = "0.4.5"
-uuid = { version = "1.5.0", features = ["serde","v4"] }
+uuid = { version = "1.5.0", features = ["serde", "v4"] }
 http = "0.2.10"
 tower-layer = "0.3.2"
 tower-service = "0.3.2"
@@ -74,20 +67,31 @@ futures = "0.3.29"
 bytes = "1.5.0"
 dashmap = "5.5.3"
 redis_pool = { version = "0.2.1", optional = true }
-redis = { version = "0.23.3", features = ["aio", "tokio-comp"], optional = true }
+redis = { version = "0.23.3", features = [
+    "aio",
+    "tokio-comp",
+], optional = true }
 surrealdb = { version = "1.0.0", optional = true }
-aes-gcm = { version = "0.10.3"}
-base64 = { version = "0.21.5"}
-rand = { version = "0.8.5"}
-fastbloom-rs = {version = "0.5.7", optional = true }
+aes-gcm = { version = "0.10.3" }
+base64 = { version = "0.21.5" }
+rand = { version = "0.8.5" }
+fastbloom-rs = { version = "0.5.7", optional = true }
 mongodb = { version = "2.7.1", optional = true }
 
 [dev-dependencies]
-axum = { version = "0.6.20", features = ["macros"]}
+axum = { version = "0.6.20", features = ["macros"] }
 hyper = "0.14.27"
 tower = "0.4.13"
 log = { version = "0.4.20", default-features = false }
 
 [package.metadata.docs.rs]
-features = ["sqlite-rustls", "mysql-rustls", "redis-db", "surrealdb-rocksdb", "surrealdb-mem", "key-store", "advanced"]
+features = [
+    "sqlite-rustls",
+    "mysql-rustls",
+    "redis-db",
+    "surrealdb-rocksdb",
+    "surrealdb-mem",
+    "key-store",
+    "advanced",
+]
 rustdoc-args = ["--document-private-items"]
