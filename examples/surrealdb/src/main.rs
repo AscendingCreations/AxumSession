@@ -8,7 +8,7 @@ use surrealdb::opt::auth::Root;
 #[tokio::main]
 async fn main() {
     // Create the Surreal connection.
-    let db = connect("ws://localhost:8080").await.unwrap();
+    let db = connect("ws://localhost:8000").await.unwrap();
 
     // sign in as our account.
     db.signin(Root {

@@ -28,9 +28,9 @@ mod mongodb;
 #[cfg(feature = "mongo")]
 pub use self::mongodb::*;
 
-#[cfg(feature = "surrealdb_tag")]
+#[cfg(feature = "surreal")]
 mod surreal;
-#[cfg(feature = "surrealdb_tag")]
+#[cfg(feature = "surreal")]
 pub use self::surreal::*;
 
 mod any_db;

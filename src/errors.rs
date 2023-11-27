@@ -33,10 +33,10 @@ pub enum SessionError {
     UUID(#[from] uuid::Error),
     #[error(transparent)]
     UTF8(#[from] std::string::FromUtf8Error),
-    #[cfg(feature = "surrealdb_tag")]
+    #[cfg(feature = "surreal")]
     #[error(transparent)]
     SurrealDBError(#[from] surrealdb::Error),
-    #[cfg(feature = "surrealdb_tag")]
+    #[cfg(feature = "surreal")]
     #[error(transparent)]
     SurrealDBDatabaseError(#[from] surrealdb::error::Db),
     #[error("unknown Session store error")]
