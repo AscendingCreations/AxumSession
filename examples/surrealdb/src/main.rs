@@ -4,6 +4,7 @@ use axum_session::{
 };
 use surrealdb::engine::any::{connect, Any};
 use surrealdb::opt::auth::Root;
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
@@ -38,10 +39,8 @@ async fn main() {
         .layer(SessionLayer::new(session_store)); // adding the crate plugin ( layer ) to the project
 
     // run it with hyper on localhost:3000
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 async fn root() -> &'static str {

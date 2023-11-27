@@ -2,6 +2,7 @@ use axum::{routing::get, Router};
 use axum_session::{Session, SessionConfig, SessionLayer, SessionSqlitePool, SessionStore};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use std::str::FromStr;
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
@@ -22,10 +23,8 @@ async fn main() {
         .route("/greet", get(greet))
         .layer(SessionLayer::new(session_store));
 
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 async fn greet(session: Session<SessionSqlitePool>) -> String {

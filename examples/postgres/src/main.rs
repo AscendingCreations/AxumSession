@@ -1,6 +1,7 @@
 use axum::{routing::get, Router};
 use axum_session::{SessionConfig, SessionLayer, SessionPgSession, SessionPgSessionStore};
 use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions};
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
@@ -20,10 +21,8 @@ async fn main() {
         .route("/greet", get(greet))
         .layer(SessionLayer::new(session_store));
 
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 async fn greet(session: SessionPgSession) -> String {

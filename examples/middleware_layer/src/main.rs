@@ -1,4 +1,4 @@
-use axum::http::Request;
+use axum::extract::Request;
 use axum::middleware::Next;
 use axum::response::Response;
 use axum::{routing::get, Router};
@@ -9,6 +9,7 @@ use axum_session::{
 use hyper::StatusCode;
 use surrealdb::engine::any::{connect, Any};
 use surrealdb::opt::auth::Root;
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
@@ -44,20 +45,18 @@ async fn main() {
         .layer(SessionLayer::new(session_store)); // adding the crate plugin ( layer ) to the project
 
     // run it with hyper on localhost:3000
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 async fn root() -> &'static str {
     "Hello, World!"
 }
 
-pub async fn auth_middleware<T>(
+pub async fn auth_middleware(
     session: ReadOnlySession<SessionSurrealPool<Any>>,
-    request: Request<T>,
-    next: Next<T>,
+    request: Request,
+    next: Next,
 ) -> Result<Response, StatusCode> {
     let count: usize = session.get("count").unwrap_or(0);
     println!("count: {count}");

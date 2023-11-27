@@ -5,10 +5,11 @@ authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-axum = { version = "0.6.18" }
+axum = { version = "0.7.1" }
 tokio = { version = "1.29.1", features = ["full", "tracing"] }
 async-trait = "0.1.71"
 axum_session = { path = "../../", features = ["surreal", "rest_mode"] }
 surrealdb = { version = "1.0.0", features = ["kv-mem"] }
 tower = "0.4.13"
-hyper = "0.14.27"
+hyper = "1.0.1"
+http-body-util = "0.1.0"

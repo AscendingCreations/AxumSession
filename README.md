@@ -71,13 +71,7 @@ axum_session = { version = "0.8.0", features = [ "postgres-rustls"] }
 
 `redis-clusterdb`:  `redis_pool 0.2.0` session support. Enabled Redis ClusterClient Pool.
 
-`surrealdb-rocksdb`: `surrealdb 1.0.0` support for rocksdb.
-
-`surrealdb-tikv` : `surrealdb 1.0.0` support for tikv.
-
-`surrealdb-fdb-?_?` : `surrealdb 1.0.0` support for fdb versions 6_1, 6_2, 6_3, 7_0, 7_1. Replace ?_? with version.
-
-`surrealdb-mem` : `surrealdb 1.0.0` support for mem.
+`surreal`: `surrealdb 1.0.0` support for surrealdb.
 
 `mongo` : `mongodb 2.6.1` support for mongo.
 

@@ -41,7 +41,7 @@ rest_mode = []
 advanced = []
 
 [dependencies]
-axum-core = { version = "0.3.4" }
+axum-core = { version = "0.4.0" }
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
 chrono = { version = "0.4.31", default-features = false, features = [
@@ -52,12 +52,12 @@ tokio = { version = "1.34.0", features = ["full"] }
 async-trait = "0.1.74"
 tracing = "0.1.40"
 thiserror = "1.0.50"
-http-body = "0.4.5"
-uuid = { version = "1.5.0", features = ["serde", "v4"] }
-http = "0.2.10"
+http-body = "1.0.0"
+uuid = { version = "1.6.1", features = ["serde", "v4"] }
+http = "1.0.0"
 tower-layer = "0.3.2"
 tower-service = "0.3.2"
-sqlx = { version = "0.7.2", default-features = false, features = [
+sqlx = { version = "0.7.3", default-features = false, features = [
     "runtime-tokio",
     "chrono",
     "uuid",
@@ -79,10 +79,11 @@ fastbloom-rs = { version = "0.5.7", optional = true }
 mongodb = { version = "2.7.1", optional = true }
 
 [dev-dependencies]
-axum = { version = "0.6.20", features = ["macros"] }
-hyper = "0.14.27"
+axum = { version = "0.7.1", features = ["macros"] }
+hyper = "1.0.1"
 tower = "0.4.13"
 log = { version = "0.4.20", default-features = false }
+http-body-util = "0.1.0"
 
 [package.metadata.docs.rs]
 features = [

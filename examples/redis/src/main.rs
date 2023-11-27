@@ -1,6 +1,8 @@
 use axum::{extract::State, routing::get, Router};
 use axum_session::{Session, SessionConfig, SessionLayer, SessionRedisPool, SessionStore};
 use redis_pool::{RedisPool, SingleRedisPool};
+use tokio::net::TcpListener;
+
 #[tokio::main]
 async fn main() {
     // please consider using dotenvy to get this
@@ -29,10 +31,8 @@ async fn main() {
         .with_state(pool); // adding the crate plugin ( layer ) to the project
 
     // run it with hyper on localhost:3000
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 async fn root() -> &'static str {
