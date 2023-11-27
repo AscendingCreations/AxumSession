@@ -133,7 +133,13 @@ mod tests {
 
         let response = app.clone().oneshot(request).await.unwrap();
 
-        let bytes = response.into_body().collect().await.unwrap().to_bytes().to_vec();
+        let bytes = response
+            .into_body()
+            .collect()
+            .await
+            .unwrap()
+            .to_bytes()
+            .to_vec();
         let body = String::from_utf8(bytes).unwrap();
         assert_eq!(body, "Success");
     }
