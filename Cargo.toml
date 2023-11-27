@@ -89,8 +89,7 @@ features = [
     "sqlite-rustls",
     "mysql-rustls",
     "redis-db",
-    "surrealdb-rocksdb",
-    "surrealdb-mem",
+    "surreal",
     "key-store",
     "advanced",
 ]
