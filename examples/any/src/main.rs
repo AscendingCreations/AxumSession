@@ -27,8 +27,8 @@ async fn main() {
         .route("/greet", get(greet))
         .layer(SessionLayer::new(session_store));
 
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
-        .serve(app.into_make_service())
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
 }

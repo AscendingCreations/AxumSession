@@ -5,6 +5,7 @@ use axum::{routing::get, Router};
 use axum_session::{
     Key, SessionConfig, SessionLayer, SessionStore, SessionSurrealPool, SessionSurrealSession,
 };
+use http_body_util::BodyExt;
 use surrealdb::engine::any::{connect, Any};
 use surrealdb::opt::auth::Root;
 use tower::{Service, ServiceExt};
@@ -50,7 +51,12 @@ async fn main() {
         .unwrap();
 
     // Get the Response back.
-    let response = app.ready().await.unwrap().call(request).await.unwrap();
+    let response = <axum::Router as tower::ServiceExt<Request<Body>>>::ready(&mut app)
+        .await
+        .unwrap()
+        .call(request)
+        .await
+        .unwrap();
 
     // Get our Session ID from the Response
     let mut sessionid = response
@@ -63,10 +69,10 @@ async fn main() {
 
     for _ in 0..10 {
         // Do some more Requests and get the Responses for counter
-        let response = app
-            .ready()
+        let response = <axum::Router as tower::ServiceExt<Request<Body>>>::ready(&mut app)
             .await
-            .unwrap()
+            .unwrap();
+        let response = response
             .call(
                 Request::builder()
                     .uri("/counter")
@@ -93,7 +99,7 @@ async fn main() {
         println!("Status: {:?}", response.status());
 
         // Get and print our returned Body String.
-        let bytes = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
         let body = String::from_utf8(bytes.to_vec()).unwrap();
         println!("Body: {:?}", body);
     }

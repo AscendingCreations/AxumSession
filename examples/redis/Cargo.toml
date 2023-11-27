@@ -5,9 +5,9 @@ authors = ["Hossam Maher<hos.mercury@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-axum = {version = "0.6.18"}
-tokio = { version = "1.29.1", features = ["full", "tracing"] }
-async-trait = "0.1.71"
+axum = {version = "0.7"}
+tokio = { version = "1", features = ["full", "tracing"] }
+async-trait = "0.1"
 axum_session = { path = "../../", features = [ "redis-db"] }
-redis_pool = "0.2.0"
-redis = { version = "0.23.3" }
+redis_pool = "0.2"
+redis = { version = "0.23" }

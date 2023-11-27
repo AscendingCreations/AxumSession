@@ -5,10 +5,10 @@ authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-axum = {version = "0.6.18"}
-tokio = { version = "1.29.1", features = ["full", "tracing"] }
-async-trait = "0.1.71"
-sqlx = { version = "0.7.2", features = [
+axum = {version = "0.7"}
+tokio = { version = "1.29", features = ["full", "tracing"] }
+async-trait = "0.1"
+sqlx = { version = "0.7", features = [
     "macros",
     "sqlite",
     "_unstable-all-types",

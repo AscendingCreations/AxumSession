@@ -1,7 +1,7 @@
 use crate::{config::SecurityMode, headers::*, DatabasePool, Session, SessionData, SessionStore};
 use axum_core::{
-    body::{self, BoxBody},
-    response::Response,
+    body::{self, Body},
+    response::{Response, IntoResponse},
     BoxError,
 };
 use bytes::Bytes;
@@ -42,7 +42,7 @@ where
     ResBody::Error: Into<BoxError>,
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
-    type Response = Response<BoxBody>;
+    type Response = Response<Body>;
     type Error = Infallible;
     type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
@@ -176,7 +176,7 @@ where
             //req.extensions_mut().insert(store.clone());
             req.extensions_mut().insert(session.clone());
 
-            let mut response = ready_inner.call(req).await?.map(body::boxed);
+            let mut response = ready_inner.call(req).await?.into_response();
 
             let (renew, storable, renew_key, destroy, loaded) =
                 if let Some(session_data) = session.store.inner.get(&session.id.inner()) {

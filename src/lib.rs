@@ -36,6 +36,7 @@ mod tests {
         routing::get,
         Router,
     };
+    use http_body_util::BodyExt;
     use log::LevelFilter;
     use serde::{Deserialize, Serialize};
     use sqlx::{
@@ -132,7 +133,7 @@ mod tests {
 
         let response = app.clone().oneshot(request).await.unwrap();
 
-        let bytes = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
         let body = String::from_utf8(bytes.to_vec()).unwrap();
         assert_eq!(body, "Success");
     }
