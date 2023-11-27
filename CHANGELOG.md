@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+
+## 0.10.0 (27. November, 2023)
 ### Changed
 - (Breaking) Surreal is now a single feature instead of selecting all the seperate parts.
 - (Breaking) Axum to 0.7
