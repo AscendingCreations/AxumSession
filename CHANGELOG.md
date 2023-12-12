@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.10.1 (27. November, 2023)
+### Fixed
+- Mongo inserting multiple copies due to use of insert instead of update with upsert option enabled. (@MohenjoDaro)
+
 ## 0.10.0 (27. November, 2023)
 ### Changed
 - (Breaking) Surreal is now a single feature instead of selecting all the seperate parts.
