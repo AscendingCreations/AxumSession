@@ -103,15 +103,19 @@ impl DatabasePool for SessionMongoPool {
     ) -> Result<(), SessionError> {
         match &self.client.default_database() {
             Some(db) => {
+                let filter = doc! {
+                    "id": id
+                };
+                let update_data = doc! {"$set": {
+                    "id": id.to_string(),
+                    "expires": expires,
+                    "session": session.to_string()
+                }};
+                let update_options = mongodb::options::UpdateOptions::builder()
+                    .upsert(Some(true))
+                    .build();
                 db.collection::<MongoSessionData>(&table_name)
-                    .insert_one(
-                        MongoSessionData {
-                            id: id.to_string(),
-                            expires: expires,
-                            session: session.to_string(),
-                        },
-                        None,
-                    )
+                    .update_one(filter, update_data, update_options)
                     .await?;
             }
             None => {}
