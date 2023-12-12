@@ -115,11 +115,7 @@ impl DatabasePool for SessionMongoPool {
                     .upsert(Some(true))
                     .build();
                 db.collection::<MongoSessionData>(&table_name)
-                    .update_one(
-                        filter,
-                        update_data,
-                        update_options,
-                    )
+                    .update_one(filter, update_data, update_options)
                     .await?;
             }
             None => {}
