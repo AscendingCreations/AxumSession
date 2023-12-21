@@ -67,9 +67,9 @@ axum_session = { version = "0.11.0", features = [ "postgres-rustls"] }
 
 `mysql-native`: `Sqlx 0.7.0` support for the MySQL/MariaDB database server and `native-tls`.
 
-`redis-db`:  `redis_pool 0.2.1` session support. Enables Redis Client Pool
+`redis-db`:  `redis_pool 0.3.0` session support. Enables Redis Client Pool
 
-`redis-clusterdb`:  `redis_pool 0.2.0` session support. Enabled Redis ClusterClient Pool.
+`redis-clusterdb`:  `redis_pool 0.3.0` session support. Enabled Redis ClusterClient Pool.
 
 `surreal`: `surrealdb 1.0.0` support for surrealdb.
 
