@@ -9,5 +9,5 @@ axum = {version = "0.7.1"}
 tokio = { version = "1.29.1", features = ["full", "tracing"] }
 async-trait = "0.1.71"
 axum_session = { path = "../../", features = [ "redis-db"] }
-redis_pool = "0.2.0"
-redis = { version = "0.23.3" }
+redis_pool = "0.3.0"
+redis = { version = "0.24.0" }

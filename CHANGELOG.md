@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.11.0 (12. December, 2023)
+### Changed
+- (Breaking) updated Redis_Pool to 0.3.0 which updated Redis to 0.24.0.
+
+
 ## 0.10.1 (27. November, 2023)
 ### Fixed
 - Mongo inserting multiple copies due to use of insert instead of update with upsert option enabled. (@MohenjoDaro)

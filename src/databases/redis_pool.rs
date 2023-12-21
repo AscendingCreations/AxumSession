@@ -56,7 +56,7 @@ impl DatabasePool for SessionRedisPool {
             .atomic() //makes this a transation.
             .set(id, session)
             .ignore()
-            .expire_at(id, expires as usize)
+            .expire_at(id, expires as i64)
             .ignore()
             .query_async(&mut con)
             .await?;
