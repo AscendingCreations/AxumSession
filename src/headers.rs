@@ -1,16 +1,13 @@
-#[cfg(feature = "rest_mode")]
-use crate::SessionError;
-use crate::{CookiesAdditionJar, DatabasePool, Session, SessionConfig, SessionStore};
-use cookie::Key;
 #[cfg(not(feature = "rest_mode"))]
-use cookie::{Cookie, CookieJar};
+use crate::CookiesAdditionJar;
+use crate::{DatabasePool, Session, SessionConfig, SessionStore};
+#[cfg(not(feature = "rest_mode"))]
+use cookie::{Cookie, CookieJar, Key};
 #[cfg(not(feature = "rest_mode"))]
 use http::header::{COOKIE, SET_COOKIE};
 use http::{self, HeaderMap};
 #[cfg(feature = "rest_mode")]
 use http::{header::HeaderName, HeaderValue};
-#[cfg(feature = "rest_mode")]
-use rand::RngCore;
 #[cfg(feature = "rest_mode")]
 use std::collections::HashMap;
 use std::{
@@ -71,6 +68,7 @@ pub async fn get_headers_and_key<T>(
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
+    use crate::sec::verify_header;
     let key = store.config.key.as_ref();
 
     let name = store.config.session_name.to_string();
@@ -78,7 +76,7 @@ where
         .get(&name)
         .and_then(|c| {
             if let Some(key) = key {
-                decrypt(&name, c, key).ok()
+                verify_header(c, key, "".to_owned()).ok()
             } else {
                 Some(c.to_owned())
             }
@@ -90,7 +88,7 @@ where
         .get(&name)
         .and_then(|c| {
             if let Some(key) = key {
-                decrypt(&name, c, key).ok()
+                verify_header(c, key, "".to_owned()).ok()
             } else {
                 Some(c.to_owned())
             }
@@ -300,7 +298,7 @@ pub(crate) fn set_headers<T>(
     }
     #[cfg(feature = "rest_mode")]
     {
-        use crate::sec::{sign_header, verify_header};
+        use crate::sec::sign_header;
         // Add SessionID
         if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
             let name = NameType::Data.get_name(&session.store.config);

@@ -3172,6 +3172,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "rest_test"
+version = "0.0.1"
+dependencies = [
+ "async-trait",
+ "axum",
+ "axum_session",
+ "http-body-util",
+ "hyper 1.1.0",
+ "surrealdb",
+ "tokio",
+ "tower",
+]
+
+[[package]]
 name = "retain_mut"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"

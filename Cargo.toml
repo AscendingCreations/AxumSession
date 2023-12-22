@@ -8,7 +8,7 @@ members = [
     "examples/redis",
     "examples/surrealdb",
     "examples/middleware_layer",
-    #"examples/rest_test",
+    "examples/rest_test",
 ]
 
 [package]
