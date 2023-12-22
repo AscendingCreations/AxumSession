@@ -1,6 +1,7 @@
-use crate::{DatabasePool, Session, SessionError, SessionStore};
 use async_trait::async_trait;
 use redis_pool::SingleRedisPool;
+
+use crate::{DatabasePool, Session, SessionError, SessionStore};
 
 ///Redis's Session Helper type for the DatabasePool.
 pub type SessionRedisSession = Session<SessionRedisPool>;
@@ -37,9 +38,18 @@ impl DatabasePool for SessionRedisPool {
         Ok(Vec::new())
     }
 
-    async fn count(&self, _table_name: &str) -> Result<i64, SessionError> {
+    async fn count(&self, table_name: &str) -> Result<i64, SessionError> {
         let mut con = self.pool.aquire().await?;
-        let count: i64 = redis::cmd("DBSIZE").query_async(&mut con).await?;
+
+        let count: i64 = if table_name.is_empty() {
+            redis::cmd("DBSIZE").query_async(&mut con).await?
+        } else {
+            // Assuming we have a table name, we need to count all the keys that match the table name.
+            // We can't use DBSIZE because that would count all the keys in the database.
+            let keys =
+                super::redis_tools::scan_keys(&mut con, &format!("{}:*", table_name)).await?;
+            keys.len() as i64
+        };
 
         Ok(count)
     }
@@ -49,48 +59,87 @@ impl DatabasePool for SessionRedisPool {
         id: &str,
         session: &str,
         expires: i64,
-        _table_name: &str,
+        table_name: &str,
     ) -> Result<(), SessionError> {
+        let id = if table_name.is_empty() {
+            id.to_string()
+        } else {
+            format!("{}:{}", table_name, id)
+        };
         let mut con = self.pool.aquire().await?;
         redis::pipe()
             .atomic() //makes this a transation.
-            .set(id, session)
+            .set(&id, session)
             .ignore()
-            .expire_at(id, expires as i64)
+            .expire_at(&id, expires)
             .ignore()
             .query_async(&mut con)
             .await?;
         Ok(())
     }
 
-    async fn load(&self, id: &str, _table_name: &str) -> Result<Option<String>, SessionError> {
+    async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, SessionError> {
         let mut con = self.pool.aquire().await?;
+        let id = if table_name.is_empty() {
+            id.to_string()
+        } else {
+            format!("{}:{}", table_name, id)
+        };
         let result: String = redis::cmd("GET").arg(id).query_async(&mut con).await?;
         Ok(Some(result))
     }
 
-    async fn delete_one_by_id(&self, id: &str, _table_name: &str) -> Result<(), SessionError> {
+    async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError> {
         let mut con = self.pool.aquire().await?;
+        let id = if table_name.is_empty() {
+            id.to_string()
+        } else {
+            format!("{}:{}", table_name, id)
+        };
         redis::cmd("DEL").arg(id).query_async(&mut con).await?;
         Ok(())
     }
 
-    async fn exists(&self, id: &str, _table_name: &str) -> Result<bool, SessionError> {
+    async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
         let mut con = self.pool.aquire().await?;
+        let id = if table_name.is_empty() {
+            id.to_string()
+        } else {
+            format!("{}:{}", table_name, id)
+        };
         let exists: bool = redis::cmd("EXISTS").arg(id).query_async(&mut con).await?;
 
         Ok(exists)
     }
 
-    async fn delete_all(&self, _table_name: &str) -> Result<(), SessionError> {
+    async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
         let mut con = self.pool.aquire().await?;
-        redis::cmd("FLUSHDB").query_async(&mut con).await?;
+        if table_name.is_empty() {
+            redis::cmd("FLUSHDB").query_async(&mut con).await?;
+        } else {
+            // Assuming we have a table name, we need to delete all the keys that match the table name.
+            // We can't use FLUSHDB because that would delete all the keys in the database.
+            let keys =
+                super::redis_tools::scan_keys(&mut con, &format!("{}:*", table_name)).await?;
+
+            for key in keys {
+                redis::cmd("DEL").arg(key).query_async(&mut con).await?;
+            }
+        }
+
         Ok(())
     }
 
-    async fn get_ids(&self, _table_name: &str) -> Result<Vec<String>, SessionError> {
+    async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
         let mut con = self.pool.aquire().await?;
-        let result: Vec<String> = redis::cmd("KEYS").arg("*").query_async(&mut con).await?;
+        let table_name = if table_name.is_empty() {
+            "*".to_string()
+        } else {
+            format!("{}:0", table_name)
+        };
+
+        let result: Vec<String> =
+            super::redis_tools::scan_keys(&mut con, &format!("{}:*", table_name)).await?;
         Ok(result)
     }
 

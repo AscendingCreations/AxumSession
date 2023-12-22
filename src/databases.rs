@@ -23,6 +23,9 @@ mod redis_cluster_pool;
 #[cfg(feature = "redis-clusterdb")]
 pub use self::redis_cluster_pool::*;
 
+#[cfg(any(feature = "redis-db", feature = "redis-clusterdb"))]
+pub(crate) mod redis_tools;
+
 #[cfg(feature = "mongo")]
 mod mongodb;
 #[cfg(feature = "mongo")]
