@@ -1,4 +1,4 @@
-use crate::{config::SecurityMode, headers::*, DatabasePool, Session, SessionData, SessionStore};
+use crate::{headers::*, DatabasePool, Session, SessionData, SessionStore};
 use axum_core::{response::Response, BoxError};
 use bytes::Bytes;
 use chrono::Utc;
@@ -56,15 +56,13 @@ where
             let cookies = get_cookies(req.headers());
 
             #[cfg(not(feature = "rest_mode"))]
-            let (mut session_key, session_uuid, storable) =
-                get_headers_and_key(&store, cookies).await;
+            let (session_uuid, storable) = get_headers_and_key(&store, cookies).await;
 
             #[cfg(feature = "rest_mode")]
             let headers = get_headers(&store, req.headers());
 
             #[cfg(feature = "rest_mode")]
-            let (mut session_key, session_uuid, storable) =
-                get_headers_and_key(&store, headers).await;
+            let (session_uuid, storable) = get_headers_and_key(&store, headers).await;
 
             let (mut session, is_new) = Session::new(store, session_uuid).await;
 
@@ -124,23 +122,13 @@ where
                         .iter()
                         .filter(|r| r.autoremove < current_time)
                         .for_each(|r| filter.remove(r.key().as_bytes()));
-
-                    session
-                        .store
-                        .keys
-                        .iter()
-                        .filter(|r| r.autoremove < current_time)
-                        .for_each(|r| filter.remove(r.key().as_bytes()));
                 }
 
                 session
                     .store
                     .inner
                     .retain(|_k, v| v.autoremove > current_time);
-                session
-                    .store
-                    .keys
-                    .retain(|_k, v| v.autoremove > current_time);
+
                 session.store.timers.write().await.last_expiry_sweep =
                     Utc::now() + session.store.config.purge_update;
             }
@@ -174,17 +162,16 @@ where
 
             let mut response = ready_inner.call(req).await?;
 
-            let (renew, storable, renew_key, destroy, loaded) =
+            let (renew, storable, destroy, loaded) =
                 if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
                     (
                         session_data.renew,
                         session_data.store,
-                        session_data.renew_key,
                         session_data.destroy,
                         true,
                     )
                 } else {
-                    (false, false, false, false, false)
+                    (false, false, false, false)
                 };
 
             if !destroy && (!session.store.config.session_mode.is_manual() || loaded) {
@@ -218,30 +205,6 @@ where
                         session.store.inner.insert(session.id.inner(), session_data);
                     }
                 }
-
-                if renew_key && session.store.config.security_mode == SecurityMode::PerSession {
-                    // Lets remove it from the database first.
-                    if session.store.is_persistent() {
-                        session
-                            .store
-                            .database_remove_session(session_key.id.inner())
-                            .await
-                            .unwrap();
-                    }
-
-                    // Lets remove update and reinsert.
-                    #[cfg(feature = "key-store")]
-                    let old_id = session_key.renew(&session.store).await.unwrap();
-
-                    #[cfg(not(feature = "key-store"))]
-                    let _ = session_key.renew(&session.store).await.unwrap();
-
-                    #[cfg(feature = "key-store")]
-                    if session.store.config.use_bloom_filters {
-                        let mut filter = session.store.filter.write().await;
-                        filter.remove(old_id.as_bytes());
-                    }
-                }
             }
 
             // Add the Session ID so it can link back to a Session if one exists.
@@ -271,14 +234,6 @@ where
 
                 if let Some(sess) = clone_session {
                     session.store.store_session(&sess).await.unwrap();
-
-                    if session.store.config.security_mode == SecurityMode::PerSession {
-                        session
-                            .store
-                            .store_key(&session_key, sess.expires.timestamp())
-                            .await
-                            .unwrap();
-                    }
                 }
             }
 
@@ -289,24 +244,6 @@ where
             if ((session.store.config.session_mode.is_opt_in() && !storable) || destroy)
                 && !session.is_parallel()
             {
-                if session.store.config.security_mode == SecurityMode::PerSession {
-                    #[cfg(feature = "key-store")]
-                    if session.store.config.use_bloom_filters {
-                        let mut filter = session.store.filter.write().await;
-                        filter.remove(session_key.id.inner().as_bytes());
-                    }
-
-                    let _ = session.store.keys.remove(&session_key.id.inner());
-
-                    if session.store.is_persistent() {
-                        session
-                            .store
-                            .database_remove_session(session_key.id.inner())
-                            .await
-                            .unwrap();
-                    }
-                }
-
                 #[cfg(feature = "key-store")]
                 if session.store.config.use_bloom_filters {
                     let mut filter = session.store.filter.write().await;
@@ -331,20 +268,12 @@ where
                 if !session.store.is_persistent() && session.store.config.use_bloom_filters {
                     let mut filter = session.store.filter.write().await;
                     filter.remove(session.id.inner().as_bytes());
-                    filter.remove(session_key.id.inner().as_bytes());
                 }
 
                 session.store.inner.remove(&session.id.inner());
-                session.store.keys.remove(&session_key.id.inner());
             }
 
-            set_headers(
-                &session,
-                &session_key,
-                response.headers_mut(),
-                destroy,
-                storable,
-            );
+            set_headers(&session, response.headers_mut(), destroy, storable);
 
             Ok(response)
         })

@@ -8,7 +8,7 @@ members = [
     "examples/redis",
     "examples/surrealdb",
     "examples/middleware_layer",
-    "examples/rest_test",
+    #"examples/rest_test",
 ]
 
 [package]
@@ -77,6 +77,8 @@ base64 = { version = "0.21.5" }
 rand = { version = "0.8.5" }
 fastbloom-rs = { version = "0.5.7", optional = true }
 mongodb = { version = "2.7.1", optional = true }
+hmac = "0.12.1"
+sha2 = "0.10.8"
 
 [dev-dependencies]
 axum = { version = "0.7.1", features = ["macros"] }

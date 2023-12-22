@@ -43,33 +43,6 @@ impl SessionMode {
     }
 }
 
-/// Mode at which the Session will function As.
-///
-/// # Examples
-/// ```rust
-/// use axum_session::{SessionConfig, SessionMode};
-///
-/// let config = SessionConfig::default().with_mode(SessionMode::Persistent);
-/// ```
-///
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum SecurityMode {
-    /// Will create and store a per-session Encryption key to encrypt the
-    /// SessionID and Store cookies with that will get rotated upon Session renew.
-    /// Config's Key must be set to Some() or the system will Panic.
-    PerSession,
-    /// Uses the config Key to encrypt SessionID in cookies if Key is Some().
-    Simple,
-}
-
-impl SecurityMode {
-    /// Checks if the Mode is set to Simple.
-    ///
-    pub fn is_simple(&self) -> bool {
-        matches!(self, SecurityMode::Simple)
-    }
-}
-
 /// Configuration for how the Session and Cookies are used.
 ///
 /// # Examples
@@ -86,8 +59,6 @@ pub struct SessionConfig {
     pub(crate) store_name: Cow<'static, str>,
     /// Session Cookie or Header name.
     pub(crate) session_name: Cow<'static, str>,
-    /// Session key Cookie or Header name.
-    pub(crate) key_name: Cow<'static, str>,
     /// Session cookie domain.
     pub(crate) cookie_domain: Option<Cow<'static, str>>,
     /// Session cookie http only flag.
@@ -124,8 +95,6 @@ pub struct SessionConfig {
     pub(crate) key: Option<Key>,
     /// Encyption Key used to encypt keys stored in the database for confidentiality.
     pub(crate) database_key: Option<Key>,
-    /// Set how Secure you want SessionID's to be stored as.
-    pub(crate) security_mode: SecurityMode,
     /// How many Elements could we see at one time in the Table?
     /// So if you have 1000 unique visitors a second and each generate a UUID.
     /// That would be 1000 * 60(secs) * 60(mins) * 24(hours) to get 1 days worth of visitors.
@@ -148,7 +117,6 @@ impl std::fmt::Debug for SessionConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SessionConfig")
             .field("store_name", &self.store_name)
-            .field("key_name", &self.key_name)
             .field("cookie_domain", &self.cookie_domain)
             .field("cookie_http_only", &self.cookie_http_only)
             .field("cookie_max_age", &self.cookie_max_age)
@@ -161,7 +129,6 @@ impl std::fmt::Debug for SessionConfig {
             .field("max_lifespan", &self.max_lifespan)
             .field("memory_lifespan", &self.memory_lifespan)
             .field("table_name", &self.table_name)
-            .field("security mode", &self.security_mode)
             .field("filter_expected_elements", &self.filter_expected_elements)
             .field("use_bloom_filters", &self.use_bloom_filters)
             .field("purge_update", &self.purge_update)
@@ -228,21 +195,6 @@ impl SessionConfig {
     #[must_use]
     pub fn with_session_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
         self.session_name = name.into();
-        self
-    }
-
-    /// Set's the session's key Cookie or Header name.
-    ///
-    /// # Examples
-    /// ```rust
-    /// use axum_session::SessionConfig;
-    ///
-    /// let config = SessionConfig::default().with_key_name("my_key_cookie");
-    /// ```
-    ///
-    #[must_use]
-    pub fn with_key_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
-        self.key_name = name.into();
         self
     }
 
@@ -505,21 +457,6 @@ impl SessionConfig {
         self
     }
 
-    /// Set's the session's security mode.
-    ///
-    /// # Examples
-    /// ```rust
-    /// use axum_session::{SecurityMode, SessionConfig};
-    ///
-    /// let config = SessionConfig::default().with_security_mode(SecurityMode::PerSession);
-    /// ```
-    ///
-    #[must_use]
-    pub fn with_security_mode(mut self, mode: SecurityMode) -> Self {
-        self.security_mode = mode;
-        self
-    }
-
     /// Set's the session's filters expected elements.
     /// Please Set this by a daily value.
     /// Example: 1000 * 60(secs) * 60(mins) * 24(hours) to get 1 days worth of visitors.
@@ -578,19 +515,6 @@ impl SessionConfig {
     ///
     pub fn get_session_name(&self) -> String {
         self.session_name.to_string()
-    }
-
-    /// Get's the session's Key Cookie/Header name
-    ///
-    /// # Examples
-    /// ```rust
-    /// use axum_session::SessionConfig;
-    ///
-    /// let name = SessionConfig::default().get_key_name();
-    /// ```
-    ///
-    pub fn get_key_name(&self) -> String {
-        self.key_name.to_string()
     }
 
     /// Get's the session's store booleans Cookie/Header name
@@ -668,10 +592,7 @@ impl Default for SessionConfig {
             key: None,
             // Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.
             database_key: None,
-            // Default cookie name for the Key Id.
-            key_name: "session_key".into(),
             // Simple is the Default mode for compatibilty with older versions of the crate.
-            security_mode: SecurityMode::Simple,
             filter_expected_elements: 100_000,
             // The probability of how many allowable false positives you want to have based on the expected elements.
             // 0.01 is a good starting point.

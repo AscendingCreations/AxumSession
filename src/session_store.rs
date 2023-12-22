@@ -1,6 +1,5 @@
 use crate::{
-    DatabasePool, Session, SessionConfig, SessionData, SessionError, SessionID, SessionKey,
-    SessionTimers,
+    sec::encrypt, DatabasePool, Session, SessionConfig, SessionData, SessionError, SessionTimers,
 };
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
@@ -39,8 +38,6 @@ where
     pub client: Option<T>,
     /// locked Hashmap containing UserID and their session data.
     pub(crate) inner: Arc<DashMap<String, SessionData>>,
-    /// locked Hashmap containing KeyID and their Key data.
-    pub(crate) keys: Arc<DashMap<String, SessionKey>>,
     /// Session Configuration.
     pub config: SessionConfig,
     /// Session Timers used for Clearing Memory and Database.
@@ -97,7 +94,6 @@ where
         Ok(Self {
             client,
             inner: Default::default(),
-            keys: Default::default(),
             config,
             timers: Arc::new(RwLock::new(SessionTimers {
                 // the first expiry sweep is scheduled one lifetime from start-up
@@ -236,57 +232,25 @@ where
             let result: Option<String> =
                 client.load(&cookie_value, &self.config.table_name).await?;
 
+            //TODO add SessionKey::decrypt(uuid, &value, self.config.database_key.clone().unwrap(), self.config.memory_lifespan,)
+            //TODO To allow using it to encrypt Session data into the database.
             if let Ok(uuid) = Uuid::parse_str(&cookie_value) {
                 if let Some(mut session) = result
-                    .map(|session| serde_json::from_str::<SessionData>(&session))
+                    .map(|session| {
+                        if let Some(key) = self.config.database_key.as_ref() {
+                            serde_json::from_str::<SessionData>(
+                                &encrypt::decrypt(&uuid.to_string(), &session, key)
+                                    .unwrap_or_default(),
+                            )
+                        } else {
+                            serde_json::from_str::<SessionData>(&session)
+                        }
+                    })
                     .transpose()?
                 {
                     session.id = uuid;
                     return Ok(Some(session));
                 }
-            }
-        }
-
-        Ok(None)
-    }
-
-    /// private internal function that loads an encryption key for the session's cookie from the database using a UUID string.
-    ///
-    /// If client is None it will return Ok(None).
-    ///
-    /// # Errors
-    /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
-    ///
-    /// # Examples
-    /// ```rust ignore
-    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
-    /// use uuid::Uuid;
-    ///
-    /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config).await.unwrap();
-    /// let token = Uuid::new_v4();
-    /// let key = Key::generate();
-    /// async {
-    ///     let session_key = session_store.load_key(token.to_string(), key).await.unwrap();
-    /// };
-    /// ```
-    ///
-    pub(crate) async fn load_key(
-        &self,
-        cookie_value: String,
-    ) -> Result<Option<SessionKey>, SessionError> {
-        if let Some(client) = &self.client {
-            let result: Option<String> =
-                client.load(&cookie_value, &self.config.table_name).await?;
-
-            let uuid = SessionID::new(Uuid::parse_str(cookie_value.as_str())?);
-            if let Some(value) = result {
-                return Ok(Some(SessionKey::decrypt(
-                    uuid,
-                    &value,
-                    self.config.database_key.clone().unwrap(),
-                    self.config.memory_lifespan,
-                )?));
             }
         }
 
@@ -318,54 +282,17 @@ where
     ///
     pub(crate) async fn store_session(&self, session: &SessionData) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
+            //TODO add let value = key.encrypt(self.config.database_key.clone().unwrap()) to encrypt session data.
+            let uuid = session.id.to_string();
             client
                 .store(
-                    &session.id.to_string(),
-                    &serde_json::to_string(session)?,
+                    &uuid,
+                    &if let Some(key) = self.config.database_key.as_ref() {
+                        encrypt::encrypt(&uuid, &serde_json::to_string(session)?, &key)
+                    } else {
+                        serde_json::to_string(session)?
+                    },
                     session.expires.timestamp(),
-                    &self.config.table_name,
-                )
-                .await?;
-        }
-
-        Ok(())
-    }
-
-    /// private internal function that stores a keys data to the database as a session.
-    ///
-    /// If client is None it will return Ok(()).
-    ///
-    /// # Errors
-    /// - ['SessionError::Sqlx'] is returned if database connection has failed or user does not have permissions.
-    ///
-    /// # Examples
-    /// ```rust ignore
-    /// use axum_session::{SessionNullPool, SessionConfig, SessionStore, SessionKey};
-    /// use uuid::Uuid;
-    ///
-    /// let config = SessionConfig::default();
-    /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
-    /// let token = Uuid::new_v4();
-    /// let key = Key::generate();
-    /// let session_key = SessionKey::new(token);
-    ///
-    /// async {
-    ///     let _ = session_store.store_key(&session_key, key).await.unwrap();
-    /// };
-    /// ```
-    ///
-    pub(crate) async fn store_key(
-        &self,
-        key: &SessionKey,
-        expires: i64,
-    ) -> Result<(), SessionError> {
-        if let Some(client) = &self.client {
-            let value = key.encrypt(self.config.database_key.clone().unwrap());
-            client
-                .store(
-                    &key.id.to_string(),
-                    &value,
-                    expires,
                     &self.config.table_name,
                 )
                 .await?;
@@ -433,7 +360,6 @@ where
         }
 
         self.inner.clear();
-        self.keys.clear();
     }
 
     /// Attempts to load check and clear Data.
@@ -453,15 +379,6 @@ where
     pub(crate) fn renew(&self, id: String) {
         if let Some(mut instance) = self.inner.get_mut(&id) {
             instance.renew();
-        } else {
-            tracing::warn!("Session data unexpectedly missing");
-        }
-    }
-
-    #[inline]
-    pub(crate) fn renew_key(&self, id: String) {
-        if let Some(mut instance) = self.inner.get_mut(&id) {
-            instance.renew_key();
         } else {
             tracing::warn!("Session data unexpectedly missing");
         }

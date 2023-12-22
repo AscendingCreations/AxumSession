@@ -84,7 +84,6 @@ where
 
             if (!store.config.use_bloom_filters || store.auto_handles_expiry())
                 && !store.inner.contains_key(&token.to_string())
-                && !store.keys.contains_key(&token.to_string())
             {
                 //This fixes an already used but in database issue.
                 if let Some(client) = &store.client {
@@ -115,9 +114,7 @@ where
         loop {
             let token = Uuid::new_v4();
 
-            if !store.inner.contains_key(&token.to_string())
-                && !store.keys.contains_key(&token.to_string())
-            {
+            if !store.inner.contains_key(&token.to_string()) {
                 //This fixes an already used but in database issue.
                 if let Some(client) = &store.client {
                     // Unwrap should be safe to use as we would want it to crash if there was a major database error.
@@ -199,27 +196,6 @@ where
     #[inline]
     pub fn update(&self) {
         self.store.update(self.id.inner());
-    }
-
-    /// Sets the Session to renew its Session Key ID and Encryption Key.
-    /// This Deletes Session key data from the database
-    /// associated with the old Key UUID. This helps to enhance
-    /// Security when logging into Secure area's across a website much further than
-    /// renew() would. Will only work if SecurityMode::PerSession is Set.
-    /// The new key data will be pushed to the database
-    /// with the new key UUID.
-    ///
-    /// It is recommended to use both renew() and renew_key together to better
-    /// cycle the UUID's.
-    ///
-    /// # Examples
-    /// ```rust ignore
-    /// session.renew_key();
-    /// ```
-    ///
-    #[inline]
-    pub fn renew_key(&self) {
-        self.store.renew_key(self.id.inner());
     }
 
     /// Sets the Current Session to be Destroyed.

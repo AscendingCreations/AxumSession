@@ -38,8 +38,6 @@ pub struct SessionData {
     #[serde(skip)]
     pub(crate) update: bool,
     #[serde(skip)]
-    pub(crate) renew_key: bool,
-    #[serde(skip)]
     pub(crate) requests: usize,
 }
 
@@ -64,7 +62,6 @@ impl SessionData {
             expires: Utc::now() + config.lifespan,
             destroy: false,
             renew: false,
-            renew_key: false,
             autoremove: Utc::now() + config.memory_lifespan,
             longterm: false,
             store: storable,
@@ -134,28 +131,6 @@ impl SessionData {
     #[inline]
     pub fn renew(&mut self) {
         self.renew = true;
-        self.update = true;
-    }
-
-    /// Sets the Session to renew its Session Key ID and Encryption Key.
-    /// This Deletes Session key data from the database
-    /// associated with the old Key UUID. This helps to enhance
-    /// Security when logging into Secure area's across a website much further than
-    /// renew() would. Will only work if SecurityMode::PerSession is Set.
-    /// The new key data will be pushed to the database
-    /// with the new key UUID.
-    ///
-    /// It is recommended to use both renew() and renew_key together to better
-    /// cycle the UUID's.
-    ///
-    /// # Examples
-    /// ```rust ignore
-    /// session.renew_key();
-    /// ```
-    ///
-    #[inline]
-    pub fn renew_key(&mut self) {
-        self.renew_key = true;
         self.update = true;
     }
 
