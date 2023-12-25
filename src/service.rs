@@ -89,7 +89,7 @@ where
                         SessionData::new(session.id.0, storable, &session.store.config)
                     });
 
-                sess.autoremove = Utc::now() + session.store.config.memory_lifespan;
+                sess.autoremove = Utc::now() + session.store.config.memory_config.memory_lifespan;
                 sess.store = storable;
                 sess.update = true;
                 sess.requests = 1;
@@ -107,7 +107,9 @@ where
             // throttle by memory lifespan - e.g. sweep every hour
             let current_time = Utc::now();
 
-            if last_sweep <= current_time && !session.store.config.memory_lifespan.is_zero() {
+            if last_sweep <= current_time
+                && !session.store.config.memory_config.memory_lifespan.is_zero()
+            {
                 // Only unload these from filter if the Client is None as this means no database.
                 // Otherwise only unload from the filter if removed from the Database.
                 #[cfg(feature = "key-store")]
@@ -130,7 +132,7 @@ where
                     .retain(|_k, v| v.autoremove > current_time);
 
                 session.store.timers.write().await.last_expiry_sweep =
-                    Utc::now() + session.store.config.purge_update;
+                    Utc::now() + session.store.config.memory_config.purge_update;
             }
 
             // Throttle by database lifespan - e.g. sweep every 6 hours
@@ -153,7 +155,7 @@ where
                     .write()
                     .await
                     .last_database_expiry_sweep =
-                    Utc::now() + session.store.config.purge_database_update;
+                    Utc::now() + session.store.config.database_config.purge_database_update;
             }
 
             // Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage
@@ -190,7 +192,7 @@ where
 
                     //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
                     #[cfg(feature = "key-store")]
-                    if session.store.config.use_bloom_filters {
+                    if session.store.config.memory_config.use_bloom_filters {
                         let mut filter = session.store.filter.write().await;
                         filter.remove(session.id.inner().as_bytes());
                     }
@@ -215,7 +217,10 @@ where
                 let clone_session =
                     if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner()) {
                         // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
-                        if session.store.config.always_save || sess.update || !sess.validate() {
+                        if session.store.config.database_config.always_save
+                            || sess.update
+                            || !sess.validate()
+                        {
                             if sess.longterm {
                                 sess.expires = Utc::now() + session.store.config.max_lifespan;
                             } else {
@@ -245,7 +250,7 @@ where
                 && !session.is_parallel()
             {
                 #[cfg(feature = "key-store")]
-                if session.store.config.use_bloom_filters {
+                if session.store.config.memory_config.use_bloom_filters {
                     let mut filter = session.store.filter.write().await;
                     filter.remove(session.id.inner().as_bytes());
                 }
@@ -263,9 +268,13 @@ where
 
             // We will Deleted the data in memory as it should be stored in the database instead.
             // if user is using this without a database then it will only work as a per request data store.
-            if session.store.config.memory_lifespan.is_zero() && !session.is_parallel() {
+            if session.store.config.memory_config.memory_lifespan.is_zero()
+                && !session.is_parallel()
+            {
                 #[cfg(feature = "key-store")]
-                if !session.store.is_persistent() && session.store.config.use_bloom_filters {
+                if !session.store.is_persistent()
+                    && session.store.config.memory_config.use_bloom_filters
+                {
                     let mut filter = session.store.filter.write().await;
                     filter.remove(session.id.inner().as_bytes());
                 }

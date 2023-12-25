@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+### Changed
+- (Breaking) split config into groups to help make it more understandable on the Docs side.
+- (Breaking) Removed encryption of cookies and headers and replaced with signing.
+- (Breaking) Database_key is now used to encrypt the Session Data when set.
+- (Breaking) Removed Cyclable encryption key since we are signing instead. 
 
 ## 0.11.0 (21. December, 2023)
 ### Changed
 - (Breaking) updated Redis_Pool to 0.3.0 which updated Redis to 0.24.0.
-
 
 ## 0.10.1 (27. November, 2023)
 ### Fixed

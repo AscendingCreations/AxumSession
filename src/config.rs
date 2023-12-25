@@ -43,17 +43,8 @@ impl SessionMode {
     }
 }
 
-/// Configuration for how the Session and Cookies are used.
-///
-/// # Examples
-/// ```rust
-/// use axum_session::SessionConfig;
-///
-/// let config = SessionConfig::default();
-/// ```
-///
 #[derive(Clone)]
-pub struct SessionConfig {
+pub struct CookieAndHeaderConfig {
     /// The Cookie or Header name that contains a boolean for session saving.
     /// only used when session_mode is set to SessionMode::OptIn or Manual.
     pub(crate) store_name: Cow<'static, str>,
@@ -72,29 +63,61 @@ pub struct SessionConfig {
     pub(crate) cookie_same_site: SameSite,
     /// Session cookie secure flag.
     pub(crate) cookie_secure: bool,
-    /// Disables the need to avoid session saving.
-    pub(crate) session_mode: SessionMode,
-    /// Sessions the minimal lifespan a session can live in the database before expiring.
-    pub(crate) lifespan: Duration,
-    /// Sessions the maximum lifespan a session can live in the database before expiring.
-    /// This is generally used when a Session is set to be Long Term.
-    pub(crate) max_lifespan: Duration,
-    /// This value represents the duration for how often session's data gets purged from memory per request.
-    pub(crate) purge_update: Duration,
+    /// Encyption Key used to sign cookies and header for integrity, and authenticity.
+    pub(crate) key: Option<Key>,
+    /// This is used to append __Host- to the front of all Cookie names to prevent sub domain usage.
+    /// This will not append to Headers only Cookies. It is enabled by default.
+    pub(crate) prefix_with_host: bool,
+}
+
+impl std::fmt::Debug for CookieAndHeaderConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CookieAndHeaderConfig")
+            .field("store_name", &self.store_name)
+            .field("cookie_domain", &self.cookie_domain)
+            .field("cookie_http_only", &self.cookie_http_only)
+            .field("cookie_max_age", &self.cookie_max_age)
+            .field("session_name", &self.session_name)
+            .field("cookie_path", &self.cookie_path)
+            .field("cookie_same_site", &self.cookie_same_site)
+            .field("cookie_secure", &self.cookie_secure)
+            .field("prefix_with_host", &self.prefix_with_host)
+            .field("key", &"key hidden")
+            .finish()
+    }
+}
+
+#[derive(Clone)]
+pub struct DatabaseConfig {
+    /// Encyption Key used to encypt Session data stored in the database for confidentiality.
+    pub(crate) database_key: Option<Key>,
+    /// Session Database table name default is sessions.
+    pub(crate) table_name: Cow<'static, str>,
     /// This value represents the duration for how often session's data gets purged from the database per request.
     pub(crate) purge_database_update: Duration,
     /// Ignore's the update checks and will always save the session to the database if set to true.
     pub(crate) always_save: bool,
+}
+
+impl std::fmt::Debug for DatabaseConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DatabaseConfig")
+            .field("table_name", &self.table_name)
+            .field("purge_database_update", &self.purge_database_update)
+            .field("always_save", &self.always_save)
+            .field("database_key", &"key hidden")
+            .finish()
+    }
+}
+
+#[derive(Clone)]
+pub struct MemoryConfig {
+    /// This value represents the duration for how often session's data gets purged from memory per request.
+    pub(crate) purge_update: Duration,
     /// Session Memory lifespan, deturmines when to unload it from memory
     /// this works fine since the data can stay in the database till its needed
     /// if not yet expired.
     pub(crate) memory_lifespan: Duration,
-    /// Session Database table name default is async_sessions
-    pub(crate) table_name: Cow<'static, str>,
-    /// Encyption Key used to encypt cookies for confidentiality, integrity, and authenticity.
-    pub(crate) key: Option<Key>,
-    /// Encyption Key used to encypt keys stored in the database for confidentiality.
-    pub(crate) database_key: Option<Key>,
     /// How many Elements could we see at one time in the Table?
     /// So if you have 1000 unique visitors a second and each generate a UUID.
     /// That would be 1000 * 60(secs) * 60(mins) * 24(hours) to get 1 days worth of visitors.
@@ -106,41 +129,63 @@ pub struct SessionConfig {
     /// the false positives it can give you can disable it by setting it to false. This will reduce memory usage.
     /// By default this is enabled unless the specific database cant function with it then disabled.
     pub(crate) use_bloom_filters: bool,
+}
+
+impl std::fmt::Debug for MemoryConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MemoryConfig")
+            .field("memory_lifespan", &self.memory_lifespan)
+            .field("filter_expected_elements", &self.filter_expected_elements)
+            .field("use_bloom_filters", &self.use_bloom_filters)
+            .field("purge_update", &self.purge_update)
+            .field(
+                "filter_false_positive_probability",
+                &self.filter_false_positive_probability,
+            )
+            .finish()
+    }
+}
+
+/// Configuration for how the Session and Cookies are used.
+///
+/// # Examples
+/// ```rust
+/// use axum_session::SessionConfig;
+///
+/// let config = SessionConfig::default();
+/// ```
+///
+#[derive(Clone)]
+pub struct SessionConfig {
+    /// Disables the need to avoid session saving.
+    pub(crate) session_mode: SessionMode,
+    /// Minimal lifespan of database store and cookie before expiring.
+    /// This is set to the Cookie before sending and to the database before updating/inserting.
+    pub(crate) lifespan: Duration,
+    /// Maximum lifespan of database store and cookie before expiring.
+    /// This is set to the Cookie before sending and to the database before updating/inserting.
+    /// Only Set when Long Term is true.
+    pub(crate) max_lifespan: Duration,
     /// This is to be used when your handling multiple Parallel Sessions to prevent the next one from unloaded data.
     pub(crate) clear_check_on_load: bool,
-    /// This is used to append __Host- to the front of all Cookie names to prevent sub domain usage.
-    /// This will not append to Headers only Cookies. It is enabled by default.
-    pub(crate) prefix_with_host: bool,
+    /// where All Database Storage options exist.
+    pub(crate) database_config: DatabaseConfig,
+    /// where All In Memory Storage options exist.
+    pub(crate) memory_config: MemoryConfig,
+    /// where All the cookie and header Options Exist.
+    pub(crate) cookie_and_header_config: CookieAndHeaderConfig,
 }
 
 impl std::fmt::Debug for SessionConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SessionConfig")
-            .field("store_name", &self.store_name)
-            .field("cookie_domain", &self.cookie_domain)
-            .field("cookie_http_only", &self.cookie_http_only)
-            .field("cookie_max_age", &self.cookie_max_age)
-            .field("session_name", &self.session_name)
-            .field("cookie_path", &self.cookie_path)
-            .field("cookie_same_site", &self.cookie_same_site)
-            .field("cookie_secure", &self.cookie_secure)
+            .field("database_config", &self.database_config)
+            .field("memory_config", &self.memory_config)
+            .field("cookie_and_header_config", &self.cookie_and_header_config)
             .field("session_mode", &self.session_mode)
             .field("lifespan", &self.lifespan)
             .field("max_lifespan", &self.max_lifespan)
-            .field("memory_lifespan", &self.memory_lifespan)
-            .field("table_name", &self.table_name)
-            .field("filter_expected_elements", &self.filter_expected_elements)
-            .field("use_bloom_filters", &self.use_bloom_filters)
-            .field("purge_update", &self.purge_update)
-            .field("purge_database_update", &self.use_bloom_filters)
             .field("clear_check_on_load", &self.clear_check_on_load)
-            .field("prefix_with_host", &self.prefix_with_host)
-            .field(
-                "filter_false_positive_probability",
-                &self.filter_false_positive_probability,
-            )
-            .field("key", &"key hidden")
-            .field("database_key", &"key hidden")
             .finish()
     }
 }
@@ -164,7 +209,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_store_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
-        self.store_name = name.into();
+        self.cookie_and_header_config.store_name = name.into();
         self
     }
 
@@ -179,7 +224,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_cookie_domain(mut self, name: impl Into<Cow<'static, str>>) -> Self {
-        self.cookie_domain = Some(name.into());
+        self.cookie_and_header_config.cookie_domain = Some(name.into());
         self
     }
 
@@ -194,7 +239,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_session_name(mut self, name: impl Into<Cow<'static, str>>) -> Self {
-        self.session_name = name.into();
+        self.cookie_and_header_config.session_name = name.into();
         self
     }
 
@@ -212,7 +257,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_cookie_path(mut self, path: impl Into<Cow<'static, str>>) -> Self {
-        self.cookie_path = path.into();
+        self.cookie_and_header_config.cookie_path = path.into();
         self
     }
 
@@ -228,7 +273,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_cookie_same_site(mut self, same_site: SameSite) -> Self {
-        self.cookie_same_site = same_site;
+        self.cookie_and_header_config.cookie_same_site = same_site;
         self
     }
 
@@ -259,7 +304,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_http_only(mut self, is_set: bool) -> Self {
-        self.cookie_http_only = is_set;
+        self.cookie_and_header_config.cookie_http_only = is_set;
         self
     }
 
@@ -295,7 +340,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_max_age(mut self, time: Option<Duration>) -> Self {
-        self.cookie_max_age = time;
+        self.cookie_and_header_config.cookie_max_age = time;
         self
     }
 
@@ -332,7 +377,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_memory_lifetime(mut self, time: Duration) -> Self {
-        self.memory_lifespan = time;
+        self.memory_config.memory_lifespan = time;
         self
     }
 
@@ -348,7 +393,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_purge_update(mut self, duration: Duration) -> Self {
-        self.purge_update = duration;
+        self.memory_config.purge_update = duration;
         self
     }
 
@@ -365,7 +410,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_purge_database_update(mut self, duration: Duration) -> Self {
-        self.purge_database_update = duration;
+        self.database_config.purge_database_update = duration;
         self
     }
 
@@ -383,7 +428,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_always_save(mut self, always_save: bool) -> Self {
-        self.always_save = always_save;
+        self.database_config.always_save = always_save;
         self
     }
 
@@ -398,7 +443,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_secure(mut self, is_set: bool) -> Self {
-        self.cookie_secure = is_set;
+        self.cookie_and_header_config.cookie_secure = is_set;
         self
     }
 
@@ -413,7 +458,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_table_name(mut self, table_name: impl Into<Cow<'static, str>>) -> Self {
-        self.table_name = table_name.into();
+        self.database_config.table_name = table_name.into();
         self
     }
 
@@ -436,7 +481,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_key(mut self, key: Key) -> Self {
-        self.key = Some(key);
+        self.cookie_and_header_config.key = Some(key);
         self
     }
 
@@ -453,7 +498,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_database_key(mut self, key: Key) -> Self {
-        self.database_key = Some(key);
+        self.database_config.database_key = Some(key);
         self
     }
 
@@ -470,7 +515,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_filter_expected_elements(mut self, elements: u64) -> Self {
-        self.filter_expected_elements = elements;
+        self.memory_config.filter_expected_elements = elements;
         self
     }
 
@@ -485,7 +530,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_filter_false_positive_probability(mut self, probability: f64) -> Self {
-        self.filter_false_positive_probability = probability;
+        self.memory_config.filter_false_positive_probability = probability;
         self
     }
 
@@ -500,7 +545,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_bloom_filter(mut self, enable: bool) -> Self {
-        self.use_bloom_filters = enable;
+        self.memory_config.use_bloom_filters = enable;
         self
     }
 
@@ -514,7 +559,7 @@ impl SessionConfig {
     /// ```
     ///
     pub fn get_session_name(&self) -> String {
-        self.session_name.to_string()
+        self.cookie_and_header_config.session_name.to_string()
     }
 
     /// Get's the session's store booleans Cookie/Header name
@@ -527,7 +572,7 @@ impl SessionConfig {
     /// ```
     ///
     pub fn get_store_name(&self) -> String {
-        self.store_name.to_string()
+        self.cookie_and_header_config.store_name.to_string()
     }
 
     /// Set's the session's loading to either true: unload data if checks fail or false: bypass.
@@ -559,7 +604,7 @@ impl SessionConfig {
     ///
     #[must_use]
     pub fn with_prefix_with_host(mut self, enable: bool) -> Self {
-        self.prefix_with_host = enable;
+        self.cookie_and_header_config.prefix_with_host = enable;
         self
     }
 }
@@ -569,6 +614,52 @@ impl Default for SessionConfig {
         Self {
             // Set to a 6 hour default in Database Session stores unloading.
             lifespan: Duration::hours(6),
+            cookie_and_header_config: CookieAndHeaderConfig::default(),
+            database_config: DatabaseConfig::default(),
+            memory_config: MemoryConfig::default(),
+            // Unload long term session after 60 days if it has not been accessed.
+            max_lifespan: Duration::days(60),
+            session_mode: SessionMode::Persistent,
+            clear_check_on_load: true,
+        }
+    }
+}
+
+impl Default for MemoryConfig {
+    fn default() -> Self {
+        Self {
+            // Unload memory after 60 minutes if it has not been accessed.
+            memory_lifespan: Duration::minutes(60),
+            // Default to purge old sessions every 5 hours.
+            purge_update: Duration::hours(1),
+            // Simple is the Default mode for compatibilty with older versions of the crate.
+            filter_expected_elements: 100_000,
+            // The probability of how many allowable false positives you want to have based on the expected elements.
+            // 0.01 is a good starting point.
+            filter_false_positive_probability: 0.01,
+            // Always set to on.
+            use_bloom_filters: true,
+        }
+    }
+}
+
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self {
+            // Set to a 6 hour default in Database Session stores unloading.
+            table_name: "sessions".into(),
+            // Default to purge old sessions in the database every 5 hours per request.
+            purge_database_update: Duration::hours(5),
+            always_save: false,
+            // Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.
+            database_key: None,
+        }
+    }
+}
+
+impl Default for CookieAndHeaderConfig {
+    fn default() -> Self {
+        Self {
             session_name: "session".into(),
             cookie_path: "/".into(),
             cookie_max_age: Some(Duration::days(100)),
@@ -577,29 +668,8 @@ impl Default for SessionConfig {
             cookie_domain: None,
             cookie_same_site: SameSite::Lax,
             store_name: "store".into(),
-            table_name: "sessions".into(),
-            // Unload memory after 60 minutes if it has not been accessed.
-            memory_lifespan: Duration::minutes(60),
-            // Unload long term session after 60 days if it has not been accessed.
-            max_lifespan: Duration::days(60),
-            // Default to purge old sessions every 5 hours.
-            purge_update: Duration::hours(1),
-            // Default to purge old sessions in the database every 5 hours per request.
-            purge_database_update: Duration::hours(5),
-            always_save: false,
-            session_mode: SessionMode::Persistent,
             // Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
             key: None,
-            // Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.
-            database_key: None,
-            // Simple is the Default mode for compatibilty with older versions of the crate.
-            filter_expected_elements: 100_000,
-            // The probability of how many allowable false positives you want to have based on the expected elements.
-            // 0.01 is a good starting point.
-            filter_false_positive_probability: 0.01,
-            // Always set to on.
-            use_bloom_filters: true,
-            clear_check_on_load: true,
             prefix_with_host: false,
         }
     }

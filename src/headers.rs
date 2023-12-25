@@ -25,17 +25,21 @@ impl NameType {
     #[inline]
     pub(crate) fn get_name(&self, config: &SessionConfig) -> String {
         let name = match self {
-            NameType::Data => config.session_name.to_string(),
-            NameType::Store => config.store_name.to_string(),
+            NameType::Data => config.cookie_and_header_config.session_name.to_string(),
+            NameType::Store => config.cookie_and_header_config.store_name.to_string(),
         };
 
-        if config.prefix_with_host {
+        #[cfg(not(feature = "rest_mode"))]
+        if config.cookie_and_header_config.prefix_with_host {
             let mut prefixed = "__Host-".to_owned();
             prefixed.push_str(&name);
             prefixed
         } else {
             name
         }
+
+        #[cfg(feature = "rest_mode")]
+        name
     }
 }
 
@@ -50,11 +54,21 @@ where
     let key = store.config.key.as_ref();
 
     let value = cookies
-        .get_cookie(&store.config.session_name, key, "".to_owned(), false)
+        .get_cookie(
+            &store.config.cookie_and_header_config.session_name,
+            key,
+            "".to_owned(),
+            false,
+        )
         .and_then(|c| Uuid::parse_str(c.value()).ok());
 
     let storable = cookies
-        .get_cookie(&store.config.store_name, key, "".to_owned(), true)
+        .get_cookie(
+            &store.config.cookie_and_header_config.store_name,
+            key,
+            "".to_owned(),
+            true,
+        )
         .map_or(false, |c| c.value().parse().unwrap_or(false));
 
     (value, storable)
@@ -69,9 +83,13 @@ where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     use crate::sec::verify_header;
-    let key = store.config.key.as_ref();
+    let key = store.config.cookie_and_header_config.key.as_ref();
 
-    let name = store.config.session_name.to_string();
+    let name = store
+        .config
+        .cookie_and_header_config
+        .session_name
+        .to_string();
     let value = headers
         .get(&name)
         .and_then(|c| {
@@ -83,7 +101,7 @@ where
         })
         .and_then(|c| Uuid::parse_str(&c).ok());
 
-    let name = store.config.store_name.to_string();
+    let name = store.config.cookie_and_header_config.store_name.to_string();
     let storable = headers
         .get(&name)
         .and_then(|c| {
@@ -155,16 +173,16 @@ impl CookiesExt for CookieJar {
 #[cfg(not(feature = "rest_mode"))]
 fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: NameType) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build((cookie_type.get_name(config), value))
-        .path(config.cookie_path.clone())
-        .secure(config.cookie_secure)
-        .http_only(config.cookie_http_only)
-        .same_site(config.cookie_same_site);
+        .path(config.cookie_and_header_config.cookie_path.clone())
+        .secure(config.cookie_and_header_config.cookie_secure)
+        .http_only(config.cookie_and_header_config.cookie_http_only)
+        .same_site(config.cookie_and_header_config.cookie_same_site);
 
-    if let Some(domain) = &config.cookie_domain {
+    if let Some(domain) = &config.cookie_and_header_config.cookie_domain {
         cookie_builder = cookie_builder.domain(domain.clone());
     }
 
-    if let Some(max_age) = config.cookie_max_age {
+    if let Some(max_age) = config.cookie_and_header_config.cookie_max_age {
         let time_duration = max_age.to_std().expect("Max Age out of bounds");
         cookie_builder =
             cookie_builder.expires(Some((std::time::SystemTime::now() + time_duration).into()));
@@ -176,15 +194,15 @@ fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: NameTyp
 #[cfg(not(feature = "rest_mode"))]
 fn remove_cookie<'a>(config: &SessionConfig, cookie_type: NameType) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build((cookie_type.get_name(config), ""))
-        .path(config.cookie_path.clone())
-        .http_only(config.cookie_http_only)
+        .path(config.cookie_and_header_config.cookie_path.clone())
+        .http_only(config.cookie_and_header_config.cookie_http_only)
         .same_site(cookie::SameSite::None);
 
-    if let Some(domain) = &config.cookie_domain {
+    if let Some(domain) = &config.cookie_and_header_config.cookie_domain {
         cookie_builder = cookie_builder.domain(domain.clone());
     }
 
-    if let Some(domain) = &config.cookie_domain {
+    if let Some(domain) = &config.cookie_and_header_config.cookie_domain {
         cookie_builder = cookie_builder.domain(domain.clone());
     }
 
@@ -224,8 +242,12 @@ where
     let mut map = HashMap::new();
 
     for name in [
-        store.config.session_name.to_string(),
-        store.config.store_name.to_string(),
+        store
+            .config
+            .cookie_and_header_config
+            .session_name
+            .to_string(),
+        store.config.cookie_and_header_config.store_name.to_string(),
     ] {
         if let Some(value) = headers.get(&name) {
             if let Ok(val) = value.to_str() {
@@ -302,11 +324,12 @@ pub(crate) fn set_headers<T>(
         // Add SessionID
         if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
             let name = NameType::Data.get_name(&session.store.config);
-            let value = if let Some(key) = session.store.config.key.as_ref() {
-                sign_header(&session.id.inner(), key, "".to_owned())
-            } else {
-                session.id.inner()
-            };
+            let value =
+                if let Some(key) = session.store.config.cookie_and_header_config.key.as_ref() {
+                    sign_header(&session.id.inner(), key, "".to_owned())
+                } else {
+                    session.id.inner()
+                };
 
             if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {
                 if let Ok(value) = HeaderValue::from_str(&value) {
