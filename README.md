@@ -20,7 +20,8 @@ Uses Cookie or Header stored UUID's to sync back to the session store.
 - Uses Serdes for Data Serialization so it can store any Serdes supported type's into the Sessions data.
 - Supports Redis, SurrealDB, MongoDB and SQLx optional Databases out of the Box.
 - Supports Memory Only usage. No need to use a persistant database.
-- Supports Per Session SessionID cookie Encryption for enhanced Security.
+- Supports Cookie and Header Signing for integrity, and authenticity.
+- Supports Database Session Data Encryption for confidentiality, integrity.
 - Supports SessionID renewal for enhanced Security.
 - Optional Fastbloom key storage for reduced Database lookups during new UUID generation. Boosting Bandwidth.
 - Optional Rest Mode that Disables Cookies and uses the Header values instead.
