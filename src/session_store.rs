@@ -83,7 +83,7 @@ where
     #[inline]
     pub async fn new(client: Option<T>, config: SessionConfig) -> Result<Self, SessionError> {
         if let Some(client) = &client {
-            client.initiate(&config.database_config.table_name).await?
+            client.initiate(&config.database.table_name).await?
         }
 
         // If we have a database client then lets also get any SessionId's that Exist within the database
@@ -170,7 +170,7 @@ where
     pub async fn cleanup(&self) -> Result<Vec<String>, SessionError> {
         if let Some(client) = &self.client {
             Ok(client
-                .delete_by_expiry(&self.config.database_config.table_name)
+                .delete_by_expiry(&self.config.database.table_name)
                 .await?)
         } else {
             Ok(Vec::new())
@@ -199,7 +199,7 @@ where
     pub async fn count(&self) -> Result<i64, SessionError> {
         if let Some(client) = &self.client {
             let count = client
-                .count(&self.config.database_config.table_name)
+                .count(&self.config.database.table_name)
                 .await?;
             return Ok(count);
         }
@@ -234,7 +234,7 @@ where
     ) -> Result<Option<SessionData>, SessionError> {
         if let Some(client) = &self.client {
             let result: Option<String> = client
-                .load(&cookie_value, &self.config.database_config.table_name)
+                .load(&cookie_value, &self.config.database.table_name)
                 .await?;
 
             //TODO add SessionKey::decrypt(uuid, &value, self.config.database_key.clone().unwrap(), self.config.memory_lifespan,)
@@ -242,7 +242,7 @@ where
             if let Ok(uuid) = Uuid::parse_str(&cookie_value) {
                 if let Some(mut session) = result
                     .map(|session| {
-                        if let Some(key) = self.config.database_config.database_key.as_ref() {
+                        if let Some(key) = self.config.database.database_key.as_ref() {
                             serde_json::from_str::<SessionData>(
                                 &encrypt::decrypt(&uuid.to_string(), &session, key)
                                     .unwrap_or_default(),
@@ -292,13 +292,13 @@ where
             client
                 .store(
                     &uuid,
-                    &if let Some(key) = self.config.database_config.database_key.as_ref() {
+                    &if let Some(key) = self.config.database.database_key.as_ref() {
                         encrypt::encrypt(&uuid, &serde_json::to_string(session)?, &key)
                     } else {
                         serde_json::to_string(session)?
                     },
                     session.expires.timestamp(),
-                    &self.config.database_config.table_name,
+                    &self.config.database.table_name,
                 )
                 .await?;
         }
@@ -330,7 +330,7 @@ where
     pub async fn clear_store(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             client
-                .delete_all(&self.config.database_config.table_name)
+                .delete_all(&self.config.database.table_name)
                 .await?;
         }
 
@@ -375,7 +375,7 @@ where
     pub(crate) fn service_session_data(&self, session: &Session<T>) -> bool {
         if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
             inner.service_clear(
-                self.config.memory_config.memory_lifespan,
+                self.config.memory.memory_lifespan,
                 self.config.clear_check_on_load,
             );
             inner.set_request();
@@ -602,7 +602,7 @@ where
     pub(crate) async fn database_remove_session(&self, id: String) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             client
-                .delete_one_by_id(&id, &self.config.database_config.table_name)
+                .delete_one_by_id(&id, &self.config.database.table_name)
                 .await?;
         }
 

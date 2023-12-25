@@ -62,7 +62,7 @@ impl SessionData {
             expires: Utc::now() + config.lifespan,
             destroy: false,
             renew: false,
-            autoremove: Utc::now() + config.memory_config.memory_lifespan,
+            autoremove: Utc::now() + config.memory.memory_lifespan,
             longterm: false,
             store: storable,
             update: true,
