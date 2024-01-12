@@ -23,7 +23,7 @@ pub(crate) fn decode<T: AsRef<[u8]>>(input: T) -> Result<Vec<u8>, DecodeError> {
     BASE64_STANDARD.decode(input)
 }
 
-pub(crate) trait CookiesAdditionJar {
+pub trait CookiesAdditionJar {
     fn message_signed<'a>(&'a self, key: &Key, message: String) -> AdditionalSignedJar<&'a Self>;
     fn message_signed_mut<'a>(
         &'a mut self,
