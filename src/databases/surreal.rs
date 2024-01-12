@@ -118,8 +118,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .bind(("table_name", table_name))
             .bind(("session_id", id))
             .bind(("expires", Utc::now().timestamp()))
-            .await
-            .unwrap();
+            .await?;
 
         let response: Option<String> = res.take("sessionstore")?;
         Ok(response)

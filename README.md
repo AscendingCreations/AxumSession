@@ -20,7 +20,8 @@ Uses Cookie or Header stored UUID's to sync back to the session store.
 - Uses Serdes for Data Serialization so it can store any Serdes supported type's into the Sessions data.
 - Supports Redis, SurrealDB, MongoDB and SQLx optional Databases out of the Box.
 - Supports Memory Only usage. No need to use a persistant database.
-- Supports Per Session SessionID cookie Encryption for enhanced Security.
+- Supports Cookie and Header Signing for integrity, and authenticity.
+- Supports Database Session Data Encryption for confidentiality, integrity.
 - Supports SessionID renewal for enhanced Security.
 - Optional Fastbloom key storage for reduced Database lookups during new UUID generation. Boosting Bandwidth.
 - Optional Rest Mode that Disables Cookies and uses the Header values instead.
@@ -43,7 +44,7 @@ to your cargo include for Axum Session.
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.11.0", features = [ "postgres-rustls"] }
+axum_session = { version = "0.12.0", features = [ "postgres-rustls"] }
 ```
 
 ## 📱 Cargo Feature Flags
@@ -128,8 +129,8 @@ async fn connect_to_database() -> anyhow::Result<sqlx::Pool<sqlx::Postgres>> {
 }
 ```
 
-## 🔐 Example Encryption.
-### Enable Cookie and Header UUID Encryption and Database Key encryption for Per_session Keys.
+## 🔐 Example Signed Cookies/Headers and Database Session Data Encryption.
+### Enable Cookie and Header UUID Signing and Database Key encryption for Session Data.
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
@@ -146,16 +147,10 @@ async fn main() {
         .with_table_name("sessions_table")
         // 'Key::generate()' will generate a new key each restart of the server.
         // If you want it to be more permanent then generate and set it to a config file.
-        // If with_key() is used it will set all cookies as private, which guarantees integrity, and authenticity.
+        // If with_key() is used it will set all cookies or headers as signed, which guarantees integrity, and authenticity.
         .with_key(Key::generate())
-        // This is how we would Set a Database Key to encrypt as store our per session keys. 
-        // This MUST be set in order to use SecurityMode::PerSession.
-        .with_database_key(Key::generate())
-        // This is How you will enable PerSession SessionID Private Cookie Encryption. When enabled it will
-        // Encrypt the SessionID and Storage with an Encryption key generated and stored per session.
-        // This allows for Key renewing without needing to force the entire Session from being destroyed.
-        // This Also helps prevent impersonation attempts. 
-        .with_security_mode(SecurityMode::PerSession);
+        // This is how we would Set a Database Key to encrypt as store our per session data. 
+        .with_database_key(Key::generate());
 
     // create SessionStore and initiate the database tables
     let session_store = SessionStore::<SessionPgPool>::new(None, session_config).await.unwrap();
