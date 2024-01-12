@@ -566,7 +566,7 @@ where
     #[inline]
     pub(crate) fn update_memory_expires(&self, id: String) -> Result<(), SessionError> {
         if let Some(mut instance) = self.inner.get_mut(&id) {
-            instance.autoremove = Utc::now() + self.config.memory_lifespan;
+            instance.autoremove = Utc::now() + self.config.memory.memory_lifespan;
 
             Ok(())
         } else {
