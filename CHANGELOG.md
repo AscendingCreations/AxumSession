@@ -7,8 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Changed
 - (Breaking) split config into groups to help make it more understandable on the Docs side.
 - (Breaking) Removed encryption of cookies and headers and replaced with signing.
-- (Breaking) Database_key is now used to encrypt the Session Data when set.
+- (Breaking) Database_key is now used to encrypt the Session Data within Database when set.
 - (Breaking) Removed Cyclable encryption key since we are signing instead. 
+- Added Tracing logs.
+- Removed a lot of panics and instead sending an Empty response with 500 internal server error status.
 
 ## 0.11.0 (21. December, 2023)
 ### Changed

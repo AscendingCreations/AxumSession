@@ -1,4 +1,4 @@
-use crate::{headers::*, DatabasePool, Session, SessionData, SessionStore};
+use crate::{headers::*, DatabasePool, Session, SessionData, SessionError, SessionStore};
 use axum_core::{response::Response, BoxError};
 use bytes::Bytes;
 use chrono::Utc;
@@ -25,6 +25,20 @@ where
     pub(crate) inner: S,
 }
 
+pub(crate) fn trace_error<ResBody>(
+    err: SessionError,
+    msg: &str,
+) -> Result<Response<ResBody>, Infallible>
+where
+    ResBody: HttpBody<Data = Bytes> + Default + Send + 'static,
+    ResBody::Error: Into<BoxError>,
+{
+    tracing::error!(err = %err, msg);
+    let mut res = Response::default();
+    *res.status_mut() = http::StatusCode::INTERNAL_SERVER_ERROR;
+    Ok(res)
+}
+
 impl<S, T, ReqBody, ResBody> Service<Request<ReqBody>> for SessionService<S, T>
 where
     S: Service<Request<ReqBody>, Response = Response<ResBody>, Error = Infallible>
@@ -34,7 +48,7 @@ where
     S::Future: Send + 'static,
     ReqBody: Send + 'static,
     Infallible: From<<S as Service<Request<ReqBody>>>::Error>,
-    ResBody: HttpBody<Data = Bytes> + Send + 'static,
+    ResBody: HttpBody<Data = Bytes> + Default + Send + 'static,
     ResBody::Error: Into<BoxError>,
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
@@ -64,7 +78,12 @@ where
             #[cfg(feature = "rest_mode")]
             let (session_uuid, storable) = get_headers_and_key(&store, headers).await;
 
-            let (mut session, is_new) = Session::new(store, session_uuid).await;
+            let (mut session, is_new) = match Session::new(store, session_uuid).await {
+                Ok(v) => v,
+                Err(err) => {
+                    return trace_error(err, "failed to generate Session ID");
+                }
+            };
 
             // Check if the session id exists if not lets check if it exists in the database or generate a new session.
             // If manual mode is enabled then do not check for a Session unless the UUID is not new.
@@ -86,6 +105,10 @@ where
                     .ok()
                     .flatten()
                     .unwrap_or_else(|| {
+                        tracing::info!(
+                            "Session {} did not exist in Database. So it was Recreated.",
+                            session.id
+                        );
                         SessionData::new(session.id.0, storable, &session.store.config)
                     });
 
@@ -107,9 +130,9 @@ where
             // throttle by memory lifespan - e.g. sweep every hour
             let current_time = Utc::now();
 
-            if last_sweep <= current_time
-                && !session.store.config.memory.memory_lifespan.is_zero()
+            if last_sweep <= current_time && !session.store.config.memory.memory_lifespan.is_zero()
             {
+                tracing::info!("Session id {}: Session Memory Cleaning Started", session.id);
                 // Only unload these from filter if the Client is None as this means no database.
                 // Otherwise only unload from the filter if removed from the Database.
                 #[cfg(feature = "key-store")]
@@ -133,15 +156,34 @@ where
 
                 session.store.timers.write().await.last_expiry_sweep =
                     Utc::now() + session.store.config.memory.purge_update;
+                tracing::info!(
+                    "Session id {}: Session Memory Cleaning Finished",
+                    session.id
+                );
             }
 
             // Throttle by database lifespan - e.g. sweep every 6 hours
             if last_database_sweep <= current_time && session.store.is_persistent() {
+                tracing::info!(
+                    "Session id {}: Session Database Cleaning Started",
+                    session.id
+                );
                 //Remove any old keys that expired and Remove them from our loaded filter.
                 #[cfg(feature = "key-store")]
-                let expired = session.store.cleanup().await.unwrap();
+                let expired = match session.store.cleanup().await {
+                    Ok(v) => v,
+                    Err(err) => {
+                        return trace_error(
+                            err,
+                            "failed to remove expired session's from database",
+                        );
+                    }
+                };
+
                 #[cfg(not(feature = "key-store"))]
-                let _ = session.store.cleanup().await.unwrap();
+                if let Err(err) = session.store.cleanup().await {
+                    return trace_error(err, "failed to remove expired session's from database");
+                }
 
                 #[cfg(feature = "key-store")]
                 if !session.store.auto_handles_expiry() {
@@ -156,6 +198,10 @@ where
                     .await
                     .last_database_expiry_sweep =
                     Utc::now() + session.store.config.database.purge_database_update;
+                tracing::info!(
+                    "Session id {}: Session Database Cleaning Finished",
+                    session.id
+                );
             }
 
             // Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage
@@ -176,18 +222,34 @@ where
                     (false, false, false, false)
                 };
 
+            tracing::trace!(
+                renew = renew,
+                storable = storable,
+                destroy = destroy,
+                loaded = loaded,
+                "Session id: {}",
+                session.id
+            );
+
             if !destroy && (!session.store.config.session_mode.is_manual() || loaded) {
                 if renew {
                     // Lets change the Session ID and destory the old Session from the database.
-                    let session_id = Session::generate_uuid(&session.store).await;
+                    let session_id = match Session::generate_uuid(&session.store).await {
+                        Ok(v) => v,
+                        Err(err) => {
+                            return trace_error(err, "failed to Generate Session ID");
+                        }
+                    };
 
                     // Lets remove it from the database first.
                     if session.store.is_persistent() {
-                        session
+                        if let Err(err) = session
                             .store
                             .database_remove_session(session.id.inner())
                             .await
-                            .unwrap();
+                        {
+                            return trace_error(err, "failed to remove session from database");
+                        };
                     }
 
                     //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
@@ -214,31 +276,34 @@ where
                 && session.store.is_persistent()
                 && !destroy
             {
-                let clone_session =
-                    if let Some(mut sess) = session.store.inner.get_mut(&session.id.inner()) {
-                        // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
-                        if session.store.config.database.always_save
-                            || sess.update
-                            || !sess.validate()
-                        {
-                            if sess.longterm {
-                                sess.expires = Utc::now() + session.store.config.max_lifespan;
-                            } else {
-                                sess.expires = Utc::now() + session.store.config.lifespan;
-                            };
-
-                            sess.update = false;
-
-                            Some(sess.clone())
+                let clone_session = if let Some(mut sess) =
+                    session.store.inner.get_mut(&session.id.inner())
+                {
+                    // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
+                    if session.store.config.database.always_save || sess.update || !sess.validate()
+                    {
+                        if sess.longterm {
+                            sess.expires = Utc::now() + session.store.config.max_lifespan;
                         } else {
-                            None
-                        }
+                            sess.expires = Utc::now() + session.store.config.lifespan;
+                        };
+
+                        sess.update = false;
+
+                        Some(sess.clone())
                     } else {
                         None
-                    };
+                    }
+                } else {
+                    None
+                };
 
                 if let Some(sess) = clone_session {
-                    session.store.store_session(&sess).await.unwrap();
+                    if let Err(err) = session.store.store_session(&sess).await {
+                        return trace_error(err, "failed to save session to database");
+                    } else {
+                        tracing::info!("Session id {}: was saved to the database.", session.id);
+                    }
                 }
             }
 
@@ -258,23 +323,21 @@ where
                 let _ = session.store.inner.remove(&session.id.inner());
 
                 if session.store.is_persistent() {
-                    session
+                    if let Err(err) = session
                         .store
                         .database_remove_session(session.id.inner())
                         .await
-                        .unwrap();
+                    {
+                        return trace_error(err, "failed to remove session from database");
+                    }
                 }
             }
 
             // We will Deleted the data in memory as it should be stored in the database instead.
             // if user is using this without a database then it will only work as a per request data store.
-            if session.store.config.memory.memory_lifespan.is_zero()
-                && !session.is_parallel()
-            {
+            if session.store.config.memory.memory_lifespan.is_zero() && !session.is_parallel() {
                 #[cfg(feature = "key-store")]
-                if !session.store.is_persistent()
-                    && session.store.config.memory.use_bloom_filters
-                {
+                if !session.store.is_persistent() && session.store.config.memory.use_bloom_filters {
                     let mut filter = session.store.filter.write().await;
                     filter.remove(session.id.inner().as_bytes());
                 }

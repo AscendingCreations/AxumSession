@@ -1,6 +1,4 @@
-#[cfg(feature = "advanced")]
-use crate::SessionError;
-use crate::{DatabasePool, SessionData, SessionID, SessionStore};
+use crate::{DatabasePool, SessionData, SessionError, SessionID, SessionStore};
 use async_trait::async_trait;
 use axum_core::extract::FromRequestParts;
 
@@ -55,10 +53,13 @@ where
     S: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     #[allow(clippy::needless_pass_by_ref_mut)]
-    pub(crate) async fn new(store: SessionStore<S>, value: Option<Uuid>) -> (Self, bool) {
+    pub(crate) async fn new(
+        store: SessionStore<S>,
+        value: Option<Uuid>,
+    ) -> Result<(Self, bool), SessionError> {
         let (id, is_new) = match value {
             Some(v) => (SessionID(v), false),
-            None => (Self::generate_uuid(&store).await, true),
+            None => (Self::generate_uuid(&store).await?, true),
         };
 
         #[cfg(feature = "key-store")]
@@ -74,11 +75,11 @@ where
             }
         }
 
-        (Self { id, store }, is_new)
+        Ok((Self { id, store }, is_new))
     }
 
     #[cfg(feature = "key-store")]
-    pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> SessionID {
+    pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> Result<SessionID, SessionError> {
         loop {
             let token = Uuid::new_v4();
 
@@ -91,26 +92,25 @@ where
                     // This would mean the database no longer is online or the table missing etc.
                     if !client
                         .exists(&token.to_string(), &store.config.table_name)
-                        .await
-                        .unwrap()
+                        .await?
                     {
-                        return SessionID(token);
+                        return Ok(SessionID(token));
                     }
                 } else {
-                    return SessionID(token);
+                    return Ok(SessionID(token));
                 }
             } else {
                 let filter = store.filter.read().await;
 
                 if !filter.contains(token.to_string().as_bytes()) {
-                    return SessionID(token);
+                    return Ok(SessionID(token));
                 }
             }
         }
     }
 
     #[cfg(not(feature = "key-store"))]
-    pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> SessionID {
+    pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> Result<SessionID, SessionError> {
         loop {
             let token = Uuid::new_v4();
 
@@ -121,13 +121,12 @@ where
                     // This would mean the database no longer is online or the table missing etc.
                     if !client
                         .exists(&token.to_string(), &store.config.database.table_name)
-                        .await
-                        .unwrap()
+                        .await?
                     {
-                        return SessionID(token);
+                        return Ok(SessionID(token));
                     }
                 } else {
-                    return SessionID(token);
+                    return Ok(SessionID(token));
                 }
             }
         }

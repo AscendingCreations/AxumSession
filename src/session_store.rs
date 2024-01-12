@@ -198,9 +198,7 @@ where
     #[inline]
     pub async fn count(&self) -> Result<i64, SessionError> {
         if let Some(client) = &self.client {
-            let count = client
-                .count(&self.config.database.table_name)
-                .await?;
+            let count = client.count(&self.config.database.table_name).await?;
             return Ok(count);
         }
 
@@ -237,15 +235,18 @@ where
                 .load(&cookie_value, &self.config.database.table_name)
                 .await?;
 
-            //TODO add SessionKey::decrypt(uuid, &value, self.config.database_key.clone().unwrap(), self.config.memory_lifespan,)
-            //TODO To allow using it to encrypt Session data into the database.
             if let Ok(uuid) = Uuid::parse_str(&cookie_value) {
                 if let Some(mut session) = result
                     .map(|session| {
                         if let Some(key) = self.config.database.database_key.as_ref() {
                             serde_json::from_str::<SessionData>(
-                                &encrypt::decrypt(&uuid.to_string(), &session, key)
-                                    .unwrap_or_default(),
+                                &match encrypt::decrypt(&uuid.to_string(), &session, key) {
+                                    Ok(v) => v,
+                                    Err(err) => {
+                                        tracing::error!(err = %err, "Failed to decrypt Session data from database.");
+                                        String::new()
+                                    }
+                                }
                             )
                         } else {
                             serde_json::from_str::<SessionData>(&session)
@@ -287,13 +288,19 @@ where
     ///
     pub(crate) async fn store_session(&self, session: &SessionData) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            //TODO add let value = key.encrypt(self.config.database_key.clone().unwrap()) to encrypt session data.
             let uuid = session.id.to_string();
             client
                 .store(
                     &uuid,
                     &if let Some(key) = self.config.database.database_key.as_ref() {
-                        encrypt::encrypt(&uuid, &serde_json::to_string(session)?, &key)
+                        encrypt::encrypt(&uuid, &serde_json::to_string(session)?, &key).map_err(
+                            |e| {
+                                SessionError::GenericNotSupportedError(format!(
+                                    "Error: {} Occured when encrypting a Session.",
+                                    e
+                                ))
+                            },
+                        )?
                     } else {
                         serde_json::to_string(session)?
                     },
@@ -329,9 +336,7 @@ where
     #[inline]
     pub async fn clear_store(&self) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            client
-                .delete_all(&self.config.database.table_name)
-                .await?;
+            client.delete_all(&self.config.database.table_name).await?;
         }
 
         Ok(())

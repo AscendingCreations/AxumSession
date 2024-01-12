@@ -85,11 +85,7 @@ where
     use crate::sec::verify_header;
     let key = store.config.cookie_and_header.key.as_ref();
 
-    let name = store
-        .config
-        .cookie_and_header
-        .session_name
-        .to_string();
+    let name = store.config.cookie_and_header.session_name.to_string();
     let value = headers
         .get(&name)
         .and_then(|c| {
@@ -242,11 +238,7 @@ where
     let mut map = HashMap::new();
 
     for name in [
-        store
-            .config
-            .cookie_and_header
-            .session_name
-            .to_string(),
+        store.config.cookie_and_header.session_name.to_string(),
         store.config.cookie_and_header.store_name.to_string(),
     ] {
         if let Some(value) = headers.get(&name) {
@@ -324,12 +316,17 @@ pub(crate) fn set_headers<T>(
         // Add SessionID
         if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
             let name = NameType::Data.get_name(&session.store.config);
-            let value =
-                if let Some(key) = session.store.config.cookie_and_header.key.as_ref() {
-                    sign_header(&session.id.inner(), key, "".to_owned())
-                } else {
-                    session.id.inner()
-                };
+            let value = if let Some(key) = session.store.config.cookie_and_header.key.as_ref() {
+                match sign_header(&session.id.inner(), key, "".to_owned()) {
+                    Ok(v) => v,
+                    Err(err) => {
+                        tracing::error!(err = %err, "Failed to sign Session ID so blank will be used.");
+                        String::new()
+                    }
+                }
+            } else {
+                session.id.inner()
+            };
 
             if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {
                 if let Ok(value) = HeaderValue::from_str(&value) {

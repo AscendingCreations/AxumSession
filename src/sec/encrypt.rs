@@ -10,7 +10,7 @@ pub(crate) const TAG_LEN: usize = 16;
 pub(crate) const KEY_LEN: usize = 32;
 
 ///Used to encrypt the database Values
-pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> String {
+pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> Result<String, &'static str> {
     let val = value.as_bytes();
 
     let mut data = vec![0; NONCE_LEN + val.len() + TAG_LEN];
@@ -19,8 +19,10 @@ pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> String {
     in_out.copy_from_slice(val);
 
     let mut rng = rand::thread_rng();
-    rng.try_fill_bytes(nonce)
-        .expect("couldn't random fill nonce");
+    let _ = rng
+        .try_fill_bytes(nonce)
+        .map_err(|_| "couldn't random fill nonce")?;
+
     let nonce = GenericArray::clone_from_slice(nonce);
 
     // Use the UUID to preform actual cookie Sealing.
@@ -28,11 +30,11 @@ pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> String {
     let aead = Aes256Gcm::new(GenericArray::from_slice(key.encryption()));
     let aad_tag = aead
         .encrypt_in_place_detached(&nonce, aad, in_out)
-        .expect("encryption failure!");
+        .map_err(|_| "encryption failure!")?;
 
     tag.copy_from_slice(aad_tag.as_slice());
 
-    general_purpose::STANDARD.encode(&data)
+    Ok(general_purpose::STANDARD.encode(&data))
 }
 
 ///Used to decrypt the database Values.

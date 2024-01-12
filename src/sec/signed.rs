@@ -67,7 +67,14 @@ impl<J> AdditionalSignedJar<J> {
     /// Signs the cookie's value and message providing integrity and authenticity.
     fn sign_cookie(&self, cookie: &mut Cookie) {
         // Compute HMAC-SHA256 of the cookie's value.
-        let mut mac = Hmac::<Sha256>::new_from_slice(&self.key).expect("good key");
+        let mut mac = match Hmac::<Sha256>::new_from_slice(&self.key) {
+            Ok(v) => v,
+            Err(err) => {
+                tracing::error!(err = %err,  "key is invalid." );
+                return;
+            }
+        };
+
         // Add the payload to the message first.
         let message = format!("{}{}", cookie.value(), self.message);
         mac.update(message.as_bytes());
@@ -91,7 +98,7 @@ impl<J> AdditionalSignedJar<J> {
         let digest = decode(digest_str).map_err(|_| "bad base64 digest")?;
 
         // Perform the verification.
-        let mut mac = Hmac::<Sha256>::new_from_slice(&self.key).expect("good key");
+        let mut mac = Hmac::<Sha256>::new_from_slice(&self.key).map_err(|_| "key is invalid.")?;
         // Add message here so we can check if it matches.
         let message = format!("{}{}", value, self.message);
         mac.update(message.as_bytes());
@@ -126,12 +133,19 @@ impl<J> AdditionalSignedJar<J> {
     /// assert!(jar.message_signed(&key, "".to_owned()).verify(plain).is_none());
     /// ```
     pub fn verify(&self, mut cookie: Cookie<'static>) -> Option<Cookie<'static>> {
-        if let Ok(value) = self._verify(cookie.value()) {
-            cookie.set_value(value);
-            return Some(cookie);
+        match self._verify(cookie.value()) {
+            Ok(value) => {
+                cookie.set_value(value);
+                Some(cookie)
+            }
+            Err(err) => {
+                tracing::warn!(
+                    err = %err,
+                    "possibly suspicious activity: Verification failed for Cookie."
+                );
+                None
+            }
         }
-
-        None
     }
 }
 
@@ -241,9 +255,9 @@ impl<J: BorrowMut<CookieJar>> AdditionalSignedJar<J> {
     }
 }
 
-pub(crate) fn sign_header(value: &str, key: &Key, message: String) -> String {
+pub(crate) fn sign_header(value: &str, key: &Key, message: String) -> Result<String, &'static str> {
     // Compute HMAC-SHA256 of the cookie's value.
-    let mut mac = Hmac::<Sha256>::new_from_slice(key.signing()).expect("good key");
+    let mut mac = Hmac::<Sha256>::new_from_slice(key.signing()).map_err(|_| "Key was invalid.")?;
     // Add the payload to the message first.
     let message = format!("{}{}", value, message);
     mac.update(message.as_bytes());
@@ -251,7 +265,7 @@ pub(crate) fn sign_header(value: &str, key: &Key, message: String) -> String {
     // Cookie's new value is [MAC | original-value].
     let mut new_value = encode(&mac.finalize().into_bytes());
     new_value.push_str(value);
-    new_value
+    Ok(new_value)
 }
 
 /// Given a signed value `str` where the signature is prepended to `value`,
@@ -271,7 +285,7 @@ pub(crate) fn verify_header(
     let digest = decode(digest_str).map_err(|_| "bad base64 digest")?;
 
     // Perform the verification.
-    let mut mac = Hmac::<Sha256>::new_from_slice(key.signing()).expect("good key");
+    let mut mac = Hmac::<Sha256>::new_from_slice(key.signing()).map_err(|_| "Key was invalid.")?;
     // Add message here so we can check if it matches.
     let message = format!("{}{}", value, message);
     mac.update(message.as_bytes());
