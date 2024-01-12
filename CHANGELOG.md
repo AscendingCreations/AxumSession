@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+
+## 0.12.0 (1. January, 2023)
 ### Changed
 - (Breaking) split config into groups to help make it more understandable on the Docs side.
 - (Breaking) Removed encryption of cookies and headers and replaced with signing.
