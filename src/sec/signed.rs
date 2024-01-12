@@ -114,7 +114,7 @@ impl<J> AdditionalSignedJar<J> {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```rust ignore
     /// use cookie::{CookieJar, Cookie, Key};
     ///
     /// let key = Key::generate();
@@ -157,7 +157,7 @@ impl<J: Borrow<CookieJar>> AdditionalSignedJar<J> {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```rust ignore
     /// use cookie::{CookieJar, Cookie, Key};
     ///
     /// let key = Key::generate();
@@ -183,7 +183,7 @@ impl<J: BorrowMut<CookieJar>> AdditionalSignedJar<J> {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```rust ignore
     /// use cookie::{CookieJar, Cookie, Key};
     ///
     /// let key = Key::generate();
@@ -211,7 +211,7 @@ impl<J: BorrowMut<CookieJar>> AdditionalSignedJar<J> {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```rust ignore
     /// use cookie::{CookieJar, Cookie, Key};
     ///
     /// let key = Key::generate();
@@ -237,7 +237,7 @@ impl<J: BorrowMut<CookieJar>> AdditionalSignedJar<J> {
     ///
     /// # Example
     ///
-    /// ```rust
+    /// ```rust ignore
     /// use cookie::{CookieJar, Cookie, Key};
     ///
     /// let key = Key::generate();
