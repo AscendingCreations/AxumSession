@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.12.2 (4. February, 2024)
+### Added
+- Function with_ip_and_user_agent to disable or enable ip and user agent usage within signed uuid's
+- Made signed cookies and headers use ip's and user agent for Message signing to help prevent spoofing. Enabled by default.
+
 ## 0.12.1 (1. January, 2023)
 - Fixed missing MemoryLifetime in Advanced feature.
 

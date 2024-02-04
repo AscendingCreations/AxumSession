@@ -8,12 +8,12 @@ members = [
     "examples/redis",
     "examples/surrealdb",
     "examples/middleware_layer",
-    #"examples/rest_test",
+    "examples/rest_test",
 ]
 
 [package]
 name = "axum_session"
-version = "0.12.1"
+version = "0.12.2"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "📝 Session management layer for axum that supports HTTP and Rest."
 edition = "2021"

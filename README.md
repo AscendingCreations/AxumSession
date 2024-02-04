@@ -44,7 +44,7 @@ to your cargo include for Axum Session.
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.12.0", features = [ "postgres-rustls"] }
+axum_session = { version = "0.12.2", features = [ "postgres-rustls"] }
 ```
 
 ## 📱 Cargo Feature Flags
@@ -86,6 +86,7 @@ use axum::{
     Router,
     routing::get,
 };
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
@@ -106,12 +107,11 @@ async fn main() {
         .layer(SessionLayer::new(session_store));
 
     // run it
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::debug!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+
+    debug!("listening on {}", addr);
+    let listener = TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 async fn greet(session: Session<SessionPgPool>) -> String {
@@ -140,6 +140,7 @@ use axum::{
     Router,
     routing::get,
 };
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
@@ -161,12 +162,21 @@ async fn main() {
         .layer(SessionLayer::new(session_store));
 
     // run it
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::debug!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+
+    debug!("listening on {}", addr);
+    let listener = TcpListener::bind(addr).await.unwrap();
+
+    //we then start the actual service.
+    axum::serve(
+        listener,
+        // We set it with connection info so we can get the ip address of the user from the socket.
+        // Otherwise if we try to get this and this is not set the ip address will be empty.
+        // This is needed for the ip and user agent stuff to get the correct information.
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }
 ```
 
@@ -180,6 +190,7 @@ use axum::{
     Router,
     routing::get,
 };
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
@@ -195,12 +206,11 @@ async fn main() {
         .layer(SessionLayer::new(session_store));
 
     // run it
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::debug!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+
+    debug!("listening on {}", addr);
+    let listener = TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 async fn greet(session: Session<SessionNullPool>) -> String {
@@ -224,6 +234,7 @@ use axum::{
     Router,
     routing::get,
 };
+use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
@@ -239,12 +250,11 @@ async fn main() {
         .layer(SessionLayer::new(session_store));
 
     // run it
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::debug!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
+
+    debug!("listening on {}", addr);
+    let listener = TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 async fn greet(session: Session<SessionPgPool>) -> String {
