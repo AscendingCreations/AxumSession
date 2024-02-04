@@ -3,9 +3,15 @@ use crate::CookiesAdditionJar;
 use crate::{DatabasePool, Session, SessionConfig, SessionStore};
 #[cfg(not(feature = "rest_mode"))]
 use cookie::{Cookie, CookieJar, Key};
+use forwarded_header_value::{ForwardedHeaderValue, Identifier};
 #[cfg(not(feature = "rest_mode"))]
 use http::header::{COOKIE, SET_COOKIE};
-use http::{self, HeaderMap};
+use http::{
+    self,
+    header::{FORWARDED, USER_AGENT},
+    request::Request,
+    HeaderMap,
+};
 #[cfg(feature = "rest_mode")]
 use http::{header::HeaderName, HeaderValue};
 #[cfg(feature = "rest_mode")]
@@ -13,8 +19,12 @@ use std::collections::HashMap;
 use std::{
     fmt::Debug,
     marker::{Send, Sync},
+    net::{IpAddr, SocketAddr},
 };
 use uuid::Uuid;
+
+const X_REAL_IP: &str = "x-real-ip";
+const X_FORWARDED_FOR: &str = "x-forwarded-for";
 
 enum NameType {
     Store,
@@ -47,6 +57,7 @@ impl NameType {
 pub async fn get_headers_and_key<T>(
     store: &SessionStore<T>,
     cookies: CookieJar,
+    ip_user_agent: &str,
 ) -> (Option<Uuid>, bool)
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
@@ -57,7 +68,7 @@ where
         .get_cookie(
             &store.config.cookie_and_header.session_name,
             key,
-            "".to_owned(),
+            ip_user_agent.to_owned(),
             false,
         )
         .and_then(|c| Uuid::parse_str(c.value()).ok());
@@ -66,7 +77,7 @@ where
         .get_cookie(
             &store.config.cookie_and_header.store_name,
             key,
-            "".to_owned(),
+            ip_user_agent.to_owned(),
             true,
         )
         .map_or(false, |c| c.value().parse().unwrap_or(false));
@@ -78,6 +89,7 @@ where
 pub async fn get_headers_and_key<T>(
     store: &SessionStore<T>,
     headers: HashMap<String, String>,
+    ip_user_agent: &str,
 ) -> (Option<Uuid>, bool)
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
@@ -90,7 +102,7 @@ where
         .get(&name)
         .and_then(|c| {
             if let Some(key) = key {
-                verify_header(c, key, "".to_owned()).ok()
+                verify_header(c, key, ip_user_agent).ok()
             } else {
                 Some(c.to_owned())
             }
@@ -102,7 +114,7 @@ where
         .get(&name)
         .and_then(|c| {
             if let Some(key) = key {
-                verify_header(c, key, "".to_owned()).ok()
+                verify_header(c, key, ip_user_agent).ok()
             } else {
                 Some(c.to_owned())
             }
@@ -264,6 +276,7 @@ fn set_cookies(jar: CookieJar, headers: &mut HeaderMap) {
 pub(crate) fn set_headers<T>(
     session: &Session<T>,
     headers: &mut HeaderMap,
+    ip_user_agent: &str,
     destroy: bool,
     storable: bool,
 ) where
@@ -279,14 +292,14 @@ pub(crate) fn set_headers<T>(
             cookies.add_cookie(
                 create_cookie(&session.store.config, session.id.inner(), NameType::Data),
                 &session.store.config.cookie_and_header.key,
-                "".to_owned(),
+                ip_user_agent.to_owned(),
                 false,
             );
         } else {
             cookies.add_cookie(
                 remove_cookie(&session.store.config, NameType::Data),
                 &session.store.config.cookie_and_header.key,
-                "".to_owned(),
+                ip_user_agent.to_owned(),
                 false,
             );
         }
@@ -296,14 +309,14 @@ pub(crate) fn set_headers<T>(
             cookies.add_cookie(
                 create_cookie(&session.store.config, storable.to_string(), NameType::Store),
                 &session.store.config.cookie_and_header.key,
-                "".to_owned(),
+                ip_user_agent.to_owned(),
                 true,
             );
         } else {
             cookies.add_cookie(
                 remove_cookie(&session.store.config, NameType::Store),
                 &session.store.config.cookie_and_header.key,
-                "".to_owned(),
+                ip_user_agent.to_owned(),
                 true,
             );
         }
@@ -317,7 +330,7 @@ pub(crate) fn set_headers<T>(
         if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
             let name = NameType::Data.get_name(&session.store.config);
             let value = if let Some(key) = session.store.config.cookie_and_header.key.as_ref() {
-                match sign_header(&session.id.inner(), key, "".to_owned()) {
+                match sign_header(&session.id.inner(), key, ip_user_agent) {
                     Ok(v) => v,
                     Err(err) => {
                         tracing::error!(err = %err, "Failed to sign Session ID so blank will be used.");
@@ -347,5 +360,72 @@ pub(crate) fn set_headers<T>(
                 }
             }
         }
+    }
+}
+
+///Rather than getting a single IP from the x_real, X forwarded and socket ip
+///It is better to use all 3 to ensure none of them have changed. Setting the default
+/// to be a empty String if it is not present. we will combine these together in a single Message String.
+pub(crate) fn get_ips_hash<T, D>(req: &Request<T>, store: &SessionStore<D>) -> String
+where
+    D: DatabasePool + Clone + Debug + Sync + Send + 'static,
+{
+    if store.config.cookie_and_header.key.is_some()
+        && store.config.cookie_and_header.with_ip_and_user_agent
+    {
+        let headers = req.headers();
+
+        let ip = req
+            .extensions()
+            .get::<axum::extract::ConnectInfo<SocketAddr>>()
+            .map(|addr| addr.ip().to_string())
+            .unwrap_or_default();
+
+        let x_forward_for_ip = headers
+            .get(X_FORWARDED_FOR)
+            .and_then(|hv| hv.to_str().ok())
+            .and_then(|s| s.split(',').find_map(|s| s.trim().parse::<IpAddr>().ok()))
+            .map(|ip| ip.to_string())
+            .unwrap_or_default();
+
+        let forwarded_ip = headers
+            .get_all(FORWARDED)
+            .iter()
+            .find_map(|hv| {
+                hv.to_str()
+                    .ok()
+                    .and_then(|s| ForwardedHeaderValue::from_forwarded(s).ok())
+                    .and_then(|f| {
+                        f.iter()
+                            .filter_map(|fs| fs.forwarded_for.as_ref())
+                            .find_map(|ff| match ff {
+                                Identifier::SocketAddr(a) => Some(a.ip()),
+                                Identifier::IpAddr(ip) => Some(*ip),
+                                _ => None,
+                            })
+                    })
+            })
+            .map(|ip| ip.to_string())
+            .unwrap_or_default();
+
+        let real_ip = headers
+            .get(X_REAL_IP)
+            .and_then(|hv| hv.to_str().ok())
+            .and_then(|s| s.parse::<IpAddr>().ok())
+            .map(|ip| ip.to_string())
+            .unwrap_or_default();
+
+        let user_agent = headers
+            .get(USER_AGENT)
+            .and_then(|hv| hv.to_str().ok())
+            .map(|useragent| useragent.to_string())
+            .unwrap_or_default();
+
+        format!(
+            "{};{};{};{};{}",
+            ip, x_forward_for_ip, forwarded_ip, real_ip, user_agent
+        )
+    } else {
+        String::new()
     }
 }

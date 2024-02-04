@@ -1,5 +1,5 @@
 use crate::{headers::*, DatabasePool, Session, SessionData, SessionError, SessionStore};
-use axum_core::{response::Response, BoxError};
+use axum::{response::Response, BoxError};
 use bytes::Bytes;
 use chrono::Utc;
 #[cfg(feature = "key-store")]
@@ -66,17 +66,21 @@ where
         let mut ready_inner = std::mem::replace(&mut self.inner, not_ready_inner);
 
         Box::pin(async move {
+            let ip_user_agent = get_ips_hash(&req, &store);
+
             #[cfg(not(feature = "rest_mode"))]
             let cookies = get_cookies(req.headers());
 
             #[cfg(not(feature = "rest_mode"))]
-            let (session_uuid, storable) = get_headers_and_key(&store, cookies).await;
+            let (session_uuid, storable) =
+                get_headers_and_key(&store, cookies, &ip_user_agent).await;
 
             #[cfg(feature = "rest_mode")]
             let headers = get_headers(&store, req.headers());
 
             #[cfg(feature = "rest_mode")]
-            let (session_uuid, storable) = get_headers_and_key(&store, headers).await;
+            let (session_uuid, storable) =
+                get_headers_and_key(&store, headers, &ip_user_agent).await;
 
             let (mut session, is_new) = match Session::new(store, session_uuid).await {
                 Ok(v) => v,
@@ -231,43 +235,40 @@ where
                 session.id
             );
 
-            if !destroy && (!session.store.config.session_mode.is_manual() || loaded) {
-                if renew {
-                    // Lets change the Session ID and destory the old Session from the database.
-                    let session_id = match Session::generate_uuid(&session.store).await {
-                        Ok(v) => v,
-                        Err(err) => {
-                            return trace_error(err, "failed to Generate Session ID");
-                        }
-                    };
-
-                    // Lets remove it from the database first.
-                    if session.store.is_persistent() {
-                        if let Err(err) = session
-                            .store
-                            .database_remove_session(session.id.inner())
-                            .await
-                        {
-                            return trace_error(err, "failed to remove session from database");
-                        };
+            if !destroy && (!session.store.config.session_mode.is_manual() || loaded) && renew {
+                // Lets change the Session ID and destory the old Session from the database.
+                let session_id = match Session::generate_uuid(&session.store).await {
+                    Ok(v) => v,
+                    Err(err) => {
+                        return trace_error(err, "failed to Generate Session ID");
                     }
+                };
 
-                    //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
-                    #[cfg(feature = "key-store")]
-                    if session.store.config.memory.use_bloom_filters {
-                        let mut filter = session.store.filter.write().await;
-                        filter.remove(session.id.inner().as_bytes());
-                    }
-
-                    // Lets remove update and reinsert.
-                    if let Some((_, mut session_data)) =
-                        session.store.inner.remove(&session.id.inner())
+                // Lets remove it from the database first.
+                if session.store.is_persistent() {
+                    if let Err(err) = session
+                        .store
+                        .database_remove_session(session.id.inner())
+                        .await
                     {
-                        session_data.id = session_id.0;
-                        session_data.renew = false;
-                        session.id = session_id;
-                        session.store.inner.insert(session.id.inner(), session_data);
-                    }
+                        return trace_error(err, "failed to remove session from database");
+                    };
+                }
+
+                //lets remove it from the filter. if the bottom fails just means it did not exist or was already unloaded.
+                #[cfg(feature = "key-store")]
+                if session.store.config.memory.use_bloom_filters {
+                    let mut filter = session.store.filter.write().await;
+                    filter.remove(session.id.inner().as_bytes());
+                }
+
+                // Lets remove update and reinsert.
+                if let Some((_, mut session_data)) = session.store.inner.remove(&session.id.inner())
+                {
+                    session_data.id = session_id.0;
+                    session_data.renew = false;
+                    session.id = session_id;
+                    session.store.inner.insert(session.id.inner(), session_data);
                 }
             }
 
@@ -345,7 +346,13 @@ where
                 session.store.inner.remove(&session.id.inner());
             }
 
-            set_headers(&session, response.headers_mut(), destroy, storable);
+            set_headers(
+                &session,
+                response.headers_mut(),
+                &ip_user_agent,
+                destroy,
+                storable,
+            );
 
             Ok(response)
         })

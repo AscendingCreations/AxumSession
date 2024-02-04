@@ -76,11 +76,11 @@ impl<J> AdditionalSignedJar<J> {
         };
 
         // Add the payload to the message first.
-        let message = format!("{}{}", cookie.value(), self.message);
+        let message = format!("{}{}", cookie.value(), &self.message);
         mac.update(message.as_bytes());
 
         // Cookie's new value is [MAC | original-value].
-        let mut new_value = encode(&mac.finalize().into_bytes());
+        let mut new_value = encode(mac.finalize().into_bytes());
         new_value.push_str(cookie.value());
         cookie.set_value(new_value);
     }
@@ -100,7 +100,7 @@ impl<J> AdditionalSignedJar<J> {
         // Perform the verification.
         let mut mac = Hmac::<Sha256>::new_from_slice(&self.key).map_err(|_| "key is invalid.")?;
         // Add message here so we can check if it matches.
-        let message = format!("{}{}", value, self.message);
+        let message = format!("{}{}", value, &self.message);
         mac.update(message.as_bytes());
         mac.verify_slice(&digest)
             .map(|_| value.to_string())
@@ -255,7 +255,7 @@ impl<J: BorrowMut<CookieJar>> AdditionalSignedJar<J> {
     }
 }
 
-pub(crate) fn sign_header(value: &str, key: &Key, message: String) -> Result<String, &'static str> {
+pub(crate) fn sign_header(value: &str, key: &Key, message: &str) -> Result<String, &'static str> {
     // Compute HMAC-SHA256 of the cookie's value.
     let mut mac = Hmac::<Sha256>::new_from_slice(key.signing()).map_err(|_| "Key was invalid.")?;
     // Add the payload to the message first.
@@ -263,7 +263,7 @@ pub(crate) fn sign_header(value: &str, key: &Key, message: String) -> Result<Str
     mac.update(message.as_bytes());
 
     // Cookie's new value is [MAC | original-value].
-    let mut new_value = encode(&mac.finalize().into_bytes());
+    let mut new_value = encode(mac.finalize().into_bytes());
     new_value.push_str(value);
     Ok(new_value)
 }
@@ -274,7 +274,7 @@ pub(crate) fn sign_header(value: &str, key: &Key, message: String) -> Result<Str
 pub(crate) fn verify_header(
     header_value: &str,
     key: &Key,
-    message: String,
+    message: &str,
 ) -> Result<String, &'static str> {
     if !header_value.is_char_boundary(BASE64_DIGEST_LEN) {
         return Err("missing or invalid digest");

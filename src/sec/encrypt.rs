@@ -19,8 +19,7 @@ pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> Result<String, &'st
     in_out.copy_from_slice(val);
 
     let mut rng = rand::thread_rng();
-    let _ = rng
-        .try_fill_bytes(nonce)
+    rng.try_fill_bytes(nonce)
         .map_err(|_| "couldn't random fill nonce")?;
 
     let nonce = GenericArray::clone_from_slice(nonce);

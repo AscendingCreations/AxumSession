@@ -68,6 +68,10 @@ pub struct CookieAndHeaderConfig {
     /// This is used to append __Host- to the front of all Cookie names to prevent sub domain usage.
     /// This will not append to Headers only Cookies. It is enabled by default.
     pub(crate) prefix_with_host: bool,
+    /// If Key is Some and this is true then the ip and user agent will be used to further sign cookies
+    /// and header values. This will help prevent others from spoofing your cookies and headers.
+    /// It is enabled by default.
+    pub(crate) with_ip_and_user_agent: bool,
 }
 
 impl std::fmt::Debug for CookieAndHeaderConfig {
@@ -82,6 +86,7 @@ impl std::fmt::Debug for CookieAndHeaderConfig {
             .field("cookie_same_site", &self.cookie_same_site)
             .field("cookie_secure", &self.cookie_secure)
             .field("prefix_with_host", &self.prefix_with_host)
+            .field("with_ip_and_user_agent", &self.with_ip_and_user_agent)
             .field("key", &"key hidden")
             .finish()
     }
@@ -607,6 +612,25 @@ impl SessionConfig {
         self.cookie_and_header.prefix_with_host = enable;
         self
     }
+
+    /// Set's the session's with_ip_and_user_agent.
+    ///
+    /// If Key is Some and this is true then the ip and user agent will be used to further sign cookies
+    /// and header values. This will help prevent others from spoofing your cookies and headers.
+    /// It is enabled by default.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_ip_and_user_agent(false);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_ip_and_user_agent(mut self, enable: bool) -> Self {
+        self.cookie_and_header.with_ip_and_user_agent = enable;
+        self
+    }
 }
 
 impl Default for SessionConfig {
@@ -671,6 +695,7 @@ impl Default for CookieAndHeaderConfig {
             // Key is set to None so Private cookies are not used by default. Please set this if you want to use private cookies.
             key: None,
             prefix_with_host: false,
+            with_ip_and_user_agent: true,
         }
     }
 }

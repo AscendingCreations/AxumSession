@@ -1,6 +1,6 @@
 use crate::{DatabasePool, SessionData, SessionError, SessionID, SessionStore};
 use async_trait::async_trait;
-use axum_core::extract::FromRequestParts;
+use axum::extract::FromRequestParts;
 
 #[cfg(feature = "key-store")]
 use fastbloom_rs::Membership;

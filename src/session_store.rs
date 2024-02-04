@@ -2,7 +2,7 @@ use crate::{
     sec::encrypt, DatabasePool, Session, SessionConfig, SessionData, SessionError, SessionTimers,
 };
 use async_trait::async_trait;
-use axum_core::extract::FromRequestParts;
+use axum::extract::FromRequestParts;
 use chrono::{Duration, Utc};
 use dashmap::DashMap;
 #[cfg(feature = "key-store")]
@@ -293,7 +293,7 @@ where
                 .store(
                     &uuid,
                     &if let Some(key) = self.config.database.database_key.as_ref() {
-                        encrypt::encrypt(&uuid, &serde_json::to_string(session)?, &key).map_err(
+                        encrypt::encrypt(&uuid, &serde_json::to_string(session)?, key).map_err(
                             |e| {
                                 SessionError::GenericNotSupportedError(format!(
                                     "Error: {} Occured when encrypting a Session.",
