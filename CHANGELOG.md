@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.12.3 (5. February, 2024)
+### Fixed
+- missing .memory. on some use_bloom_filters internally.
+
 ## 0.12.2 (4. February, 2024)
 ### Added
 - Function with_ip_and_user_agent to disable or enable ip and user agent usage within signed uuid's

@@ -142,7 +142,7 @@ where
                 #[cfg(feature = "key-store")]
                 if session.store.is_persistent()
                     && session.store.auto_handles_expiry()
-                    && session.store.config.use_bloom_filters
+                    && session.store.config.memory.use_bloom_filters
                 {
                     let mut filter = session.store.filter.write().await;
                     session

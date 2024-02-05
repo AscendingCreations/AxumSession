@@ -63,7 +63,7 @@ where
         };
 
         #[cfg(feature = "key-store")]
-        if store.config.use_bloom_filters {
+        if store.config.memory.use_bloom_filters {
             let contained = {
                 let filter = store.filter.read().await;
                 filter.contains(id.inner().as_bytes())
@@ -83,7 +83,7 @@ where
         loop {
             let token = Uuid::new_v4();
 
-            if (!store.config.use_bloom_filters || store.auto_handles_expiry())
+            if (!store.config.memory.use_bloom_filters || store.auto_handles_expiry())
                 && !store.inner.contains_key(&token.to_string())
             {
                 //This fixes an already used but in database issue.

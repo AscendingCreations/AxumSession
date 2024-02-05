@@ -118,7 +118,7 @@ where
         )
         .build_counting_bloom_filter();
 
-        if config.use_bloom_filters {
+        if config.memory.use_bloom_filters {
             // If client exist then lets preload the id's within the database so the filter is accurate.
             if let Some(client) = &client {
                 let ids = client.get_ids(&config.table_name).await?;
