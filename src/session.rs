@@ -91,7 +91,7 @@ where
                     // Unwrap should be safe to use as we would want it to crash if there was a major database error.
                     // This would mean the database no longer is online or the table missing etc.
                     if !client
-                        .exists(&token.to_string(), &store.config.table_name)
+                        .exists(&token.to_string(), &store.config.database.table_name)
                         .await?
                     {
                         return Ok(SessionID(token));

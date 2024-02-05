@@ -113,15 +113,15 @@ where
         config: &SessionConfig,
     ) -> Result<CountingBloomFilter, SessionError> {
         let mut filter = FilterBuilder::new(
-            config.filter_expected_elements,
-            config.filter_false_positive_probability,
+            config.memory.filter_expected_elements,
+            config.memory.filter_false_positive_probability,
         )
         .build_counting_bloom_filter();
 
         if config.memory.use_bloom_filters {
             // If client exist then lets preload the id's within the database so the filter is accurate.
             if let Some(client) = &client {
-                let ids = client.get_ids(&config.table_name).await?;
+                let ids = client.get_ids(&config.database.table_name).await?;
 
                 ids.iter().for_each(|id| filter.add(id.as_bytes()));
             }
@@ -364,9 +364,6 @@ where
         if self.client.is_none() {
             let mut filter = self.filter.write().await;
             self.inner
-                .iter()
-                .for_each(|value| filter.remove(value.key().as_bytes()));
-            self.keys
                 .iter()
                 .for_each(|value| filter.remove(value.key().as_bytes()));
         }
