@@ -359,7 +359,7 @@ dependencies = [
 
 [[package]]
 name = "axum_session"
-version = "0.12.2"
+version = "0.12.3"
 dependencies = [
  "aes-gcm",
  "async-trait",

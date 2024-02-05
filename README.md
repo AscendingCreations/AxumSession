@@ -27,6 +27,7 @@ Uses Cookie or Header stored UUID's to sync back to the session store.
 - Optional Rest Mode that Disables Cookies and uses the Header values instead.
 - uses `#![forbid(unsafe_code)]` to ensure everything is implemented as safe rust.
 - has an `advanced` API to allow further control of a session.
+- uses IP address's and user agent to deter spoofing of signed cookies and headers.
 
 ## 🚨 Help
 
@@ -44,7 +45,7 @@ to your cargo include for Axum Session.
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.12.2", features = [ "postgres-rustls"] }
+axum_session = { version = "0.12.3", features = [ "postgres-rustls"] }
 ```
 
 ## 📱 Cargo Feature Flags
