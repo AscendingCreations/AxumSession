@@ -46,7 +46,7 @@ jobs:
             key: ${{ matrix.databases }}
 
         - name: Check
-        - run: cargo clippy --features ${{ matrix.databases }}
+          run: cargo clippy --features ${{ matrix.databases }}
 
   test:
     name: Test
@@ -78,6 +78,6 @@ jobs:
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
-      - run: cargo test --features "postgres-rustls"   
+        run: cargo test --features "postgres-rustls"   
 
 
