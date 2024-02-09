@@ -21,10 +21,7 @@ jobs:
         with:
           components: rustfmt
           toolchain: stable
-          override: true
 
-      # this is cheaper than requesting the non-minimal profile
-      - run: rustup component add rustfmt
       - run: cargo fmt --all -- --check
 
   check:
@@ -39,7 +36,6 @@ jobs:
           with:
             components: clippy
             toolchain: nightly
-            override: true
 
         - uses: Swatinem/rust-cache@v2
           with:
@@ -71,7 +67,7 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
-          override: true
+
       - run: |
         
       - name: Migrate database
