@@ -15,9 +15,9 @@ jobs:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@master
         with:
           components: rustfmt
           toolchain: stable
@@ -25,11 +25,7 @@ jobs:
 
       # this is cheaper than requesting the non-minimal profile
       - run: rustup component add rustfmt
-
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - run: cargo fmt --all -- --check
 
   check:
       runs-on: ubuntu-latest
@@ -38,22 +34,19 @@ jobs:
           databases: [sqlite-rustls, postgres-rustls,  mysql-rustls, redis-db]
 
       steps:
-        - uses: actions/checkout@v3
-        - uses: actions-rs/toolchain@v1
+        - uses: actions/checkout@v4
+        - uses: dtolnay/rust-toolchain@master
           with:
             components: clippy
             toolchain: nightly
             override: true
 
-        - uses: Swatinem/rust-cache@v1
+        - uses: Swatinem/rust-cache@v2
           with:
             key: ${{ matrix.databases }}
 
         - name: Check
-          uses: actions-rs/cargo@v1
-          with:
-            command: clippy
-            args: --features ${{ matrix.databases }}
+        - run: cargo clippy --features ${{ matrix.databases }}
 
   test:
     name: Test
@@ -73,8 +66,8 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
           profile: minimal
           toolchain: nightly
@@ -85,8 +78,6 @@ jobs:
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --features "postgres-rustls"
+      - run: cargo test --features "postgres-rustls"   
+
 
