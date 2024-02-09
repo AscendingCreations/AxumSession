@@ -74,10 +74,10 @@ jobs:
           override: true
       - run: |
         
-        
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
+      - name: Run Test
         run: cargo test --features "postgres-rustls"   
 
 
