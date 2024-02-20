@@ -5,13 +5,11 @@ use chrono::Utc;
 #[cfg(feature = "key-store")]
 use fastbloom_rs::Deletable;
 use futures::future::BoxFuture;
-use http::{self, Request};
+use http::Request;
 use http_body::Body as HttpBody;
 use std::{
-    boxed::Box,
     convert::Infallible,
     fmt::{self, Debug, Formatter},
-    marker::{Send, Sync},
     task::{Context, Poll},
 };
 use tower_service::Service;

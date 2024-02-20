@@ -1,5 +1,4 @@
 use std::borrow::{Borrow, BorrowMut};
-use std::convert::TryInto;
 
 use hmac::{Hmac, Mac};
 use sha2::Sha256;

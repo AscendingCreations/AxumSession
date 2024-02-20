@@ -9,13 +9,9 @@ use dashmap::DashMap;
 use fastbloom_rs::Deletable;
 #[cfg(feature = "key-store")]
 use fastbloom_rs::{CountingBloomFilter, FilterBuilder, Membership};
-use http::{self, request::Parts, StatusCode};
+use http::{request::Parts, StatusCode};
 use serde::Serialize;
-use std::{
-    fmt::Debug,
-    marker::{Send, Sync},
-    sync::Arc,
-};
+use std::{fmt::Debug, sync::Arc};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 

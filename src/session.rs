@@ -4,13 +4,9 @@ use axum::extract::FromRequestParts;
 
 #[cfg(feature = "key-store")]
 use fastbloom_rs::Membership;
-use http::{self, request::Parts, StatusCode};
+use http::{request::Parts, StatusCode};
 use serde::Serialize;
-use std::{
-    convert::From,
-    fmt::Debug,
-    marker::{Send, Sync},
-};
+use std::fmt::Debug;
 use uuid::Uuid;
 
 /// A Session Store.

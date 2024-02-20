@@ -6,19 +6,17 @@ use cookie::{Cookie, CookieJar, Key};
 use forwarded_header_value::{ForwardedHeaderValue, Identifier};
 #[cfg(not(feature = "rest_mode"))]
 use http::header::{COOKIE, SET_COOKIE};
+#[cfg(feature = "rest_mode")]
+use http::{header::HeaderName, HeaderValue};
 use http::{
-    self,
     header::{FORWARDED, USER_AGENT},
     request::Request,
     HeaderMap,
 };
 #[cfg(feature = "rest_mode")]
-use http::{header::HeaderName, HeaderValue};
-#[cfg(feature = "rest_mode")]
 use std::collections::HashMap;
 use std::{
     fmt::Debug,
-    marker::{Send, Sync},
     net::{IpAddr, SocketAddr},
 };
 use uuid::Uuid;
