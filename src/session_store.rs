@@ -93,9 +93,9 @@ where
             config,
             timers: Arc::new(RwLock::new(SessionTimers {
                 // the first expiry sweep is scheduled one lifetime from start-up
-                last_expiry_sweep: Utc::now() + Duration::hours(1),
+                last_expiry_sweep: Utc::now() + Duration::try_hours(1).unwrap_or_default(),
                 // the first expiry sweep is scheduled one lifetime from start-up
-                last_database_expiry_sweep: Utc::now() + Duration::hours(6),
+                last_database_expiry_sweep: Utc::now() + Duration::try_hours(6).unwrap_or_default(),
             })),
             #[cfg(feature = "key-store")]
             filter: Arc::new(RwLock::new(filter)),

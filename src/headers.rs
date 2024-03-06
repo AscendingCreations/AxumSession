@@ -46,6 +46,7 @@ impl NameType {
             name
         }
 
+        #[allow(clippy::let_and_return)]
         #[cfg(feature = "rest_mode")]
         name
     }

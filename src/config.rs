@@ -746,12 +746,12 @@ impl Default for SessionConfig {
     fn default() -> Self {
         Self {
             // Set to a 6 hour default in Database Session stores unloading.
-            lifespan: Duration::hours(6),
+            lifespan: Duration::try_hours(6).unwrap_or_default(),
             cookie_and_header: CookieAndHeaderConfig::default(),
             database: DatabaseConfig::default(),
             memory: MemoryConfig::default(),
             // Unload long term session after 60 days if it has not been accessed.
-            max_lifespan: Duration::days(60),
+            max_lifespan: Duration::try_days(60).unwrap_or_default(),
             session_mode: SessionMode::Persistent,
             clear_check_on_load: true,
             ip_user_agent: IpUserAgentConfig::default(),
@@ -763,9 +763,9 @@ impl Default for MemoryConfig {
     fn default() -> Self {
         Self {
             // Unload memory after 60 minutes if it has not been accessed.
-            memory_lifespan: Duration::minutes(60),
+            memory_lifespan: Duration::try_minutes(60).unwrap_or_default(),
             // Default to purge old sessions every 5 hours.
-            purge_update: Duration::hours(1),
+            purge_update: Duration::try_hours(1).unwrap_or_default(),
             // Simple is the Default mode for compatibilty with older versions of the crate.
             filter_expected_elements: 100_000,
             // The probability of how many allowable false positives you want to have based on the expected elements.
@@ -783,7 +783,7 @@ impl Default for DatabaseConfig {
             // Set to a 6 hour default in Database Session stores unloading.
             table_name: "sessions".into(),
             // Default to purge old sessions in the database every 5 hours per request.
-            purge_database_update: Duration::hours(5),
+            purge_database_update: Duration::try_hours(5).unwrap_or_default(),
             always_save: false,
             // Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.
             database_key: None,
@@ -796,7 +796,7 @@ impl Default for CookieAndHeaderConfig {
         Self {
             session_name: "session".into(),
             cookie_path: "/".into(),
-            cookie_max_age: Some(Duration::days(100)),
+            cookie_max_age: Some(Duration::try_days(100).unwrap_or_default()),
             cookie_http_only: true,
             cookie_secure: false,
             cookie_domain: None,
