@@ -140,7 +140,8 @@ impl<J> AdditionalSignedJar<J> {
             Err(err) => {
                 tracing::warn!(
                     err = %err,
-                    "possibly suspicious activity: Verification failed for Cookie."
+                    "possibly suspicious activity: Verification failed for Cookie. cookie validation string was: {}",
+                    self.message
                 );
                 None
             }

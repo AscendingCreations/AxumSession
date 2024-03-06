@@ -374,11 +374,10 @@ where
         let headers = req.headers();
 
         let ip = if store.config.ip_user_agent.use_ip {
-            let ip = req
-                .extensions()
+            req.extensions()
                 .get::<axum::extract::ConnectInfo<SocketAddr>>()
                 .map(|addr| addr.ip().to_string())
-                .unwrap_or_default();
+                .unwrap_or_default()
         } else {
             "".to_owned()
         };
@@ -389,7 +388,7 @@ where
                 .and_then(|hv| hv.to_str().ok())
                 .and_then(|s| s.split(',').find_map(|s| s.trim().parse::<IpAddr>().ok()))
                 .map(|ip| ip.to_string())
-                .unwrap_or_default();
+                .unwrap_or_default()
         } else {
             "".to_owned()
         };
@@ -413,7 +412,7 @@ where
                         })
                 })
                 .map(|ip| ip.to_string())
-                .unwrap_or_default();
+                .unwrap_or_default()
         } else {
             "".to_owned()
         };
@@ -424,7 +423,7 @@ where
                 .and_then(|hv| hv.to_str().ok())
                 .and_then(|s| s.parse::<IpAddr>().ok())
                 .map(|ip| ip.to_string())
-                .unwrap_or_default();
+                .unwrap_or_default()
         } else {
             "".to_owned()
         };
@@ -434,7 +433,7 @@ where
                 .get(USER_AGENT)
                 .and_then(|hv| hv.to_str().ok())
                 .map(|useragent| useragent.to_string())
-                .unwrap_or_default();
+                .unwrap_or_default()
         } else {
             "".to_owned()
         };
