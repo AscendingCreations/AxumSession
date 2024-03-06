@@ -151,6 +151,33 @@ impl std::fmt::Debug for MemoryConfig {
     }
 }
 
+#[derive(Clone)]
+pub struct IpUserAgentConfig {
+    /// Uses the Direct Socket IP addresss of the socket connection.
+    pub(crate) use_ip: bool,
+    /// (XFF) request header is a de-facto standard header for identifying the originating
+    /// IP address of a client connecting to a web server through a proxy server
+    pub(crate) use_xforward_ip: bool,
+    /// Contains information that may be added by reverse proxy servers
+    pub(crate) use_forward_ip: bool,
+    /// The last remote peers ip addresss.
+    pub(crate) use_real_ip: bool,
+    /// The Browser user agent.
+    pub(crate) use_user_agent: bool,
+}
+
+impl std::fmt::Debug for IpUserAgentConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("IpUserAgentConfig")
+            .field("use_ip", &self.use_ip)
+            .field("use_xforward_ip", &self.use_xforward_ip)
+            .field("use_forward_ip", &self.use_forward_ip)
+            .field("use_real_ip", &self.use_real_ip)
+            .field("use_user_agent", &self.use_user_agent)
+            .finish()
+    }
+}
+
 /// Configuration for how the Session and Cookies are used.
 ///
 /// # Examples
@@ -179,6 +206,8 @@ pub struct SessionConfig {
     pub(crate) memory: MemoryConfig,
     /// where All the cookie and header Options Exist.
     pub(crate) cookie_and_header: CookieAndHeaderConfig,
+    /// tells how we should build the string for hashing to secure the cookie.
+    pub(crate) ip_user_agent: IpUserAgentConfig,
 }
 
 impl std::fmt::Debug for SessionConfig {
@@ -631,6 +660,86 @@ impl SessionConfig {
         self.cookie_and_header.with_ip_and_user_agent = enable;
         self
     }
+
+    /// Set's the session's to use the Socket connected IP when hashing and verifying the cookies integrity.
+    /// Only if with_ip_and_user_agent is also enabled.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_hashed_ip(true);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_hashed_ip(mut self, enable: bool) -> Self {
+        self.ip_user_agent.use_ip = enable;
+        self
+    }
+
+    /// Set's the session's to use the xforward information when hashing and verifying the cookies integrity.
+    /// Only if with_ip_and_user_agent is also enabled.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_prefix_with_host(true);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_hashed_xforward(mut self, enable: bool) -> Self {
+        self.ip_user_agent.use_xforward_ip = enable;
+        self
+    }
+
+    /// Set's the session's to use the forward information when hashing and verifying the cookies integrity.
+    /// Only if with_ip_and_user_agent is also enabled.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_prefix_with_host(true);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_hashed_forward(mut self, enable: bool) -> Self {
+        self.ip_user_agent.use_forward_ip = enable;
+        self
+    }
+
+    /// Set's the session's to use the real ip information when hashing and verifying the cookies integrity.
+    /// Only if with_ip_and_user_agent is also enabled.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_prefix_with_host(true);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_hashed_real_ip(mut self, enable: bool) -> Self {
+        self.ip_user_agent.use_real_ip = enable;
+        self
+    }
+
+    /// Set's the session's to use the browsers user agent information when hashing and verifying the cookies integrity.
+    /// Only if with_ip_and_user_agent is also enabled.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_prefix_with_host(true);
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_hashed_user_agent(mut self, enable: bool) -> Self {
+        self.ip_user_agent.use_user_agent = enable;
+        self
+    }
 }
 
 impl Default for SessionConfig {
@@ -645,6 +754,7 @@ impl Default for SessionConfig {
             max_lifespan: Duration::days(60),
             session_mode: SessionMode::Persistent,
             clear_check_on_load: true,
+            ip_user_agent: IpUserAgentConfig::default(),
         }
     }
 }
@@ -696,6 +806,18 @@ impl Default for CookieAndHeaderConfig {
             key: None,
             prefix_with_host: false,
             with_ip_and_user_agent: true,
+        }
+    }
+}
+
+impl Default for IpUserAgentConfig {
+    fn default() -> Self {
+        Self {
+            use_ip: true,
+            use_xforward_ip: false,
+            use_forward_ip: false,
+            use_real_ip: false,
+            use_user_agent: true,
         }
     }
 }
