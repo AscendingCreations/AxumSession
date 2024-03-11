@@ -54,13 +54,15 @@ async fn main() {
     let response = app.clone().oneshot(request).await.unwrap();
 
     // Get our Session ID from the Response
-    let mut sessionid = response
-        .headers()
-        .get("session")
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_owned();
+    let mut sessionid = Some(
+        response
+            .headers()
+            .get("session")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned(),
+    );
 
     for _ in 0..10 {
         // Do some more Requests and get the Responses for counter
@@ -70,7 +72,7 @@ async fn main() {
                 Request::builder()
                     .uri("/counter")
                     .method(Method::GET)
-                    .header("session", sessionid)
+                    .header("session", sessionid.take().unwrap())
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -79,14 +81,16 @@ async fn main() {
 
         // We pull out and reset the SessionID as this can Change based on user end designs for Security.
         // If you also use Per session keys and storage/manual you will also need to get and return those as well.
-        sessionid = response
-            .headers()
-            .get("session")
-            .cloned()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_owned();
+        sessionid = Some(
+            response
+                .headers()
+                .get("session")
+                .cloned()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_owned(),
+        );
 
         // print our Status
         println!("Status: {:?}", response.status());
