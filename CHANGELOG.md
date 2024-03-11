@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.13.0 (11. March, 2024)
+### Added
+- Options to enable and disable certain ip and user agent patterns.
+- (Breaking) Socket IP and user agent are true by default rest is now false.
+
 ## 0.12.4 (5. February, 2024)
 ### Fixed
 - missing config extensions

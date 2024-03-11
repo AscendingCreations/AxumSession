@@ -46,6 +46,7 @@ impl NameType {
             name
         }
 
+        #[allow(clippy::let_and_return)]
         #[cfg(feature = "rest_mode")]
         name
     }
@@ -373,51 +374,70 @@ where
     {
         let headers = req.headers();
 
-        let ip = req
-            .extensions()
-            .get::<axum::extract::ConnectInfo<SocketAddr>>()
-            .map(|addr| addr.ip().to_string())
-            .unwrap_or_default();
+        let ip = if store.config.ip_user_agent.use_ip {
+            req.extensions()
+                .get::<axum::extract::ConnectInfo<SocketAddr>>()
+                .map(|addr| addr.ip().to_string())
+                .unwrap_or_default()
+        } else {
+            "".to_owned()
+        };
 
-        let x_forward_for_ip = headers
-            .get(X_FORWARDED_FOR)
-            .and_then(|hv| hv.to_str().ok())
-            .and_then(|s| s.split(',').find_map(|s| s.trim().parse::<IpAddr>().ok()))
-            .map(|ip| ip.to_string())
-            .unwrap_or_default();
+        let x_forward_for_ip = if store.config.ip_user_agent.use_xforward_ip {
+            headers
+                .get(X_FORWARDED_FOR)
+                .and_then(|hv| hv.to_str().ok())
+                .and_then(|s| s.split(',').find_map(|s| s.trim().parse::<IpAddr>().ok()))
+                .map(|ip| ip.to_string())
+                .unwrap_or_default()
+        } else {
+            "".to_owned()
+        };
 
-        let forwarded_ip = headers
-            .get_all(FORWARDED)
-            .iter()
-            .find_map(|hv| {
-                hv.to_str()
-                    .ok()
-                    .and_then(|s| ForwardedHeaderValue::from_forwarded(s).ok())
-                    .and_then(|f| {
-                        f.iter()
-                            .filter_map(|fs| fs.forwarded_for.as_ref())
-                            .find_map(|ff| match ff {
-                                Identifier::SocketAddr(a) => Some(a.ip()),
-                                Identifier::IpAddr(ip) => Some(*ip),
-                                _ => None,
-                            })
-                    })
-            })
-            .map(|ip| ip.to_string())
-            .unwrap_or_default();
+        let forwarded_ip = if store.config.ip_user_agent.use_forward_ip {
+            headers
+                .get_all(FORWARDED)
+                .iter()
+                .find_map(|hv| {
+                    hv.to_str()
+                        .ok()
+                        .and_then(|s| ForwardedHeaderValue::from_forwarded(s).ok())
+                        .and_then(|f| {
+                            f.iter()
+                                .filter_map(|fs| fs.forwarded_for.as_ref())
+                                .find_map(|ff| match ff {
+                                    Identifier::SocketAddr(a) => Some(a.ip()),
+                                    Identifier::IpAddr(ip) => Some(*ip),
+                                    _ => None,
+                                })
+                        })
+                })
+                .map(|ip| ip.to_string())
+                .unwrap_or_default()
+        } else {
+            "".to_owned()
+        };
 
-        let real_ip = headers
-            .get(X_REAL_IP)
-            .and_then(|hv| hv.to_str().ok())
-            .and_then(|s| s.parse::<IpAddr>().ok())
-            .map(|ip| ip.to_string())
-            .unwrap_or_default();
+        let real_ip = if store.config.ip_user_agent.use_real_ip {
+            headers
+                .get(X_REAL_IP)
+                .and_then(|hv| hv.to_str().ok())
+                .and_then(|s| s.parse::<IpAddr>().ok())
+                .map(|ip| ip.to_string())
+                .unwrap_or_default()
+        } else {
+            "".to_owned()
+        };
 
-        let user_agent = headers
-            .get(USER_AGENT)
-            .and_then(|hv| hv.to_str().ok())
-            .map(|useragent| useragent.to_string())
-            .unwrap_or_default();
+        let user_agent = if store.config.ip_user_agent.use_user_agent {
+            headers
+                .get(USER_AGENT)
+                .and_then(|hv| hv.to_str().ok())
+                .map(|useragent| useragent.to_string())
+                .unwrap_or_default()
+        } else {
+            "".to_owned()
+        };
 
         format!(
             "{};{};{};{};{}",

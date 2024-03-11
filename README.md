@@ -45,7 +45,7 @@ to your cargo include for Axum Session.
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.12.4", features = [ "postgres-rustls"] }
+axum_session = { version = "0.13.0", features = [ "postgres-rustls"] }
 ```
 
 ## 📱 Cargo Feature Flags
@@ -69,9 +69,9 @@ axum_session = { version = "0.12.4", features = [ "postgres-rustls"] }
 
 `mysql-native`: `Sqlx 0.7.0` support for the MySQL/MariaDB database server and `native-tls`.
 
-`redis-db`:  `redis_pool 0.3.0` session support. Enables Redis Client Pool
+`redis-db`:  `redis_pool 0.3.0` session support. Enables Redis Client Pool "Uses Redis 0.24 currently."
 
-`redis-clusterdb`:  `redis_pool 0.3.0` session support. Enabled Redis ClusterClient Pool.
+`redis-clusterdb`:  `redis_pool 0.3.0` session support. Enabled Redis ClusterClient Pool. "Uses Redis 0.24 currently."
 
 `surreal`: `surrealdb 1.0.0` support for surrealdb.
 
