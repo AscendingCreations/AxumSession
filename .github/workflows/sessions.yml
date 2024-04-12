@@ -74,6 +74,6 @@ jobs:
         run: |
           sudo apt-get install libpq-dev -y
       - name: Run Test
-        run: cargo test --features "postgres", "rustls"   
+        run: cargo test  
 
 
