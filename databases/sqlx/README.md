@@ -43,5 +43,5 @@ You must choose a Database and a tls mode if you disable defaults.
 
 ## 🔎 Examples
 
-You can locate the example files within [`Repository`](https://github.com/AscendingCreations/AxumSession/tree/main/examples)  
+You can locate the example files within the [`Repository`](https://github.com/AscendingCreations/AxumSession/tree/main/examples)  
 

@@ -40,7 +40,7 @@ async fn connect_to_database() -> PgPool {
     connect_opts = connect_opts
         .database("test")
         .username("test")
-        .password("password")
+        .password("test")
         .host("127.0.0.1")
         .port(5432);
 
