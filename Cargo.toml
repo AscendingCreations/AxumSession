@@ -74,6 +74,7 @@ async-trait = "0.1.74"
 tokio = { version = "1.36.0", features = ["full", "tracing"] }
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
+axum = { version = "0.7.4" }
 
 [package.metadata.docs.rs]
 features = [
