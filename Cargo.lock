@@ -121,7 +121,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "axum_session_sqlx",
  "sqlx",
  "tokio",
@@ -385,11 +385,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum_session"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f7f838b45b25647f9df4bd99ef0bbb009020de8093773dd27b41b12a87f2167"
+dependencies = [
+ "aes-gcm",
+ "async-trait",
+ "axum",
+ "base64 0.21.7",
+ "bytes",
+ "chrono",
+ "cookie",
+ "dashmap",
+ "forwarded-header-value",
+ "futures",
+ "hmac",
+ "http 1.1.0",
+ "http-body 1.0.0",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "tokio",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "axum_session_mongo"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono",
  "mongodb",
  "serde",
@@ -401,7 +432,7 @@ name = "axum_session_redispool"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "redis",
  "redis_pool",
 ]
@@ -412,7 +443,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono",
  "http-body-util",
  "hyper 1.2.0",
@@ -429,7 +460,7 @@ name = "axum_session_surreal"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono",
  "surrealdb",
 ]
@@ -2249,7 +2280,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "axum_session_surreal",
  "hyper 1.2.0",
  "surrealdb",
@@ -2454,7 +2485,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio",
 ]
 
@@ -2828,7 +2859,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "axum_session_sqlx",
  "sqlx",
  "tokio",
@@ -3055,9 +3086,9 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.24.0"
+version = "0.25.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c580d9cbbe1d1b479e8d67cf9daf6a62c957e6846048408b80b43ac3f6af84cd"
+checksum = "6472825949c09872e8f2c50bde59fcefc17748b6be5c90fd67cd8b4daca73bfd"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3072,7 +3103,7 @@ dependencies = [
  "rand 0.8.5",
  "ryu",
  "sha1_smol",
- "socket2 0.4.10",
+ "socket2 0.5.6",
  "tokio",
  "tokio-util",
  "url",
@@ -3080,9 +3111,9 @@ dependencies = [
 
 [[package]]
 name = "redis_pool"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c6e30cbaef59b7d0373ac0d5cb022e17099b109a695cf83958677caac608035"
+checksum = "7f5fdba2b6eefecf9aa77e49a15ea66d47a160d3acf003d8f8e707b24405d696"
 dependencies = [
  "async-trait",
  "crossbeam-queue",
@@ -3098,7 +3129,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "axum_session_redispool",
  "redis",
  "redis_pool",
@@ -3243,7 +3274,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "axum_session_surreal",
  "http-body-util",
  "hyper 1.2.0",
@@ -3750,7 +3781,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "axum_session_sqlx",
  "sqlx",
  "tokio",
@@ -3820,7 +3851,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "axum_session_sqlx",
  "sqlx",
  "tokio",
@@ -3976,7 +4007,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "axum_session_sqlx",
  "sqlx",
  "tokio",
@@ -4278,7 +4309,7 @@ version = "0.0.1"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session",
+ "axum_session 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "axum_session_surreal",
  "surrealdb",
  "tokio",
