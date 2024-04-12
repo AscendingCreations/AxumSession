@@ -12,9 +12,6 @@ repository = "https://github.com/AscendingCreations/AxumSession"
 
 [dependencies]
 axum_session.workspace = true
-chrono = { version = "0.4.31", default-features = false, features = [
-    "clock",
-    "serde",
-] }
-async-trait = "0.1.74"
+chrono.workspace = true
+async-trait.workspace = true
 surrealdb = { version = "1.2.2"}

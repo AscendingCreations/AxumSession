@@ -12,11 +12,8 @@ repository = "https://github.com/AscendingCreations/AxumSession"
 
 [dependencies]
 axum_session.workspace = true
-serde = { version = "1.0.192", features = ["derive"] }
-serde_json = "1.0.108"
-chrono = { version = "0.4.31", default-features = false, features = [
-    "clock",
-    "serde",
-] }
-async-trait = "0.1.74"
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+async-trait.workspace = true
 mongodb = { version = "2.8.1"}

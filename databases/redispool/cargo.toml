@@ -14,7 +14,7 @@ repository = "https://github.com/AscendingCreations/AxumSession"
 redis-clusterdb = ["redis_pool/cluster", "redis/cluster-async"]
 
 [dependencies]
-async-trait = "0.1.74"
+async-trait.workspace = true
 redis_pool = { version = "0.3.0" }
 redis = { version = "0.24.0", features = [
     "aio",
