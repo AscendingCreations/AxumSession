@@ -19,7 +19,7 @@ If you need help with this library or have suggestions please go to our [Discord
 ```toml
 # Cargo.toml
 [dependencies]
-axum_session = { version = "0.13.0" }
+axum_session = { version = "0.14.0" }
 axum_session_surreal = { version = "0.1.0" }
 ```
 
