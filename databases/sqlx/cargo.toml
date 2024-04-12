@@ -1,0 +1,50 @@
+[package]
+name = "axum_session_sqlx"
+version = "0.1.0"
+authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
+description = "📝 Sqlx Persistent Database layer for axum_session"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+documentation = "https://docs.rs/axum_session_sqlx"
+keywords = ["Axum", "Tower", "SQLx", "Session"]
+repository = "https://github.com/AscendingCreations/AxumSession"
+
+[features]
+default = ["postgres", "tls-rustls"]
+
+sqlite = ["sqlx/sqlite"]
+postgres = ["sqlx/postgres"]
+mysql = ["sqlx/mysql"]
+tls-rustls = ["sqlx/tls-rustls"]
+tls-native-tls = ["sqlx/tls-native-tls"]
+
+[dependencies]
+chrono = { version = "0.4.31", default-features = false, features = [
+    "clock",
+    "serde",
+] }
+async-trait = "0.1.74"
+sqlx = { version = "0.7.3", default-features = false, features = [
+    "runtime-tokio",
+    "chrono",
+    "uuid",
+]}
+axum_session.workspace = true
+
+[dev-dependencies]
+axum = { version = "0.7.4", features = ["macros"] }
+hyper = "1.2.0"
+tower = "0.4.13"
+log = { version = "0.4.20", default-features = false }
+http-body-util = "0.1.0"
+sqlx = { version = "0.7.3", default-features = false, features = [
+    "runtime-tokio",
+    "chrono",
+    "uuid",
+    "postgres",
+    "tls-rustls"
+]}
+tokio = { version = "1.36.0", features = ["full"] }
+serde = { version = "1.0.192", features = ["derive"] }
+serde_json = "1.0.108"

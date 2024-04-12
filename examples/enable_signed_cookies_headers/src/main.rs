@@ -10,7 +10,14 @@ async fn main() {
 
     //This Defaults as normal Cookies.
     //To enable Private cookies for integrity, and authenticity please check the next Example.
-    let session_config = SessionConfig::default().with_table_name("sessions_table");
+    let session_config = SessionConfig::default()
+        .with_table_name("sessions_table")
+        // 'Key::generate()' will generate a new key each restart of the server.
+        // If you want it to be more permanent then generate and set it to a config file.
+        // If with_key() is used it will set all cookies or headers as signed, which guarantees integrity, and authenticity.
+        .with_key(Key::generate())
+        // This is how we would Set a Database Key to encrypt as store our per session data.
+        .with_database_key(Key::generate());
 
     // create SessionStore and initiate the database tables
     let session_store = SessionPgSessionStore::new(Some(poll.clone().into()), session_config)

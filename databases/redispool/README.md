@@ -1,0 +1,34 @@
+<h1 align="center">
+Axum Session RedisPool
+</h1>
+
+[![https://crates.io/crates/axum_session_redispool](https://img.shields.io/crates/v/axum_session_redispool?style=plastic)](https://crates.io/crates/axum_session_redispool)
+[![Docs](https://docs.rs/axum_session_redispool/badge.svg)](https://docs.rs/axum_session_redispool)
+
+## 📑 Overview
+
+<p align="center">
+`axum_session_redispool` is a redis pool store for AxumSession.
+</p>
+
+## 🚨 Help
+
+If you need help with this library or have suggestions please go to our [Discord Group](https://discord.gg/gVXNDwpS3Z)
+
+## 📦 Install
+
+```toml
+# Cargo.toml
+[dependencies]
+axum_session = { version = "0.13.0" }
+axum_session_redispool = { version = "0.1.0" }
+```
+
+## 📱 Cargo Feature Flags
+| Features                      | Description                                                        |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `redis-clusterdb`             | Enables redis Clusters.                                            |
+
+## 🔎 Examples
+
+You can locate the example files within the [`Repository`](https://github.com/AscendingCreations/AxumSession/tree/main/examples) 

@@ -1,0 +1,22 @@
+[package]
+name = "axum_session_mongo"
+version = "0.1.0"
+authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
+description = "📝 Mongo Database layer for axum_session."
+edition = "2021"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+documentation = "https://docs.rs/axum_session_mongo"
+keywords = ["Axum", "Tower", "Mongo", "Session"]
+repository = "https://github.com/AscendingCreations/AxumSession"
+
+[dependencies]
+axum_session.workspace = true
+serde = { version = "1.0.192", features = ["derive"] }
+serde_json = "1.0.108"
+chrono = { version = "0.4.31", default-features = false, features = [
+    "clock",
+    "serde",
+] }
+async-trait = "0.1.74"
+mongodb = { version = "2.8.1"}

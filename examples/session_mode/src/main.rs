@@ -1,6 +1,5 @@
 use axum::{routing::get, Router};
-use axum_session::{SessionConfig, SessionLayer};
-use axum_session_sqlx::{SessionPgSession, SessionPgSessionStore};
+use axum_session::{SessionConfig, SessionLayer, SessionPgSession, SessionPgSessionStore};
 use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions};
 use tokio::net::TcpListener;
 
@@ -10,7 +9,9 @@ async fn main() {
 
     //This Defaults as normal Cookies.
     //To enable Private cookies for integrity, and authenticity please check the next Example.
-    let session_config = SessionConfig::default().with_table_name("sessions_table");
+    let session_config = SessionConfig::default()
+        .with_table_name("sessions_table")
+        .with_mode(SessionMode::OptIn);
 
     // create SessionStore and initiate the database tables
     let session_store = SessionPgSessionStore::new(Some(poll.clone().into()), session_config)
@@ -30,6 +31,8 @@ async fn greet(session: SessionPgSession) -> String {
     let mut count: usize = session.get("count").unwrap_or(0);
 
     count += 1;
+    // Allow the Session data to be keep in memory and the database for the lifetime.
+    session.set_store(true);
     session.set("count", count);
 
     count.to_string()

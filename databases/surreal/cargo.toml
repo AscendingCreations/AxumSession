@@ -1,0 +1,20 @@
+[package]
+name = "axum_session_surreal"
+version = "0.1.0"
+authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
+description = "📝 Surreal Persistent Database layer for axum_session"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+documentation = "https://docs.rs/axum_session_surreal"
+keywords = ["Axum", "Tower", "Surreal", "Session"]
+repository = "https://github.com/AscendingCreations/AxumSession"
+
+[dependencies]
+axum_session.workspace = true
+chrono = { version = "0.4.31", default-features = false, features = [
+    "clock",
+    "serde",
+] }
+async-trait = "0.1.74"
+surrealdb = { version = "1.2.2"}

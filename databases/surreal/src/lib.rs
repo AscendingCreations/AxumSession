@@ -1,5 +1,10 @@
-use crate::{DatabasePool, SessionError, SessionStore};
+#![doc = include_str!("../README.md")]
+#![allow(dead_code)]
+#![warn(clippy::all, nonstandard_style, future_incompatible)]
+#![forbid(unsafe_code)]
+
 use async_trait::async_trait;
+use axum_session::{DatabaseError, DatabasePool, Session, SessionStore};
 use chrono::Utc;
 use surrealdb::{Connection, Surreal};
 
@@ -40,19 +45,22 @@ impl<C: Connection> SessionSurrealPool<C> {
         Self { connection }
     }
 
-    pub async fn is_valid(&self) -> Result<(), SessionError> {
-        self.connection.query("SELECT * FROM 1;").await?;
+    pub async fn is_valid(&self) -> Result<(), DatabaseError> {
+        self.connection
+            .query("SELECT * FROM 1;")
+            .await
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
         Ok(())
     }
 }
 
 #[async_trait]
 impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
-    async fn initiate(&self, _table_name: &str) -> Result<(), SessionError> {
+    async fn initiate(&self, _table_name: &str) -> Result<(), DatabaseError> {
         Ok(())
     }
 
-    async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
+    async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         let mut res = self
             .connection
             .query(
@@ -60,27 +68,34 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
                 WHERE sessionexpires = NONE OR sessionexpires < $expires;",
             )
             .bind(("table_name", table_name))
-            .await?;
+            .await
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
-        let ids: Vec<String> = res.take("sessionid")?;
+        let ids: Vec<String> = res
+            .take("sessionid")
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
         self.connection
             .query("DELETE type::table($table_name) WHERE sessionexpires < $expires;")
             .bind(("table_name", table_name))
             .bind(("expires", Utc::now().timestamp()))
-            .await?;
+            .await
+            .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
 
         Ok(ids)
     }
 
-    async fn count(&self, table_name: &str) -> Result<i64, SessionError> {
+    async fn count(&self, table_name: &str) -> Result<i64, DatabaseError> {
         let mut res = self
             .connection
             .query("SELECT count() AS amount FROM type::table($table_name) GROUP BY amount;")
             .bind(("table_name", table_name))
-            .await?;
+            .await
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
-        let response: Option<i64> = res.take("amount")?;
+        let response: Option<i64> = res
+            .take("amount")
+            .map_err(|err| DatabaseError::GenericNotSupportedError(err.to_string()))?;
         if let Some(count) = response {
             Ok(count)
         } else {
@@ -94,7 +109,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         session: &str,
         expires: i64,
         table_name: &str,
-    ) -> Result<(), SessionError> {
+    ) -> Result<(), DatabaseError> {
         self.connection
         .query(
             "UPDATE type::thing($table_name, $session_id) SET sessionstore = $store, sessionexpires = $expire, sessionid = $session_id;",
@@ -103,12 +118,12 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         .bind(("session_id", id.to_string()))
         .bind(("expire", expires.to_string()))
         .bind(("store", session))
-        .await?;
+        .await.map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
         Ok(())
     }
 
-    async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, SessionError> {
+    async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, DatabaseError> {
         let mut res = self
             .connection
             .query(
@@ -118,23 +133,27 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .bind(("table_name", table_name))
             .bind(("session_id", id))
             .bind(("expires", Utc::now().timestamp()))
-            .await?;
+            .await
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
-        let response: Option<String> = res.take("sessionstore")?;
+        let response: Option<String> = res
+            .take("sessionstore")
+            .map_err(|err| DatabaseError::GenericNotSupportedError(err.to_string()))?;
         Ok(response)
     }
 
-    async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError> {
+    async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), DatabaseError> {
         self.connection
             .query("DELETE type::table($table_name) WHERE sessionid < $session_id;")
             .bind(("table_name", table_name))
             .bind(("session_id", id))
-            .await?;
+            .await
+            .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
 
         Ok(())
     }
 
-    async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
+    async fn exists(&self, id: &str, table_name: &str) -> Result<bool, DatabaseError> {
         let mut res = self
             .connection
             .query(
@@ -144,22 +163,26 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .bind(("table_name", table_name))
             .bind(("session_id", id))
             .bind(("expires", Utc::now().timestamp()))
-            .await?;
+            .await
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
-        let response: Option<i64> = res.take("amount")?;
+        let response: Option<i64> = res
+            .take("amount")
+            .map_err(|err| DatabaseError::GenericNotSupportedError(err.to_string()))?;
         Ok(response.map(|f| f > 0).unwrap_or_default())
     }
 
-    async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
+    async fn delete_all(&self, table_name: &str) -> Result<(), DatabaseError> {
         self.connection
             .query("DELETE type::table($table_name);")
             .bind(("table_name", table_name))
-            .await?;
+            .await
+            .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
 
         Ok(())
     }
 
-    async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
+    async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         let mut res = self
             .connection
             .query(
@@ -168,9 +191,12 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             )
             .bind(("table_name", table_name))
             .bind(("expires", Utc::now().timestamp()))
-            .await?;
+            .await
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
-        let ids: Vec<String> = res.take("sessionid")?;
+        let ids: Vec<String> = res
+            .take("sessionid")
+            .map_err(|err| DatabaseError::GenericNotSupportedError(err.to_string()))?;
         Ok(ids)
     }
 

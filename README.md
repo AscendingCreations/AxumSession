@@ -36,7 +36,6 @@ If you need help with this library or have suggestions please go to our [Discord
 ## 📦 Install
 
 Axum Session uses [`tokio`]. 
-By Default Axum Session uses `postgres-rustls` so if you need tokio native TLS please add `default-features = false` 
 to your cargo include for Axum Session.
 
 [`tokio`]: https://github.com/tokio-rs/tokio
@@ -45,39 +44,20 @@ to your cargo include for Axum Session.
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.13.0", features = [ "postgres-rustls"] }
+axum_session = { version = "0.13.0" }
 ```
 
 ## 📱 Cargo Feature Flags
-`default`: [`postgres-rustls`]
 
-`advanced`: Enable functions allowing more direct control over the sessions.
-
-`rest_mode`: Disables Cookie Handlering In place of Header only usage for Rest API Requests and Responses.
-
-`key-store`: Enabled the optional key storage. Will increase ram usage based on Fastbloom settings.
-
-`sqlite-rustls`: `Sqlx 0.7.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `rustls`.
-
-`sqlite-native`: `Sqlx 0.7.0` support for the self-contained [SQLite](https://sqlite.org/) database engine and `native-tls`.
-
-`postgres-rustls`: `Sqlx 0.7.0` support for the Postgres database server and `rustls`.
-
-`postgres-native`: `Sqlx 0.7.0` support for the Postgres database server and `native-tls`.
-
-`mysql-rustls`: `Sqlx 0.7.0` support for the MySQL/MariaDB database server and `rustls`.
-
-`mysql-native`: `Sqlx 0.7.0` support for the MySQL/MariaDB database server and `native-tls`.
-
-`redis-db`:  `redis_pool 0.3.0` session support. Enables Redis Client Pool "Uses Redis 0.24 currently."
-
-`redis-clusterdb`:  `redis_pool 0.3.0` session support. Enabled Redis ClusterClient Pool. "Uses Redis 0.24 currently."
-
-`surreal`: `surrealdb 1.0.0` support for surrealdb.
-
-`mongo` : `mongodb 2.6.1` support for mongo.
+| Features                      | Description                                                                                    |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- |
+| `advanced`                    | Enable functions allowing more direct control over the sessions.                               |
+| `rest_mode`                   | Disables Cookie Handlering In place of Header only usage for Rest API Requests and Responses.  |
+| `key-store`                   | Enabled the optional key storage. Will increase ram usage based on Fastbloom settings.         |
 
 ## 🔎 Example Default Setup
+
+You can find examples within the [`Repository`](https://github.com/AscendingCreations/AxumSession/tree/main/examples) 
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
@@ -130,146 +110,6 @@ async fn connect_to_database() -> anyhow::Result<sqlx::Pool<sqlx::Postgres>> {
 }
 ```
 
-## 🔐 Example Signed Cookies/Headers and Database Session Data Encryption.
-### Enable Cookie and Header UUID Signing and Database Key encryption for Session Data.
-
-```rust ignore
-use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
-use std::net::SocketAddr;
-use axum_session::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer, SessionMode, Key, SecurityMode};
-use axum::{
-    Router,
-    routing::get,
-};
-use tokio::net::TcpListener;
-
-#[tokio::main]
-async fn main() {
-    let session_config = SessionConfig::default()
-        .with_table_name("sessions_table")
-        // 'Key::generate()' will generate a new key each restart of the server.
-        // If you want it to be more permanent then generate and set it to a config file.
-        // If with_key() is used it will set all cookies or headers as signed, which guarantees integrity, and authenticity.
-        .with_key(Key::generate())
-        // This is how we would Set a Database Key to encrypt as store our per session data. 
-        .with_database_key(Key::generate());
-
-    // create SessionStore and initiate the database tables
-    let session_store = SessionStore::<SessionPgPool>::new(None, session_config).await.unwrap();
-
-    // build our application with some routes
-    let app = Router::new()
-        .route("/greet", get(greet))
-        .layer(SessionLayer::new(session_store));
-
-    // run it
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
-
-    debug!("listening on {}", addr);
-    let listener = TcpListener::bind(addr).await.unwrap();
-
-    //we then start the actual service.
-    axum::serve(
-        listener,
-        // We set it with connection info so we can get the ip address of the user from the socket.
-        // Otherwise if we try to get this and this is not set the ip address will be empty.
-        // This is needed for the ip and user agent stuff to get the correct information.
-        app.into_make_service_with_connect_info::<SocketAddr>(),
-    )
-    .await
-    .unwrap();
-}
-```
-
-## 💿 Example SessionNullPool for non_persistant Memory store only.
-
-```rust ignore
-use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
-use std::net::SocketAddr;
-use axum_session::{Session, SessionNullPool, SessionConfig, SessionStore, SessionLayer};
-use axum::{
-    Router,
-    routing::get,
-};
-use tokio::net::TcpListener;
-
-#[tokio::main]
-async fn main() {
-    let session_config = SessionConfig::default()
-        .with_table_name("sessions_table");
-
-    // create SessionStore and initiate the database tables
-    let session_store = SessionStore::<SessionNullPool>::new(None, session_config).await.unwrap();
-
-    // build our application with some routes
-    let app = Router::new()
-        .route("/greet", get(greet))
-        .layer(SessionLayer::new(session_store));
-
-    // run it
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
-
-    debug!("listening on {}", addr);
-    let listener = TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-}
-
-async fn greet(session: Session<SessionNullPool>) -> String {
-    let mut count: usize = session.get("count").unwrap_or(0);
-
-    count += 1;
-    session.set("count", count);
-
-    count.to_string()
-}
-
-```
-
-## 🗃️ Example session mode set as OptIn
-
-```rust ignore
-use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
-use std::net::SocketAddr;
-use axum_session::{Session, SessionPgPool, SessionConfig, SessionStore, SessionLayer, SessionMode};
-use axum::{
-    Router,
-    routing::get,
-};
-use tokio::net::TcpListener;
-
-#[tokio::main]
-async fn main() {
-    let session_config = SessionConfig::default()
-        .with_table_name("sessions_table").with_mode(SessionMode::OptIn);
-
-    // create SessionStore and initiate the database tables
-    let session_store = SessionStore::<SessionPgPool>::new(None, session_config).await.unwrap();
-
-    // build our application with some routes
-    let app = Router::new()
-        .route("/greet", get(greet))
-        .layer(SessionLayer::new(session_store));
-
-    // run it
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
-
-    debug!("listening on {}", addr);
-    let listener = TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-}
-
-async fn greet(session: Session<SessionPgPool>) -> String {
-    let mut count: usize = session.get("count").unwrap_or(0);
-
-    // Allow the Session data to be keep in memory and the database for the lifetime.
-    session.set_store(true);
-    count += 1;
-    session.set("count", count);
-
-    count.to_string()
-}
-
-```
 ## 🔑 Key Store Details
 
 To enable and use fastbloom key storage for less database lookups. 

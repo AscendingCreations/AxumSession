@@ -15,4 +15,5 @@ sqlx = { version = "0.7.2", features = [
     "tls-rustls",
     "runtime-tokio",
 ] }
-axum_session = { path = "../../", features = ["sqlite-rustls"] }
+axum_session = { path = "../../" }
+axum_session_sqlx = { path = "../../databases/sqlx", features = ["sqlite"]  }

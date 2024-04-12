@@ -1,0 +1,23 @@
+[package]
+name = "axum_session_redispool"
+version = "0.1.0"
+authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
+description = "📝 RedisPool Database layer for axum_session."
+edition = "2021"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+documentation = "https://docs.rs/axum_session_redispool"
+keywords = ["Axum", "Tower", "Redis", "Session"]
+repository = "https://github.com/AscendingCreations/AxumSession"
+
+[features]
+redis-clusterdb = ["redis_pool/cluster", "redis/cluster-async"]
+
+[dependencies]
+async-trait = "0.1.74"
+redis_pool = { version = "0.3.0" }
+redis = { version = "0.24.0", features = [
+    "aio",
+    "tokio-comp",
+] }
+axum_session.workspace = true

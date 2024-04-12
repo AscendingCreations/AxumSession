@@ -1,5 +1,6 @@
 use axum::{routing::get, Router};
-use axum_session::{Session, SessionConfig, SessionLayer, SessionSqlitePool, SessionStore};
+use axum_session::{Session, SessionConfig, SessionLayer, SessionStore};
+use axum_session_sqlx::SessionSqlitePool;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions};
 use std::{net::SocketAddr, str::FromStr};
 use tokio::net::TcpListener;

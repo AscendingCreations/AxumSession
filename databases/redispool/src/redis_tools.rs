@@ -1,12 +1,11 @@
+use axum_session::DatabaseError;
 use redis::aio::ConnectionLike;
 use redis_pool::connection::RedisPoolConnection;
-
-use crate::SessionError;
 
 pub async fn scan_keys<C>(
     con: &mut RedisPoolConnection<C>,
     pattern: &str,
-) -> Result<Vec<String>, SessionError>
+) -> Result<Vec<String>, DatabaseError>
 where
     C: ConnectionLike + Send + Sync + 'static,
 {
@@ -24,7 +23,8 @@ where
             .arg("MATCH")
             .arg(pattern)
             .query_async(con)
-            .await?;
+            .await
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
         keys.extend(new_keys);
 

@@ -1,8 +1,6 @@
 use axum::{routing::get, Router};
-use axum_session::{
-    SessionAnyPool, SessionAnySession, SessionConfig, SessionLayer, SessionPgPool,
-    SessionSqlitePool, SessionStore,
-};
+use axum_session::{SessionAnyPool, SessionAnySession, SessionConfig, SessionLayer, SessionStore};
+use axum_session_sqlx::{SessionPgPool, SessionSqlitePool};
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},

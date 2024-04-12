@@ -1,8 +1,7 @@
-use crate::{databases::DatabasePool, Session, SessionError, SessionStore};
+use crate::{DatabaseError, DatabasePool, Session, SessionStore};
 use async_trait::async_trait;
 use std::fmt::Debug;
 use std::sync::Arc;
-
 ///Any Session Helper type for the DatabasePool.
 pub type SessionAnySession = Session<SessionAnyPool>;
 ///Any Session Store Helper type for the DatabasePool.
@@ -35,11 +34,11 @@ impl Debug for SessionAnyPool {
 
 #[async_trait]
 impl DatabasePool for SessionAnyPool {
-    async fn initiate(&self, table_name: &str) -> Result<(), SessionError> {
+    async fn initiate(&self, table_name: &str) -> Result<(), DatabaseError> {
         self.pool.initiate(table_name).await
     }
 
-    async fn count(&self, table_name: &str) -> Result<i64, SessionError> {
+    async fn count(&self, table_name: &str) -> Result<i64, DatabaseError> {
         self.pool.count(table_name).await
     }
 
@@ -49,31 +48,31 @@ impl DatabasePool for SessionAnyPool {
         session: &str,
         expires: i64,
         table_name: &str,
-    ) -> Result<(), SessionError> {
+    ) -> Result<(), DatabaseError> {
         self.pool.store(id, session, expires, table_name).await
     }
 
-    async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, SessionError> {
+    async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, DatabaseError> {
         self.pool.load(id, table_name).await
     }
 
-    async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), SessionError> {
+    async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), DatabaseError> {
         self.pool.delete_one_by_id(id, table_name).await
     }
 
-    async fn exists(&self, id: &str, table_name: &str) -> Result<bool, SessionError> {
+    async fn exists(&self, id: &str, table_name: &str) -> Result<bool, DatabaseError> {
         self.pool.exists(id, table_name).await
     }
 
-    async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
+    async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         self.pool.delete_by_expiry(table_name).await
     }
 
-    async fn delete_all(&self, table_name: &str) -> Result<(), SessionError> {
+    async fn delete_all(&self, table_name: &str) -> Result<(), DatabaseError> {
         self.pool.delete_all(table_name).await
     }
 
-    async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, SessionError> {
+    async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         self.pool.get_ids(table_name).await
     }
 
