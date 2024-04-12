@@ -3,6 +3,9 @@ resolver = "2"
 members = [
     ".",
     "databases/sqlx",
+    "databases/mongo",
+    "databases/redispool",
+    "databases/surreal",
     "examples/any",
     "examples/postgres",
     "examples/sqlite",
@@ -10,9 +13,9 @@ members = [
     "examples/surrealdb",
     "examples/middleware_layer",
     "examples/rest_test",
-    "databases/mongo",
-    "databases/redispool",
-    "databases/surreal",
+    "examples/enable_signed_cookies_headers",
+    "examples/session_mode",
+    "examples/session_null_pool",
 ]
 
 [package]

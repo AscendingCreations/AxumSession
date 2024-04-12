@@ -1,5 +1,6 @@
 use axum::{routing::get, Router};
-use axum_session::{SessionConfig, SessionLayer, SessionPgSession, SessionPgSessionStore};
+use axum_session::{SessionConfig, SessionLayer, SessionMode};
+use axum_session_sqlx::{SessionPgSession, SessionPgSessionStore};
 use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions};
 use tokio::net::TcpListener;
 
