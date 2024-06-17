@@ -46,7 +46,6 @@ impl CookiesAdditionJar for CookieJar {
 }
 
 /// A child cookie jar that authenticates its cookies and Adds Additional measures to ensure integrity.
-#[cfg_attr(doc, doc(cfg(feature = "signed")))]
 pub struct AdditionalSignedJar<J> {
     parent: J,
     key: [u8; KEY_LEN],
