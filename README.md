@@ -61,7 +61,7 @@ axum_session = { version = "0.14.0" }
 | [`axum_session_sqlx`](https://crates.io/crates/axum_session_sqlx)                   | Yes        | Sqlx session store                                          |
 | [`axum_session_surreal`](https://crates.io/crates/axum_session_surreal)             | Yes        | Surreal session store                                       |
 | [`axum_session_mongo`](https://crates.io/crates/axum_session_mongo)                 | Yes        | Mongo session store                                         |
-| [`axum_session_redispool`](https://crates.io/crates/axum_session_redisspool)        | Yes        | RedisPool session store                                     |
+| [`axum_session_redispool`](https://crates.io/crates/axum_session_redispool)        | Yes        | RedisPool session store                                     |
 
 ## 🔎 Example Default Setup
 
