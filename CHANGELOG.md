@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Changed
+- DashMaps to Version 6.0.1.
+
 ## 0.14.0 (12. April, 2024)
 ### Added
 - (Breaking) Split Databases into their own libraries Other than the SessionNullPool and SessionAnyPool
@@ -32,7 +35,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## 0.12.0 (1. January, 2023)
 ### Changed
-- (Breaking) split config into groups to help make it more understandable on the Docs side.
+- (Breaking) split config into groups to help make it more understandab
+le on the Docs side.
 - (Breaking) Removed encryption of cookies and headers and replaced with signing.
 - (Breaking) Database_key is now used to encrypt the Session Data within Database when set.
 - (Breaking) Removed Cyclable encryption key since we are signing instead. 
