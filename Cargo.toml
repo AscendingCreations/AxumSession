@@ -36,26 +36,26 @@ rest_mode = []
 advanced = []
 
 [dependencies]
-axum = { version = "0.7.4" }
-serde = { version = "1.0.192", features = ["derive"] }
-serde_json = "1.0.108"
-chrono = { version = "0.4.31", default-features = false, features = [
+axum = { version = "0.7.5" }
+serde = { version = "1.0.204", features = ["derive"] }
+serde_json = "1.0.120"
+chrono = { version = "0.4.38", default-features = false, features = [
     "clock",
     "serde",
 ] }
-tokio = { version = "1.36.0", features = ["full"] }
-async-trait = "0.1.74"
+tokio = { version = "1.38.0", features = ["full"] }
+async-trait = "0.1.81"
 tracing = "0.1.40"
-thiserror = "1.0.50"
+thiserror = "1.0.61"
 http-body = "1.0.0"
-uuid = { version = "1.7.0", features = ["serde", "v4"] }
+uuid = { version = "1.10.0", features = ["serde", "v4"] }
 http = "1.1.0"
 tower-layer = "0.3.2"
 tower-service = "0.3.2"
-cookie = { version = "0.18.0", features = ["percent-encode", "private"] }
+cookie = { version = "0.18.1", features = ["percent-encode", "private"] }
 futures = "0.3.30"
-bytes = "1.5.0"
-dashmap = "5.5.3"
+bytes = "1.6.0"
+dashmap = "6.0.1"
 aes-gcm = { version = "0.10.3" }
 base64 = { version = "0.22.1" }
 rand = { version = "0.8.5" }
