@@ -4,6 +4,7 @@ Axum Session
 
 [![https://crates.io/crates/axum_session](https://img.shields.io/crates/v/axum_session?style=plastic)](https://crates.io/crates/axum_session)
 [![Docs](https://docs.rs/axum_session/badge.svg)](https://docs.rs/axum_session)
+[![Discord Server](https://img.shields.io/discord/81844480201728000?label=&labelColor=6A7EC2&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.gg/gVXNDwpS3Z)
 
 ## 📑 Overview
 
