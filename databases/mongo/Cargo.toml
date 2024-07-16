@@ -1,6 +1,6 @@
 [package]
 name = "axum_session_mongo"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "📝 Mongo Database layer for axum_session."
 edition = "2021"
