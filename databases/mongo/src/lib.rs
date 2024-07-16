@@ -54,11 +54,11 @@ impl DatabasePool for SessionMongoPool {
                 let col = db.collection::<MongoSessionData>(table_name);
 
                 let _ = &col
-                    .insert_one(&tmp, None)
+                    .insert_one(&tmp)
                     .await
                     .map_err(|err| DatabaseError::GenericInsertError(err.to_string()))?;
                 let _ = col
-                    .find_one_and_delete(tmp.to_document(), None)
+                    .find_one_and_delete(tmp.to_document())
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
@@ -77,7 +77,7 @@ impl DatabasePool for SessionMongoPool {
                 };
                 let result = db
                     .collection::<MongoSessionData>(table_name)
-                    .find(filter.clone(), None)
+                    .find(filter.clone())
                     .await
                     .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
@@ -87,7 +87,7 @@ impl DatabasePool for SessionMongoPool {
                     };
                 }
                 db.collection::<MongoSessionData>(table_name)
-                    .delete_many(filter, None)
+                    .delete_many(filter)
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
@@ -100,7 +100,7 @@ impl DatabasePool for SessionMongoPool {
         Ok(match &self.client.default_database() {
             Some(db) => db
                 .collection::<MongoSessionData>(table_name)
-                .estimated_document_count(None)
+                .estimated_document_count()
                 .await
                 .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?
                 as i64,
@@ -125,11 +125,10 @@ impl DatabasePool for SessionMongoPool {
                     "expires": expires,
                     "session": session.to_string()
                 }};
-                let update_options = mongodb::options::UpdateOptions::builder()
-                    .upsert(Some(true))
-                    .build();
+
                 db.collection::<MongoSessionData>(table_name)
-                    .update_one(filter, update_data, update_options)
+                    .update_one(filter, update_data)
+                    .upsert(true)
                     .await
                     .map_err(|err| DatabaseError::GenericInsertError(err.to_string()))?;
             }
@@ -148,7 +147,7 @@ impl DatabasePool for SessionMongoPool {
                 };
                 match db
                     .collection::<MongoSessionData>(table_name)
-                    .find_one(filter, None)
+                    .find_one(filter)
                     .await
                     .unwrap_or_default()
                 {
@@ -171,7 +170,7 @@ impl DatabasePool for SessionMongoPool {
             Some(db) => {
                 let _ = db
                     .collection::<MongoSessionData>(table_name)
-                    .delete_one(doc! {"id": id}, None)
+                    .delete_one(doc! {"id": id})
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
@@ -184,7 +183,7 @@ impl DatabasePool for SessionMongoPool {
         Ok(match &self.client.default_database() {
             Some(db) => db
                 .collection::<MongoSessionData>(table_name)
-                .find_one(doc! {"id": id}, None)
+                .find_one(doc! {"id": id})
                 .await
                 .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?
                 .is_some(),
@@ -197,7 +196,7 @@ impl DatabasePool for SessionMongoPool {
             Some(db) => {
                 let _ = db
                     .collection::<MongoSessionData>(table_name)
-                    .drop(None)
+                    .drop()
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
@@ -215,7 +214,7 @@ impl DatabasePool for SessionMongoPool {
                 };
                 let result = db
                     .collection::<MongoSessionData>(table_name)
-                    .find(filter, None)
+                    .find(filter)
                     .await
                     .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?; // add filter for expiration
 

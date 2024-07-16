@@ -16,4 +16,4 @@ serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
 async-trait.workspace = true
-mongodb = { version = "2.8.1"}
+mongodb = { version = "3.0.1"}
