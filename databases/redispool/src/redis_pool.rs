@@ -38,23 +38,24 @@ impl DatabasePool for SessionRedisPool {
     }
 
     async fn count(&self, table_name: &str) -> Result<i64, DatabaseError> {
-        let mut con = self
-            .pool
-            .aquire()
-            .await
-            .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
+        let mut con = match self.pool.aquire().await {
+            Ok(v) => v,
+            Err(err) => return Err(DatabaseError::GenericAquire(err.to_string())),
+        };
 
         let count: i64 = if table_name.is_empty() {
-            redis::cmd("DBSIZE")
-                .query_async(&mut con)
-                .await
-                .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?
+            match redis::cmd("DBSIZE").query_async(&mut con).await {
+                Ok(v) => v,
+                Err(err) => return Err(DatabaseError::GenericSelectError(err.to_string())),
+            }
         } else {
             // Assuming we have a table name, we need to count all the keys that match the table name.
             // We can't use DBSIZE because that would count all the keys in the database.
-            let keys = super::redis_tools::scan_keys(&mut con, &format!("{}:*", table_name))
-                .await
-                .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
+            let keys =
+                match super::redis_tools::scan_keys(&mut con, &format!("{}:*", table_name)).await {
+                    Ok(v) => v,
+                    Err(err) => return Err(DatabaseError::GenericSelectError(err.to_string())),
+                };
             keys.len() as i64
         };
 
@@ -84,9 +85,8 @@ impl DatabasePool for SessionRedisPool {
             .ignore()
             .expire_at(&id, expires)
             .ignore()
-            .query_async(&mut con)
-            .await
-            .map_err(|err| DatabaseError::GenericInsertError(err.to_string()))?;
+            .query_async::<redis_pool::connection::RedisPoolConnection<redis::aio::MultiplexedConnection>, ()>(&mut con)
+            .await.map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
         Ok(())
     }
 
@@ -122,7 +122,7 @@ impl DatabasePool for SessionRedisPool {
         };
         redis::cmd("DEL")
             .arg(id)
-            .query_async(&mut con)
+            .query_async::<redis_pool::connection::RedisPoolConnection<redis::aio::MultiplexedConnection>, ()>(&mut con)
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
         Ok(())
@@ -156,7 +156,7 @@ impl DatabasePool for SessionRedisPool {
             .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
         if table_name.is_empty() {
             redis::cmd("FLUSHDB")
-                .query_async(&mut con)
+                .query_async::<redis_pool::connection::RedisPoolConnection<redis::aio::MultiplexedConnection>, ()>(&mut con)
                 .await
                 .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
         } else {
@@ -169,7 +169,7 @@ impl DatabasePool for SessionRedisPool {
             for key in keys {
                 redis::cmd("DEL")
                     .arg(key)
-                    .query_async(&mut con)
+                    .query_async::<redis_pool::connection::RedisPoolConnection<redis::aio::MultiplexedConnection>, ()>(&mut con)
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
