@@ -85,8 +85,9 @@ impl DatabasePool for SessionRedisPool {
             .ignore()
             .expire_at(&id, expires)
             .ignore()
-            .query_async::<redis_pool::connection::RedisPoolConnection<redis::aio::MultiplexedConnection>, ()>(&mut con)
-            .await.map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
+            .query_async::<()>(&mut con)
+            .await
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
         Ok(())
     }
 
@@ -122,7 +123,7 @@ impl DatabasePool for SessionRedisPool {
         };
         redis::cmd("DEL")
             .arg(id)
-            .query_async::<redis_pool::connection::RedisPoolConnection<redis::aio::MultiplexedConnection>, ()>(&mut con)
+            .query_async::<()>(&mut con)
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
         Ok(())
@@ -156,7 +157,7 @@ impl DatabasePool for SessionRedisPool {
             .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
         if table_name.is_empty() {
             redis::cmd("FLUSHDB")
-                .query_async::<redis_pool::connection::RedisPoolConnection<redis::aio::MultiplexedConnection>, ()>(&mut con)
+                .query_async::<()>(&mut con)
                 .await
                 .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
         } else {
@@ -169,7 +170,7 @@ impl DatabasePool for SessionRedisPool {
             for key in keys {
                 redis::cmd("DEL")
                     .arg(key)
-                    .query_async::<redis_pool::connection::RedisPoolConnection<redis::aio::MultiplexedConnection>, ()>(&mut con)
+                    .query_async::<()>(&mut con)
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
