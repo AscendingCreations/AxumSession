@@ -49,8 +49,8 @@ impl DatabasePool for SessionMongoPool {
     // by inserting a record then deleting it
     async fn initiate(&self, table_name: &str) -> Result<(), DatabaseError> {
         let tmp = MongoSessionData::default();
-        match &self.client.default_database() {
-            Some(db) => {
+
+        if let Some(db) = &self.client.default_database() {
                 let col = db.collection::<MongoSessionData>(table_name);
 
                 let _ = &col
@@ -62,15 +62,14 @@ impl DatabasePool for SessionMongoPool {
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
-            None => {}
-        }
+            
         Ok(())
     }
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         let mut ids: Vec<String> = Vec::new();
-        match &self.client.default_database() {
-            Some(db) => {
+
+        if let Some(db) =  &self.client.default_database() {
                 let now = Utc::now().timestamp();
                 let filter = doc! {"expires":
                     {"$lte": now}
@@ -91,8 +90,7 @@ impl DatabasePool for SessionMongoPool {
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
-            None => {}
-        }
+            
         Ok(ids)
     }
 
@@ -115,8 +113,7 @@ impl DatabasePool for SessionMongoPool {
         expires: i64,
         table_name: &str,
     ) -> Result<(), DatabaseError> {
-        match &self.client.default_database() {
-            Some(db) => {
+        if let Some(db) =  &self.client.default_database() {
                 let filter = doc! {
                     "id": id
                 };
@@ -132,8 +129,7 @@ impl DatabasePool for SessionMongoPool {
                     .await
                     .map_err(|err| DatabaseError::GenericInsertError(err.to_string()))?;
             }
-            None => {}
-        }
+            
         Ok(())
     }
 
@@ -166,16 +162,14 @@ impl DatabasePool for SessionMongoPool {
     }
 
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), DatabaseError> {
-        match &self.client.default_database() {
-            Some(db) => {
+        if let Some(db) =  &self.client.default_database() {
                 let _ = db
                     .collection::<MongoSessionData>(table_name)
                     .delete_one(doc! {"id": id})
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
-            None => {}
-        }
+            
         Ok(())
     }
 
@@ -192,23 +186,20 @@ impl DatabasePool for SessionMongoPool {
     }
 
     async fn delete_all(&self, table_name: &str) -> Result<(), DatabaseError> {
-        match &self.client.default_database() {
-            Some(db) => {
+        if let Some(db) =  &self.client.default_database() {
                 let _ = db
                     .collection::<MongoSessionData>(table_name)
                     .drop()
                     .await
                     .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
             }
-            None => {}
-        }
+            
         Ok(())
     }
 
     async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         let mut ids: Vec<String> = Vec::new();
-        match &self.client.default_database() {
-            Some(db) => {
+        if let Some(db) =  &self.client.default_database() {
                 let filter = doc! {"expires":
                     {"$gte": Utc::now().timestamp()}
                 };
@@ -224,8 +215,7 @@ impl DatabasePool for SessionMongoPool {
                     };
                 }
             }
-            None => {}
-        }
+            
         Ok(ids)
     }
 
