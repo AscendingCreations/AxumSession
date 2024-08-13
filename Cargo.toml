@@ -54,7 +54,7 @@ tower-layer = "0.3.2"
 tower-service = "0.3.2"
 cookie = { version = "0.18.1", features = ["percent-encode", "private"] }
 futures = "0.3.30"
-bytes = "1.6.0"
+bytes = "1.7.1"
 dashmap = "6.0.1"
 aes-gcm = { version = "0.10.3" }
 base64 = { version = "0.22.1" }

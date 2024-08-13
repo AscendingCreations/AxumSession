@@ -430,7 +430,7 @@ dependencies = [
 
 [[package]]
 name = "axum_session_sqlx"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "async-trait",
  "axum",
