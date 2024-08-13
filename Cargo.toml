@@ -54,18 +54,18 @@ tower-layer = "0.3.2"
 tower-service = "0.3.2"
 cookie = { version = "0.18.1", features = ["percent-encode", "private"] }
 futures = "0.3.30"
-bytes = "1.7.1"
+bytes = "1.6.0"
 dashmap = "6.0.1"
-aes-gcm = { version = "0.10.3" }
-base64 = { version = "0.22.1" }
-rand = { version = "0.8.5" }
+aes-gcm = "0.10.3"
+base64 = "0.22.1" 
+rand = "0.8.5" 
 hmac = "0.12.1"
 sha2 = "0.10.8"
 forwarded-header-value = "0.1.1"
 fastbloom-rs = { version = "0.5.9", optional = true }
 
 [workspace.dependencies]
-axum_session = {version = "0.14.0"}
+axum_session = "0.14.0"
 chrono = { version = "0.4.31", default-features = false, features = [
     "clock",
     "serde",
@@ -74,7 +74,7 @@ async-trait = "0.1.74"
 tokio = { version = "1.36.0", features = ["full", "tracing"] }
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
-axum = { version = "0.7.4" }
+axum = "0.7.4" 
 
 [package.metadata.docs.rs]
 features = [
