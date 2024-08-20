@@ -415,6 +415,7 @@ where
     /// ```
     ///
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub fn verify(&self) -> Result<(), SessionError> {
         self.store.verify(self.id.inner())
@@ -434,6 +435,7 @@ where
     /// ```
     ///
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub fn update_database_expires(&self) -> Result<(), SessionError> {
         self.store.update_database_expires(self.id.inner())
@@ -448,6 +450,7 @@ where
     /// ```
     ///
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub fn update_memory_expires(&self) -> Result<(), SessionError> {
         self.store.update_memory_expires(self.id.inner())
@@ -463,6 +466,7 @@ where
     /// ```
     ///
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub async fn force_database_update(&self) -> Result<(), SessionError> {
         self.store.force_database_update(self.id.inner()).await
@@ -480,6 +484,7 @@ where
     /// ```
     ///
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub fn memory_remove_session(&self) -> Result<(), SessionError> {
         self.store.memory_remove_session(self.id.inner())
@@ -495,6 +500,7 @@ where
     /// ```
     ///
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub async fn database_remove_session(&self) -> Result<(), SessionError> {
         self.store.database_remove_session(self.id.inner()).await

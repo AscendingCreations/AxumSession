@@ -526,6 +526,7 @@ where
     }
 
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub(crate) fn verify(&self, id: String) -> Result<(), SessionError> {
         if let Some(instance) = self.inner.get(&id) {
@@ -540,6 +541,7 @@ where
     }
 
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub(crate) fn update_database_expires(&self, id: String) -> Result<(), SessionError> {
         if let Some(mut instance) = self.inner.get_mut(&id) {
@@ -556,6 +558,7 @@ where
     }
 
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub(crate) fn update_memory_expires(&self, id: String) -> Result<(), SessionError> {
         if let Some(mut instance) = self.inner.get_mut(&id) {
@@ -568,6 +571,7 @@ where
     }
 
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub(crate) async fn force_database_update(&self, id: String) -> Result<(), SessionError> {
         let session = if let Some(instance) = self.inner.get(&id) {
@@ -580,6 +584,7 @@ where
     }
 
     #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub(crate) fn memory_remove_session(&self, id: String) -> Result<(), SessionError> {
         let is_parallel = if let Some(mut instance) = self.inner.get_mut(&id) {
