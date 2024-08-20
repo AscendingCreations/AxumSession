@@ -49,7 +49,7 @@ async fn counter(session: Session<SessionRedisPool>, pool: State<SingleRedisPool
     let new_count = session.get::<usize>("count").expect("error setting count");
 
     let count: i64 = redis::cmd("DBSIZE")
-        .query_async(&mut pool.aquire().await.unwrap())
+        .query_async(&mut pool.acquire().await.unwrap())
         .await
         .unwrap();
 

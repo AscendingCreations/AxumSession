@@ -420,7 +420,7 @@ dependencies = [
 
 [[package]]
 name = "axum_session_redispool"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "axum_session 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3309,9 +3309,9 @@ dependencies = [
 
 [[package]]
 name = "redis_pool"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd7c399d04c276aac50214f24f37a7277080c38b76c4aa2cb6881cc8c2bb3446"
+checksum = "4e3de41910878fa8392f0f8cefabb6b5717fd758afd4cd2f3d619959ab42edbd"
 dependencies = [
  "async-trait",
  "crossbeam-queue",

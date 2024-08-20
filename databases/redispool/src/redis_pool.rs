@@ -38,7 +38,7 @@ impl DatabasePool for SessionRedisPool {
     }
 
     async fn count(&self, table_name: &str) -> Result<i64, DatabaseError> {
-        let mut con = match self.pool.aquire().await {
+        let mut con = match self.pool.acquire().await {
             Ok(v) => v,
             Err(err) => return Err(DatabaseError::GenericAquire(err.to_string())),
         };
@@ -76,7 +76,7 @@ impl DatabasePool for SessionRedisPool {
         };
         let mut con = self
             .pool
-            .aquire()
+            .acquire()
             .await
             .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
         redis::pipe()
@@ -94,7 +94,7 @@ impl DatabasePool for SessionRedisPool {
     async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, DatabaseError> {
         let mut con = self
             .pool
-            .aquire()
+            .acquire()
             .await
             .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
         let id = if table_name.is_empty() {
@@ -113,7 +113,7 @@ impl DatabasePool for SessionRedisPool {
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), DatabaseError> {
         let mut con = self
             .pool
-            .aquire()
+            .acquire()
             .await
             .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
         let id = if table_name.is_empty() {
@@ -132,7 +132,7 @@ impl DatabasePool for SessionRedisPool {
     async fn exists(&self, id: &str, table_name: &str) -> Result<bool, DatabaseError> {
         let mut con = self
             .pool
-            .aquire()
+            .acquire()
             .await
             .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
         let id = if table_name.is_empty() {
@@ -152,7 +152,7 @@ impl DatabasePool for SessionRedisPool {
     async fn delete_all(&self, table_name: &str) -> Result<(), DatabaseError> {
         let mut con = self
             .pool
-            .aquire()
+            .acquire()
             .await
             .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
         if table_name.is_empty() {
@@ -182,7 +182,7 @@ impl DatabasePool for SessionRedisPool {
     async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         let mut con = self
             .pool
-            .aquire()
+            .acquire()
             .await
             .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
         let table_name = if table_name.is_empty() {
