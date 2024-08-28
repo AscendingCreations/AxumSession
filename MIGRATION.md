@@ -1,0 +1,2 @@
+To migrate from axum_session_sqlx 0.2.0 to 0.3.0 you will need to run Intialize for Postgresql and Mysql. If you are running Sqlite you will need to rebuild the table from scratch.
+This Migration is to Change the coloumn types from INTERGER to BIGINT for expires so we do not hit the Y2038 limit.
