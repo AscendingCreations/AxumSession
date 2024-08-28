@@ -27,7 +27,7 @@ impl DatabasePool for SessionPgPool {
             &r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
                 "id" VARCHAR(128) NOT NULL PRIMARY KEY,
-                "expires" INTEGER NULL,
+                "expires" BIGINT NULL,
                 "session" TEXT NOT NULL
             )
         "#
@@ -36,6 +36,30 @@ impl DatabasePool for SessionPgPool {
         .execute(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericCreateError(err.to_string()))?;
+
+        let (t,): (bool,) = sqlx::query_as(
+            &r#"
+            SELECT data_type = 'integer'
+            FROM information_schema.columns
+            WHERE table_name = '%%TABLE_NAME%%' and column_name = 'expires';
+            "#
+            .replace("%%TABLE_NAME%%", table_name),
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|err| DatabaseError::GenericCreateError(err.to_string()))?;
+
+        if t {
+            sqlx::query(
+                &r#"
+                ALTER TABLE %%TABLE_NAME%% ALTER COLUMN expires TYPE BIGINT;
+                "#
+                .replace("%%TABLE_NAME%%", table_name),
+            )
+            .execute(&self.pool)
+            .await
+            .map_err(|err| DatabaseError::GenericCreateError(err.to_string()))?;
+        }
 
         Ok(())
     }

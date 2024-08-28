@@ -27,7 +27,7 @@ impl DatabasePool for SessionSqlitePool {
             &r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
                 "id" VARCHAR(128) NOT NULL PRIMARY KEY,
-                "expires" INTEGER NULL,
+                "expires" BIGINT NULL,
                 "session" TEXT NOT NULL
             )
         "#

@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use thiserror::Error;
 
 /// The Trait used to identify a database pool.
+///
 /// This can be freely implemented but default implementations for the supported database types are already included
 /// If you're using a custom database library than you should use the Generic*Error in the DatabaseError enum to indicate an error.
 #[async_trait]

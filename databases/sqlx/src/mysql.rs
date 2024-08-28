@@ -27,7 +27,7 @@ impl DatabasePool for SessionMySqlPool {
             &r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
                 id VARCHAR(128) NOT NULL PRIMARY KEY,
-                expires INTEGER NULL,
+                expires BIGINT NULL,
                 session TEXT NOT NULL
             )
         "#
@@ -36,6 +36,30 @@ impl DatabasePool for SessionMySqlPool {
         .execute(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericCreateError(err.to_string()))?;
+
+        let (t,): (bool,) = sqlx::query_as(
+            &r#"
+            select DATA_TYPE = 'integer' 
+            from INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_NAME = '%%TABLE_NAME%%' and COLUMN_NAME = 'expires';
+            "#
+            .replace("%%TABLE_NAME%%", table_name),
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|err| DatabaseError::GenericCreateError(err.to_string()))?;
+
+        if t {
+            sqlx::query(
+                &r#"
+                    ALTER TABLE %%TABLE_NAME%% MODIFY expires BIGINT;
+                "#
+                .replace("%%TABLE_NAME%%", table_name),
+            )
+            .execute(&self.pool)
+            .await
+            .map_err(|err| DatabaseError::GenericCreateError(err.to_string()))?;
+        }
 
         Ok(())
     }
