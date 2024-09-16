@@ -1,6 +1,6 @@
 [package]
 name = "axum_session_redispool"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "📝 RedisPool Database layer for axum_session."
 edition = "2021"
@@ -15,8 +15,8 @@ redis-clusterdb = ["redis_pool/cluster", "redis/cluster-async"]
 
 [dependencies]
 async-trait.workspace = true
-redis_pool = { version = "0.5.1" }
-redis = { version = "0.26.0", features = [
+redis_pool = { version = "0.6.0" }
+redis = { version = "0.27.2", features = [
     "aio",
     "tokio-comp",
 ] }

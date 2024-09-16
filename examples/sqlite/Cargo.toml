@@ -8,7 +8,7 @@ edition = "2021"
 axum.workspace = true
 tokio.workspace = true
 async-trait.workspace = true
-sqlx = { version = "0.8.0", features = [
+sqlx = { version = "0.8.2", features = [
     "macros",
     "sqlite",
     "_unstable-all-types",
