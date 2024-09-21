@@ -8,7 +8,7 @@ pub type SessionAnySession = Session<SessionAnyPool>;
 pub type SessionAnySessionStore = SessionStore<SessionAnyPool>;
 
 /// [SessionAnyPool] is effectively a `dyn DatabasePool`. It can be useful if your application
-/// 
+///
 /// requires a runtime decision between multiple database backends. For example using `sqlite`
 /// in development builds but `postgres` in production builds.
 #[derive(Clone)]

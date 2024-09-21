@@ -51,46 +51,46 @@ impl DatabasePool for SessionMongoPool {
         let tmp = MongoSessionData::default();
 
         if let Some(db) = &self.client.default_database() {
-                let col = db.collection::<MongoSessionData>(table_name);
+            let col = db.collection::<MongoSessionData>(table_name);
 
-                let _ = &col
-                    .insert_one(&tmp)
-                    .await
-                    .map_err(|err| DatabaseError::GenericInsertError(err.to_string()))?;
-                let _ = col
-                    .find_one_and_delete(tmp.to_document())
-                    .await
-                    .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
-            }
-            
+            let _ = &col
+                .insert_one(&tmp)
+                .await
+                .map_err(|err| DatabaseError::GenericInsertError(err.to_string()))?;
+            let _ = col
+                .find_one_and_delete(tmp.to_document())
+                .await
+                .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
+        }
+
         Ok(())
     }
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         let mut ids: Vec<String> = Vec::new();
 
-        if let Some(db) =  &self.client.default_database() {
-                let now = Utc::now().timestamp();
-                let filter = doc! {"expires":
-                    {"$lte": now}
-                };
-                let result = db
-                    .collection::<MongoSessionData>(table_name)
-                    .find(filter.clone())
-                    .await
-                    .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
+        if let Some(db) = &self.client.default_database() {
+            let now = Utc::now().timestamp();
+            let filter = doc! {"expires":
+                {"$lte": now}
+            };
+            let result = db
+                .collection::<MongoSessionData>(table_name)
+                .find(filter.clone())
+                .await
+                .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
-                for item in result.deserialize_current().iter() {
-                    if !&item.id.is_empty() {
-                        ids.push(item.id.clone());
-                    };
-                }
-                db.collection::<MongoSessionData>(table_name)
-                    .delete_many(filter)
-                    .await
-                    .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
+            for item in result.deserialize_current().iter() {
+                if !&item.id.is_empty() {
+                    ids.push(item.id.clone());
+                };
             }
-            
+            db.collection::<MongoSessionData>(table_name)
+                .delete_many(filter)
+                .await
+                .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
+        }
+
         Ok(ids)
     }
 
@@ -113,23 +113,23 @@ impl DatabasePool for SessionMongoPool {
         expires: i64,
         table_name: &str,
     ) -> Result<(), DatabaseError> {
-        if let Some(db) =  &self.client.default_database() {
-                let filter = doc! {
-                    "id": id
-                };
-                let update_data = doc! {"$set": {
-                    "id": id.to_string(),
-                    "expires": expires,
-                    "session": session.to_string()
-                }};
+        if let Some(db) = &self.client.default_database() {
+            let filter = doc! {
+                "id": id
+            };
+            let update_data = doc! {"$set": {
+                "id": id.to_string(),
+                "expires": expires,
+                "session": session.to_string()
+            }};
 
-                db.collection::<MongoSessionData>(table_name)
-                    .update_one(filter, update_data)
-                    .upsert(true)
-                    .await
-                    .map_err(|err| DatabaseError::GenericInsertError(err.to_string()))?;
-            }
-            
+            db.collection::<MongoSessionData>(table_name)
+                .update_one(filter, update_data)
+                .upsert(true)
+                .await
+                .map_err(|err| DatabaseError::GenericInsertError(err.to_string()))?;
+        }
+
         Ok(())
     }
 
@@ -162,14 +162,14 @@ impl DatabasePool for SessionMongoPool {
     }
 
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), DatabaseError> {
-        if let Some(db) =  &self.client.default_database() {
-                let _ = db
-                    .collection::<MongoSessionData>(table_name)
-                    .delete_one(doc! {"id": id})
-                    .await
-                    .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
-            }
-            
+        if let Some(db) = &self.client.default_database() {
+            let _ = db
+                .collection::<MongoSessionData>(table_name)
+                .delete_one(doc! {"id": id})
+                .await
+                .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
+        }
+
         Ok(())
     }
 
@@ -186,36 +186,36 @@ impl DatabasePool for SessionMongoPool {
     }
 
     async fn delete_all(&self, table_name: &str) -> Result<(), DatabaseError> {
-        if let Some(db) =  &self.client.default_database() {
-                let _ = db
-                    .collection::<MongoSessionData>(table_name)
-                    .drop()
-                    .await
-                    .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
-            }
-            
+        if let Some(db) = &self.client.default_database() {
+            let _ = db
+                .collection::<MongoSessionData>(table_name)
+                .drop()
+                .await
+                .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
+        }
+
         Ok(())
     }
 
     async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         let mut ids: Vec<String> = Vec::new();
-        if let Some(db) =  &self.client.default_database() {
-                let filter = doc! {"expires":
-                    {"$gte": Utc::now().timestamp()}
-                };
-                let result = db
-                    .collection::<MongoSessionData>(table_name)
-                    .find(filter)
-                    .await
-                    .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?; // add filter for expiration
+        if let Some(db) = &self.client.default_database() {
+            let filter = doc! {"expires":
+                {"$gte": Utc::now().timestamp()}
+            };
+            let result = db
+                .collection::<MongoSessionData>(table_name)
+                .find(filter)
+                .await
+                .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?; // add filter for expiration
 
-                for item in result.deserialize_current().iter() {
-                    if !&item.id.is_empty() {
-                        ids.push(item.id.clone());
-                    };
-                }
+            for item in result.deserialize_current().iter() {
+                if !&item.id.is_empty() {
+                    ids.push(item.id.clone());
+                };
             }
-            
+        }
+
         Ok(ids)
     }
 
