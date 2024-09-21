@@ -9,5 +9,5 @@ axum.workspace = true
 tokio.workspace = true
 async-trait.workspace = true
 axum_session.workspace = true
-surrealdb = { version = "1.0.0", features = ["kv-mem"] }
+surrealdb = { version = "2.0", features = ["kv-mem"] }
 axum_session_surreal = { path = "../../databases/surreal" }
