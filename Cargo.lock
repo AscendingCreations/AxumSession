@@ -139,18 +139,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "any"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "axum_session_sqlx",
- "sqlx",
- "tokio",
-]
-
-[[package]]
 name = "any_ascii"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -454,6 +442,10 @@ dependencies = [
  "aes-gcm",
  "async-trait",
  "axum",
+ "axum_session",
+ "axum_session_redispool",
+ "axum_session_sqlx",
+ "axum_session_surreal",
  "base64 0.22.1",
  "bytes",
  "chrono",
@@ -465,43 +457,19 @@ dependencies = [
  "hmac",
  "http",
  "http-body",
+ "http-body-util",
+ "hyper",
  "rand 0.8.5",
+ "redis",
+ "redis_pool",
  "serde",
  "serde_json",
  "sha2",
+ "sqlx",
+ "surrealdb",
  "thiserror",
  "tokio",
- "tower-layer",
- "tower-service",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "axum_session"
-version = "0.14.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e526c6e2834163d1a137b01bc88737c942c228835cc859efd6765c7b5274fb48"
-dependencies = [
- "aes-gcm",
- "async-trait",
- "axum",
- "base64 0.22.1",
- "bytes",
- "chrono",
- "cookie",
- "dashmap 6.1.0",
- "forwarded-header-value",
- "futures",
- "hmac",
- "http",
- "http-body",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "tokio",
+ "tower 0.4.13",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -513,7 +481,7 @@ name = "axum_session_mongo"
 version = "0.2.0"
 dependencies = [
  "async-trait",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "axum_session",
  "chrono",
  "mongodb",
  "serde",
@@ -525,7 +493,7 @@ name = "axum_session_redispool"
 version = "0.3.0"
 dependencies = [
  "async-trait",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "axum_session",
  "redis",
  "redis_pool",
 ]
@@ -536,7 +504,7 @@ version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "axum_session",
  "chrono",
  "http-body-util",
  "hyper",
@@ -553,7 +521,7 @@ name = "axum_session_surreal"
 version = "0.1.1"
 dependencies = [
  "async-trait",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "axum_session",
  "chrono",
  "surrealdb",
 ]
@@ -2446,19 +2414,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "middleware_layer"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "axum_session_surreal",
- "hyper",
- "surrealdb",
- "tokio",
-]
-
-[[package]]
 name = "miette"
 version = "5.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2707,16 +2662,6 @@ name = "nonempty"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9e591e719385e6ebaeb5ce5d3887f7d5676fceca6411d1925ccc95745f3d6f7"
-
-[[package]]
-name = "null_pool"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "tokio",
-]
 
 [[package]]
 name = "num-bigint"
@@ -3166,18 +3111,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "postgres"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "axum_session_sqlx",
- "sqlx",
- "tokio",
-]
-
-[[package]]
 name = "powerfmt"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3520,19 +3453,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "redis_test"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "axum_session_redispool",
- "redis",
- "redis_pool",
- "tokio",
-]
-
-[[package]]
 name = "redox_syscall"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3663,21 +3583,6 @@ checksum = "52e44394d2086d010551b14b53b1f24e31647570cd1deb0379e2c21b329aba00"
 dependencies = [
  "hostname",
  "quick-error",
-]
-
-[[package]]
-name = "rest_test"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "axum_session_surreal",
- "http-body-util",
- "hyper",
- "surrealdb",
- "tokio",
- "tower 0.4.13",
 ]
 
 [[package]]
@@ -4200,18 +4105,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "session_mode"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "axum_session_sqlx",
- "sqlx",
- "tokio",
-]
-
-[[package]]
 name = "sha-1"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4273,18 +4166,6 @@ checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
 dependencies = [
  "digest",
  "rand_core 0.6.4",
-]
-
-[[package]]
-name = "signed"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "axum_session_sqlx",
- "sqlx",
- "tokio",
 ]
 
 [[package]]
@@ -4415,18 +4296,6 @@ checksum = "7bba3a93db0cc4f7bdece8bb09e77e2e785c20bfebf79eb8340ed80708048790"
 dependencies = [
  "nom",
  "unicode_categories",
-]
-
-[[package]]
-name = "sqlite"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "axum_session_sqlx",
- "sqlx",
- "tokio",
 ]
 
 [[package]]
@@ -4759,18 +4628,6 @@ name = "subtle"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
-
-[[package]]
-name = "surreal"
-version = "0.0.1"
-dependencies = [
- "async-trait",
- "axum",
- "axum_session 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "axum_session_surreal",
- "surrealdb",
- "tokio",
-]
 
 [[package]]
 name = "surrealdb"
