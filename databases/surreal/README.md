@@ -21,7 +21,7 @@ If you need help with this library or have suggestions please go to our [Discord
 # Cargo.toml
 [dependencies]
 axum_session = { version = "0.14.0" }
-axum_session_surreal = { version = "0.1.0" }
+axum_session_surreal = { version = "0.2.0" }
 ```
 
 ## 🔎 Examples
