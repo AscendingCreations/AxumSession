@@ -8,7 +8,7 @@ edition = "2021"
 axum.workspace = true
 tokio.workspace = true
 async-trait.workspace = true
-surrealdb = { version = "1.0.0", features = ["kv-mem"] }
+surrealdb = { version = "2.0.0", features = ["kv-mem"] }
 tower = "0.4.13"
 hyper = "1.0.1"
 http-body-util = "0.1.0"
