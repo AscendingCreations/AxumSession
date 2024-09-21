@@ -67,7 +67,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
                 "SELECT sessionid FROM type::table($table_name)
                 WHERE sessionexpires = NONE OR sessionexpires < $expires;",
             )
-            .bind(("table_name", table_name))
+            .bind(("table_name", table_name.to_string()))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
@@ -77,7 +77,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
 
         self.connection
             .query("DELETE type::table($table_name) WHERE sessionexpires < $expires;")
-            .bind(("table_name", table_name))
+            .bind(("table_name", table_name.to_string()))
             .bind(("expires", Utc::now().timestamp()))
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
@@ -89,7 +89,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         let mut res = self
             .connection
             .query("SELECT count() AS amount FROM type::table($table_name) GROUP BY amount;")
-            .bind(("table_name", table_name))
+            .bind(("table_name", table_name.to_string()))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
@@ -114,10 +114,10 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         .query(
             "UPDATE type::thing($table_name, $session_id) SET sessionstore = $store, sessionexpires = $expire, sessionid = $session_id;",
         )
-        .bind(("table_name", table_name))
+        .bind(("table_name", table_name.to_string()))
         .bind(("session_id", id.to_string()))
         .bind(("expire", expires.to_string()))
-        .bind(("store", session))
+        .bind(("store", session.to_string()))
         .await.map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
         Ok(())
@@ -130,8 +130,8 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
                 "SELECT sessionstore FROM type::thing($table_name, $session_id)
                 WHERE sessionexpires = NONE OR sessionexpires > $expires;",
             )
-            .bind(("table_name", table_name))
-            .bind(("session_id", id))
+            .bind(("table_name", table_name.to_string()))
+            .bind(("session_id", id.to_string()))
             .bind(("expires", Utc::now().timestamp()))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
@@ -145,8 +145,8 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), DatabaseError> {
         self.connection
             .query("DELETE type::table($table_name) WHERE sessionid < $session_id;")
-            .bind(("table_name", table_name))
-            .bind(("session_id", id))
+            .bind(("table_name", table_name.to_string()))
+            .bind(("session_id", id.to_string()))
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
 
@@ -157,11 +157,11 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         let mut res = self
             .connection
             .query(
-                "SELECT count() AS amount FROM type::thing($table_name, $session_id) 
+                "SELECT count() AS amount FROM type::thing($table_name, $session_id)
                 WHERE sessionexpires = NONE OR sessionexpires > $expires GROUP BY amount;",
             )
-            .bind(("table_name", table_name))
-            .bind(("session_id", id))
+            .bind(("table_name", table_name.to_string()))
+            .bind(("session_id", id.to_string()))
             .bind(("expires", Utc::now().timestamp()))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
@@ -175,7 +175,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     async fn delete_all(&self, table_name: &str) -> Result<(), DatabaseError> {
         self.connection
             .query("DELETE type::table($table_name);")
-            .bind(("table_name", table_name))
+            .bind(("table_name", table_name.to_string()))
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
 
@@ -189,7 +189,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
                 "SELECT sessionid FROM type::table($table_name)
                 WHERE sessionexpires = NONE OR sessionexpires > $expires;",
             )
-            .bind(("table_name", table_name))
+            .bind(("table_name", table_name.to_string()))
             .bind(("expires", Utc::now().timestamp()))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
