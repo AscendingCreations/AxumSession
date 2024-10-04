@@ -1,0 +1,17 @@
+[package]
+name = "axum_session_redis_bb8_pool"
+version = "0.1.0"
+authors = ["Behzad Khalifeh <bkhalifeh@protonmail.com>"]
+description = "📝 RedisPool (BB8) Database layer for axum_session."
+edition = "2021"
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/axum_session_redispool"
+keywords = ["Axum", "Tower", "Redis", "Session", "BB8"]
+repository = "https://github.com/AscendingCreations/AxumSession"
+
+[dependencies]
+async-trait.workspace = true
+redis = { version = "0.27.2", features = ["aio", "tokio-comp"] }
+bb8-redis = "0.17.0"
+axum_session.workspace = true
