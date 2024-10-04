@@ -6,6 +6,7 @@ members = [
     "databases/mongo",
     "databases/redispool",
     "databases/surreal",
+    "databases/redis-bb8-pool",
 ]
 
 [package]
@@ -47,15 +48,15 @@ futures = "0.3.30"
 bytes = "1.7.1"
 dashmap = "6.0.1"
 aes-gcm = "0.10.3"
-base64 = "0.22.1" 
-rand = "0.8.5" 
+base64 = "0.22.1"
+rand = "0.8.5"
 hmac = "0.12.1"
 sha2 = "0.10.8"
 forwarded-header-value = "0.1.1"
 fastbloom-rs = { version = "0.5.9", optional = true }
 
 [workspace.dependencies]
-axum_session = { version = "0.14.0", path = "./"}
+axum_session = { version = "0.14.0", path = "./" }
 chrono = { version = "0.4.38", default-features = false, features = [
     "clock",
     "serde",
@@ -64,13 +65,10 @@ async-trait = "0.1.81"
 tokio = { version = "1.39.3", features = ["full", "tracing"] }
 serde = { version = "1.0.208", features = ["derive"] }
 serde_json = "1.0.125"
-axum = "0.7.5" 
+axum = "0.7.5"
 
 [package.metadata.docs.rs]
-features = [
-    "key-store",
-    "advanced",
-]
+features = ["key-store", "advanced"]
 rustdoc-args = ["--document-private-items"]
 
 [dev-dependencies]
@@ -88,7 +86,7 @@ redis_pool = "0.6.0"
 redis = { version = "0.27.2" }
 tower = "0.4.13"
 http-body-util = "0.1.0"
-axum_session_sqlx = { path = "./databases/sqlx", features = ["sqlite"]}
+axum_session_sqlx = { path = "./databases/sqlx", features = ["sqlite"] }
 axum_session_surreal = { path = "./databases/surreal" }
 axum_session_redispool = { path = "./databases/redispool" }
 axum_session.workspace = true
