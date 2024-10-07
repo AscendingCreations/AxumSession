@@ -53,7 +53,7 @@ impl DatabasePool for SessionRedisPool {
             // Assuming we have a table name, we need to count all the keys that match the table name.
             // We can't use DBSIZE because that would count all the keys in the database.
             let keys =
-                match super::redis_bb8_tools::scan_keys(&mut *con, &format!("{}:*", table_name))
+                match super::redis_bb8_tools::scan_keys(&mut con, &format!("{}:*", table_name))
                     .await
                 {
                     Ok(v) => v,
@@ -195,7 +195,7 @@ impl DatabasePool for SessionRedisPool {
         };
 
         let result: Vec<String> =
-            super::redis_bb8_tools::scan_keys(&mut *con, &format!("{}:*", table_name))
+            super::redis_bb8_tools::scan_keys(&mut con, &format!("{}:*", table_name))
                 .await
                 .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
         Ok(result)

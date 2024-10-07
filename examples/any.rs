@@ -27,7 +27,7 @@ async fn main() {
         .layer(SessionLayer::new(session_store));
 
     let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app).await.unwrap()
 }
 
 async fn greet(session: SessionAnySession) -> String {

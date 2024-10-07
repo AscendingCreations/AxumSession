@@ -37,7 +37,7 @@ mod tests {
         postgres::{PgConnectOptions, PgPoolOptions},
         ConnectOptions,
     };
-    use tower::ServiceExt;
+    use tower::util::ServiceExt;
 
     #[tokio::test]
     async fn basic() {
