@@ -25,9 +25,9 @@ where
     pub(crate) id: SessionID,
 }
 
-/// Adds FromRequestParts<B> for Session
+/// Adds `FromRequestParts<B>` for Session
 ///
-/// Returns the Session from Axums request extensions state.
+/// Returns the Session from Axums request extensions state
 #[async_trait]
 impl<T, S> FromRequestParts<S> for Session<T>
 where
@@ -238,7 +238,7 @@ where
 
     /// Gets data from the Session's HashMap
     ///
-    /// Provides an Option<T> that returns the requested data from the Sessions store.
+    /// Provides an `Option<T>` that returns the requested data from the Sessions store.
     /// Returns None if Key does not exist or if serdes_json failed to deserialize.
     ///
     /// # Examples
@@ -255,7 +255,7 @@ where
 
     /// Removes a Key from the Current Session's HashMap returning it.
     ///
-    /// Provides an Option<T> that returns the requested data from the Sessions store.
+    /// Provides an `Option<T> `that returns the requested data from the Sessions store.
     /// Returns None if Key does not exist or if serdes_json failed to deserialize.
     ///
     /// # Examples
@@ -528,7 +528,7 @@ where
     }
 }
 
-/// Adds FromRequestParts<B> for Session
+/// Adds `FromRequestParts<B>` for Session
 ///
 /// Returns the Session from Axums request extensions state.
 #[async_trait]
@@ -555,7 +555,7 @@ where
 {
     /// Gets data from the Session's HashMap
     ///
-    /// Provides an Option<T> that returns the requested data from the Sessions store.
+    /// Provides an `Option<T>` that returns the requested data from the Sessions store.
     /// Returns None if Key does not exist or if serdes_json failed to deserialize.
     ///
     /// # Examples
