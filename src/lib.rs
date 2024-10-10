@@ -2,6 +2,7 @@
 #![allow(dead_code)]
 #![warn(clippy::all, nonstandard_style, future_incompatible)]
 #![forbid(unsafe_code)]
+#![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
 
 mod config;
 pub mod databases;
