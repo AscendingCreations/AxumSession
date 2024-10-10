@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.14.3 (16. July, 2024)
+### Fixed
+-  Docs should now build.
+
 ## 0.14.1 (16. July, 2024)
 ### Changed
 - Readme to include discord badges.
