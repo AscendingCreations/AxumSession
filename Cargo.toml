@@ -80,7 +80,7 @@ sqlx = { version = "0.8.2", features = [
     "tls-rustls",
     "runtime-tokio",
 ] }
-surrealdb = { version = "2.0.0", features = ["kv-mem"] }
+surrealdb = { version = "2.0.4", features = ["kv-mem"] }
 hyper = "1.0.1"
 redis_pool = "0.6.0"
 redis = { version = "0.27.2" }
