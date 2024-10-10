@@ -69,7 +69,7 @@ axum = "0.7.5"
 
 [package.metadata.docs.rs]
 features = ["key-store", "advanced"]
-rustdoc-args = ["--document-private-items"]
+rustdoc-args = ["--document-private-items", "--cfg", "docsrs"]
 
 [dev-dependencies]
 sqlx = { version = "0.8.2", features = [
