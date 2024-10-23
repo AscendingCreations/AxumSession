@@ -112,7 +112,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     ) -> Result<(), DatabaseError> {
         self.connection
         .query(
-            "UPDATE type::thing($table_name, $session_id) SET sessionstore = $store, sessionexpires = $expire, sessionid = $session_id;",
+            "UPSERT type::thing($table_name, $session_id) SET sessionstore = $store, sessionexpires = $expire, sessionid = $session_id;",
         )
         .bind(("table_name", table_name.to_string()))
         .bind(("session_id", id.to_string()))
