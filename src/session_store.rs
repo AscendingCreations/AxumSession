@@ -1,7 +1,6 @@
 use crate::{
     sec::encrypt, DatabasePool, Session, SessionConfig, SessionData, SessionError, SessionTimers,
 };
-use async_trait::async_trait;
 use axum::extract::FromRequestParts;
 use chrono::{Duration, Utc};
 use dashmap::DashMap;
@@ -43,7 +42,6 @@ where
     pub(crate) filter: Arc<RwLock<CountingBloomFilter>>,
 }
 
-#[async_trait]
 impl<T, S> FromRequestParts<S> for SessionStore<T>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,

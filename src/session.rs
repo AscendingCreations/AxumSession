@@ -1,5 +1,4 @@
 use crate::{DatabasePool, SessionData, SessionError, SessionID, SessionStore};
-use async_trait::async_trait;
 use axum::extract::FromRequestParts;
 
 #[cfg(feature = "key-store")]
@@ -28,7 +27,6 @@ where
 /// Adds `FromRequestParts<B>` for Session
 ///
 /// Returns the Session from Axums request extensions state
-#[async_trait]
 impl<T, S> FromRequestParts<S> for Session<T>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
@@ -531,7 +529,6 @@ where
 /// Adds `FromRequestParts<B>` for Session
 ///
 /// Returns the Session from Axums request extensions state.
-#[async_trait]
 impl<T, S> FromRequestParts<S> for ReadOnlySession<T>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,

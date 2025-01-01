@@ -29,7 +29,7 @@ sqlx = { version = "0.8.2", default-features = false, features = [
 axum_session.workspace = true
 
 [dev-dependencies]
-axum = { version = "0.7.7", features = ["macros"] }
+axum = { version = "0.8.1", features = ["macros"] }
 hyper = "1.4.1"
 tower = "0.5.1"
 log = { version = "0.4.20", default-features = false }
