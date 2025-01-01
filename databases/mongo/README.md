@@ -22,8 +22,8 @@ If you need help with this library or have suggestions please go to our [Discord
 # Cargo.toml
 [dependencies]
 # Postgres + rustls
-axum_session = { version = "0.14.0" }
-axum_session_mongo = { version = "0.2.0" }
+axum_session = { version = "0.15.0" }
+axum_session_mongo = { version = "0.3.0" }
 ```
 
 ## 🔎 Examples
