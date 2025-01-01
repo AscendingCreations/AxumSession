@@ -12,6 +12,6 @@ repository = "https://github.com/AscendingCreations/AxumSession"
 
 [dependencies]
 async-trait.workspace = true
-redis = { version = "0.27.2", features = ["aio", "tokio-comp"] }
-bb8-redis = "0.17.0"
+redis = { version = "0.27.6", features = ["aio", "tokio-comp"] }
+bb8-redis = "0.18.0"
 axum_session.workspace = true
