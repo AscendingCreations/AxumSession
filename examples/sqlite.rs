@@ -8,7 +8,7 @@ use tokio::net::TcpListener;
 #[tokio::main]
 async fn main() {
     let poll = connect_to_database().await;
-    // A premade saved and loaded Key.
+    // A pre-made, saved, and loaded Key.
     let key = [
         0, 6, 244, 144, 182, 219, 119, 30, 186, 208, 221, 180, 0, 206, 248, 7, 135, 27, 241, 0, 43,
         32, 128, 232, 76, 0, 40, 46, 1, 3, 220, 0, 42, 165, 66, 0, 36, 193, 19, 251, 196, 145, 38,

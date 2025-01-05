@@ -350,7 +350,7 @@ pub(crate) fn set_headers<T>(
         // Add Session Store Boolean
         if session.store.config.session_mode.is_opt_in() && storable && !destroy {
             let name = NameType::Store.get_name(&session.store.config);
-            //storable doesnt need signing or encryption.
+            //storable doesn't need signing or encryption.
             let value = storable.to_string();
 
             if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {

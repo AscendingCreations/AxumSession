@@ -279,7 +279,7 @@ impl SessionConfig {
 
     /// Set's the session's cookie's path.
     ///
-    /// This is used to deturmine when the cookie takes effect within the website path.
+    /// This is used to determine when the cookie takes effect within the website path.
     /// Leave as default ("/") for cookie to be used site wide.
     ///
     /// # Examples

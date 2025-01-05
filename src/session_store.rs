@@ -14,7 +14,7 @@ use std::{fmt::Debug, sync::Arc};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-/// Contains the main Services storage for all session's and database access for persistant Sessions.
+/// Contains the main Services storage for all session's and database access for persistent Sessions.
 ///
 /// # Examples
 /// ```rust ignore
@@ -290,7 +290,7 @@ where
                         encrypt::encrypt(&uuid, &serde_json::to_string(session)?, key).map_err(
                             |e| {
                                 SessionError::GenericNotSupportedError(format!(
-                                    "Error: {} Occured when encrypting a Session.",
+                                    "Error: {} Occurred when encrypting a Session.",
                                     e
                                 ))
                             },
