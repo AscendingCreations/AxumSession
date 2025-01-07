@@ -40,9 +40,9 @@ impl DatabasePool for SessionRedisClusterPool {
     async fn count(&self, table_name: &str) -> Result<i64, DatabaseError> {
         let mut con = self
             .pool
-            .aquire()
+            .acquire()
             .await
-            .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
+            .map_err(|err| DatabaseError::GenericAcquire(err.to_string()))?;
 
         let count: i64 = if table_name.is_empty() {
             redis::cmd("DBSIZE")

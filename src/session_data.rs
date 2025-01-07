@@ -136,7 +136,7 @@ impl SessionData {
 
     /// Sets the Session to force update the database.
     /// This will increase the Timer on the sessions store
-    /// making the session live longer in the persistant database.
+    /// making the session live longer in the persistent database.
     ///
     /// # Examples
     /// ```rust ignore
@@ -196,7 +196,7 @@ impl SessionData {
     /// Gets data from the Session's HashMap
     ///
     /// Provides an Option<T> that returns the requested data from the Sessions store.
-    /// Returns None if Key does not exist or if serdes_json failed to deserialize.
+    /// Returns None if Key does not exist or if serde_json failed to deserialize.
     ///
     /// # Examples
     /// ```rust ignore
@@ -215,7 +215,7 @@ impl SessionData {
     /// This will also update the database on Response Phase.
     ///
     /// Provides an Option<T> that returns the requested data from the Sessions store.
-    /// Returns None if Key does not exist or if serdes_json failed to deserialize.
+    /// Returns None if Key does not exist or if serde_json failed to deserialize.
     ///
     /// # Examples
     /// ```rust ignore
@@ -276,7 +276,7 @@ impl SessionData {
     }
 
     /// Removes a Request from the request counter
-    /// used to deturmine if parallel requests exist.
+    /// used to determine if parallel requests exist.
     /// prevents data deletion until requests == 0.
     ///
     /// # Examples
@@ -290,7 +290,7 @@ impl SessionData {
     }
 
     /// Removes a Request from the request counter
-    /// used to deturmine if parallel requests exist.
+    /// used to determine if parallel requests exist.
     /// prevents data deletion until requests == 0.
     ///
     /// # Examples

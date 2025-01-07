@@ -58,7 +58,7 @@ pub trait DatabasePool {
 #[derive(Error, Debug)]
 pub enum DatabaseError {
     #[error("Database insert error {0}")]
-    GenericAquire(String),
+    GenericAcquire(String),
     #[error("Database insert error {0}")]
     GenericInsertError(String),
     #[error("Database select error {0}")]

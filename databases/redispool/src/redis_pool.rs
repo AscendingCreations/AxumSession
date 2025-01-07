@@ -40,7 +40,7 @@ impl DatabasePool for SessionRedisPool {
     async fn count(&self, table_name: &str) -> Result<i64, DatabaseError> {
         let mut con = match self.pool.acquire().await {
             Ok(v) => v,
-            Err(err) => return Err(DatabaseError::GenericAquire(err.to_string())),
+            Err(err) => return Err(DatabaseError::GenericAcquire(err.to_string())),
         };
 
         let count: i64 = if table_name.is_empty() {
@@ -78,7 +78,7 @@ impl DatabasePool for SessionRedisPool {
             .pool
             .acquire()
             .await
-            .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
+            .map_err(|err| DatabaseError::GenericAcquire(err.to_string()))?;
         redis::pipe()
             .atomic() //makes this a transation.
             .set(&id, session)
@@ -96,7 +96,7 @@ impl DatabasePool for SessionRedisPool {
             .pool
             .acquire()
             .await
-            .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
+            .map_err(|err| DatabaseError::GenericAcquire(err.to_string()))?;
         let id = if table_name.is_empty() {
             id.to_string()
         } else {
@@ -115,7 +115,7 @@ impl DatabasePool for SessionRedisPool {
             .pool
             .acquire()
             .await
-            .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
+            .map_err(|err| DatabaseError::GenericAcquire(err.to_string()))?;
         let id = if table_name.is_empty() {
             id.to_string()
         } else {
@@ -134,7 +134,7 @@ impl DatabasePool for SessionRedisPool {
             .pool
             .acquire()
             .await
-            .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
+            .map_err(|err| DatabaseError::GenericAcquire(err.to_string()))?;
         let id = if table_name.is_empty() {
             id.to_string()
         } else {
@@ -154,7 +154,7 @@ impl DatabasePool for SessionRedisPool {
             .pool
             .acquire()
             .await
-            .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
+            .map_err(|err| DatabaseError::GenericAcquire(err.to_string()))?;
         if table_name.is_empty() {
             redis::cmd("FLUSHDB")
                 .query_async::<()>(&mut con)
@@ -184,7 +184,7 @@ impl DatabasePool for SessionRedisPool {
             .pool
             .acquire()
             .await
-            .map_err(|err| DatabaseError::GenericAquire(err.to_string()))?;
+            .map_err(|err| DatabaseError::GenericAcquire(err.to_string()))?;
         let table_name = if table_name.is_empty() {
             "*".to_string()
         } else {

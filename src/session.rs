@@ -20,13 +20,13 @@ where
 {
     /// The SessionStore that holds all the Sessions.
     pub(crate) store: SessionStore<T>,
-    /// The Sessions current ID for lookng up its store.
+    /// The Sessions current ID for looking up its store.
     pub(crate) id: SessionID,
 }
 
 /// Adds `FromRequestParts<B>` for Session
 ///
-/// Returns the Session from Axums request extensions state
+/// Returns the Session from Axum's request extensions state
 impl<T, S> FromRequestParts<S> for Session<T>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
@@ -127,7 +127,7 @@ where
     }
     /// Sets the Session to create the SessionData based on the current Session ID.
     /// You can only use this if SessionMode::Manual is set or it will Panic.
-    /// This will also set the store to true similair to session.set_store(true);
+    /// This will also set the store to true similar to session.set_store(true);
     ///
     /// # Examples
     /// ```rust ignore
@@ -138,12 +138,12 @@ where
     pub fn create_data(&self) {
         if !self.store.config.session_mode.is_manual() {
             panic!(
-                "Session must be set to SessionMode::Manual in order to use create_data, 
+                "Session must be set to SessionMode::Manual in order to use create_data,
                 as the Session data is created already."
             );
         }
-        let sess = SessionData::new(self.id.0, true, &self.store.config);
-        self.store.inner.insert(self.id.inner(), sess);
+        let session_data = SessionData::new(self.id.0, true, &self.store.config);
+        self.store.inner.insert(self.id.inner(), session_data);
     }
 
     /// Checks if the SessionData was created or not.
@@ -179,7 +179,7 @@ where
 
     /// Sets the Session to force update the database.
     /// This will increase the Timer on the sessions store
-    /// making the session live longer in the persistant database.
+    /// making the session live longer in the persistent database.
     ///
     /// # Examples
     /// ```rust ignore
@@ -237,14 +237,14 @@ where
     /// Gets data from the Session's HashMap
     ///
     /// Provides an `Option<T>` that returns the requested data from the Sessions store.
-    /// Returns None if Key does not exist or if serdes_json failed to deserialize.
+    /// Returns None if Key does not exist or if serde_json failed to deserialize.
     ///
     /// # Examples
     /// ```rust ignore
     /// let id = session.get("user-id").unwrap_or(0);
     /// ```
     ///
-    ///Used to get data stored within SessionDatas hashmap from a key value.
+    ///Used to get data stored within SessionData's hashmap from a key value.
     ///
     #[inline]
     pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
@@ -254,14 +254,14 @@ where
     /// Removes a Key from the Current Session's HashMap returning it.
     ///
     /// Provides an `Option<T> `that returns the requested data from the Sessions store.
-    /// Returns None if Key does not exist or if serdes_json failed to deserialize.
+    /// Returns None if Key does not exist or if serde_json failed to deserialize.
     ///
     /// # Examples
     /// ```rust ignore
     /// let id = session.get_remove("user-id").unwrap_or(0);
     /// ```
     ///
-    /// Used to get data stored within SessionDatas hashmap from a key value.
+    /// Used to get data stored within SessionData's hashmap from a key value.
     ///
     #[inline]
     pub fn get_remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
@@ -310,8 +310,8 @@ where
 
     /// Returns a i64 count of how many Sessions exist.
     ///
-    /// If the Session is persistant it will return all sessions within the database.
-    /// If the Session is not persistant it will return a count within SessionStore.
+    /// If the Session is persistent it will return all sessions within the database.
+    /// If the Session is not persistent it will return a count within SessionStore.
     ///
     /// # Examples
     /// ```rust ignore
@@ -366,7 +366,7 @@ where
     }
 
     /// Removes a Request from the request counter
-    /// used to deturmine if parallel requests exist.
+    /// used to determine if parallel requests exist.
     /// prevents data deletion until requests == 0.
     ///
     /// # Examples
@@ -380,7 +380,7 @@ where
     }
 
     /// Removes a Request from the request counter
-    /// used to deturmine if parallel requests exist.
+    /// used to determine if parallel requests exist.
     /// prevents data deletion until requests == 0.
     ///
     /// # Examples
@@ -528,7 +528,7 @@ where
 
 /// Adds `FromRequestParts<B>` for Session
 ///
-/// Returns the Session from Axums request extensions state.
+/// Returns the Session from Axum's request extensions state.
 impl<T, S> FromRequestParts<S> for ReadOnlySession<T>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
@@ -553,14 +553,14 @@ where
     /// Gets data from the Session's HashMap
     ///
     /// Provides an `Option<T>` that returns the requested data from the Sessions store.
-    /// Returns None if Key does not exist or if serdes_json failed to deserialize.
+    /// Returns None if Key does not exist or if serde_json failed to deserialize.
     ///
     /// # Examples
     /// ```rust ignore
     /// let id = session.get("user-id").unwrap_or(0);
     /// ```
     ///
-    ///Used to get data stored within SessionDatas hashmap from a key value.
+    ///Used to get data stored within SessionData's hashmap from a key value.
     ///
     #[inline]
     pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
@@ -569,8 +569,8 @@ where
 
     /// Returns a i64 count of how many Sessions exist.
     ///
-    /// If the Session is persistant it will return all sessions within the database.
-    /// If the Session is not persistant it will return a count within SessionStore.
+    /// If the Session is persistent it will return all sessions within the database.
+    /// If the Session is not persistent it will return a count within SessionStore.
     ///
     /// # Examples
     /// ```rust ignore

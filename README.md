@@ -9,18 +9,18 @@ Axum Session
 ## 📑 Overview
 
 <p align="center">
-`axum_session` provide's a Session management middleware that stores all session data within a MemoryStore internally. 
+`axum_session` provide's a Session management middleware that stores all session data within a MemoryStore internally.
 Optionally it can save data to a persistent database for long term storage.
 Uses Cookie or Header stored UUID's to sync back to the session store.
 </p>
 
 - Cookies or Header Store of Generated Session UUID and a Store Boolean.
 - Uses a DatabasePool Trait so you can implement your own Sub Storage Layer.
-- Convenient API for `Session` no need to mark as Read or Write making Usage Easier. 
+- Convenient API for `Session` no need to mark as Read or Write making Usage Easier.
 - Uses `dashmap` for internal memory lookup and storage to achieve high throughput.
-- Uses Serdes for Data Serialization so it can store any Serdes supported type's into the Sessions data.
+- Uses Serde for Data Serialization so it can store any Serde supported types into the Sessions data.
 - Supports Redis, SurrealDB, MongoDB and SQLx optional Databases out of the Box.
-- Supports Memory Only usage. No need to use a persistant database.
+- Supports Memory Only usage. No need to use a persistent database.
 - Supports Cookie and Header Signing for integrity, and authenticity.
 - Supports Database Session Data Encryption for confidentiality, integrity.
 - Supports SessionID renewal for enhanced Security.
@@ -36,7 +36,7 @@ If you need help with this library or have suggestions please go to our [Discord
 
 ## 📦 Install
 
-Axum Session uses [`tokio`]. 
+Axum Session uses [`tokio`].
 to your cargo include for Axum Session.
 
 [`tokio`]: https://github.com/tokio-rs/tokio
@@ -50,11 +50,11 @@ axum_session = { version = "0.15.0" }
 
 ## 📱 Cargo Feature Flags
 
-| Features                      | Description                                                                                    |
-| ----------------------------- | ---------------------------------------------------------------------------------------------- |
-| `advanced`                    | Enable functions allowing more direct control over the sessions.                               |
-| `rest_mode`                   | Disables Cookie Handlering In place of Header only usage for Rest API Requests and Responses.  |
-| `key-store`                   | Enabled the optional key storage. Will increase ram usage based on Fastbloom settings.         |
+| Features                      | Description                                                                                        |
+| ----------------------------- | -------------------------------------------------------------------------------------------------- |
+| `advanced`                    | Enables functions that provide more control over sessions.                                         |
+| `rest_mode`                   | Disables cookie handling and instead only uses a header. For rest API requests and responses.      |
+| `key-store`                   | Enables optional in-process key storage. This increases RAM usage depending on Fastbloom settings. |
 
 
 | Database Crate                                                                      | Persistent | Description                                                 |
@@ -62,11 +62,11 @@ axum_session = { version = "0.15.0" }
 | [`axum_session_sqlx`](https://crates.io/crates/axum_session_sqlx)                   | Yes        | Sqlx session store                                          |
 | [`axum_session_surreal`](https://crates.io/crates/axum_session_surreal)             | Yes        | Surreal session store                                       |
 | [`axum_session_mongo`](https://crates.io/crates/axum_session_mongo)                 | Yes        | Mongo session store                                         |
-| [`axum_session_redispool`](https://crates.io/crates/axum_session_redispool)        | Yes        | RedisPool session store                                     |
+| [`axum_session_redispool`](https://crates.io/crates/axum_session_redispool)         | Yes        | RedisPool session store                                     |
 
 ## 🔎 Example Default Setup
 
-You can find examples within the [`Repository`](https://github.com/AscendingCreations/AxumSession/tree/main/examples) 
+You can find examples within the [`Repository`](https://github.com/AscendingCreations/AxumSession/tree/main/examples)
 
 ```rust ignore
 use sqlx::{ConnectOptions, postgres::{PgPoolOptions, PgConnectOptions}};
@@ -121,15 +121,15 @@ async fn connect_to_database() -> anyhow::Result<sqlx::Pool<sqlx::Postgres>> {
 
 ## 🔑 Key Store Details
 
-To enable and use fastbloom key storage for less database lookups. 
+To enable and use fastbloom key storage for less database lookups.
 Add the feature `"key-store"` to the crate’s features. This feature will increase the ram usage server side.
-but will heavily improve the bandwidth limitations and reduce latency of returns from the server. 
+but will heavily improve the bandwidth limitations and reduce latency of returns from the server.
 This is based on how much the `filter_expected_elements` and `filter_false_positive_probability` are set too.
-The higher they are the more ram is used. You will also need to Enable the bloom filter in the config for it to be used. By default, 
+The higher they are the more ram is used. You will also need to Enable the bloom filter in the config for it to be used. By default,
 the `use_bloom_filters` is enabled and these config options exist whither or not the feature is enabled.
 Please refer to `with_filter_expected_elements` and `with_filter_false_positive_probability` within the documents to set the options.
 Otherwise stick with the default settings which should work in most situations. Just do note these options provide on how many False positives
-could possibly occur when comparing a UUID to what currently exists, which means it will keep trying till it finds none that match. 
+could possibly occur when comparing a UUID to what currently exists, which means it will keep trying till it finds none that match.
 Higher values decrease the chance of a false positive but increase ram usage.
 
 ## 😎 Session Login and Authentication via `axum_session_auth`
