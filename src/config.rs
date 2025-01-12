@@ -1,6 +1,11 @@
 use chrono::Duration;
 pub use cookie::{Key, SameSite};
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    fmt::{Debug, Formatter, Result},
+    sync::Arc,
+};
+use uuid::Uuid;
 
 /// Mode at which the Session will function As.
 ///
@@ -74,8 +79,8 @@ pub struct CookieAndHeaderConfig {
     pub(crate) with_ip_and_user_agent: bool,
 }
 
-impl std::fmt::Debug for CookieAndHeaderConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for CookieAndHeaderConfig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("CookieAndHeaderConfig")
             .field("store_name", &self.store_name)
             .field("cookie_domain", &self.cookie_domain)
@@ -104,8 +109,8 @@ pub struct DatabaseConfig {
     pub(crate) always_save: bool,
 }
 
-impl std::fmt::Debug for DatabaseConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for DatabaseConfig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("DatabaseConfig")
             .field("table_name", &self.table_name)
             .field("purge_database_update", &self.purge_database_update)
@@ -136,8 +141,8 @@ pub struct MemoryConfig {
     pub(crate) use_bloom_filters: bool,
 }
 
-impl std::fmt::Debug for MemoryConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for MemoryConfig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("MemoryConfig")
             .field("memory_lifespan", &self.memory_lifespan)
             .field("filter_expected_elements", &self.filter_expected_elements)
@@ -166,8 +171,8 @@ pub struct IpUserAgentConfig {
     pub(crate) use_user_agent: bool,
 }
 
-impl std::fmt::Debug for IpUserAgentConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for IpUserAgentConfig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("IpUserAgentConfig")
             .field("use_ip", &self.use_ip)
             .field("use_xforward_ip", &self.use_xforward_ip)
@@ -175,6 +180,16 @@ impl std::fmt::Debug for IpUserAgentConfig {
             .field("use_real_ip", &self.use_real_ip)
             .field("use_user_agent", &self.use_user_agent)
             .finish()
+    }
+}
+
+pub trait IdGenerator: Debug + Send + Sync {
+    fn generate(&self) -> String;
+}
+
+impl IdGenerator for Uuid {
+    fn generate(&self) -> String {
+        Uuid::new_v4().to_string()
     }
 }
 
@@ -191,6 +206,7 @@ impl std::fmt::Debug for IpUserAgentConfig {
 pub struct SessionConfig {
     /// Disables the need to avoid session saving.
     pub(crate) session_mode: SessionMode,
+    pub(crate) id_generator: Arc<dyn IdGenerator>,
     /// Minimal lifespan of database store and cookie before expiring.
     /// This is set to the Cookie before sending and to the database before updating/inserting.
     pub(crate) lifespan: Duration,
@@ -210,9 +226,10 @@ pub struct SessionConfig {
     pub(crate) ip_user_agent: IpUserAgentConfig,
 }
 
-impl std::fmt::Debug for SessionConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Debug for SessionConfig {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("SessionConfig")
+            .field("id_generator", &self.id_generator)
             .field("database", &self.database)
             .field("memory", &self.memory)
             .field("cookie_and_header", &self.cookie_and_header)
@@ -745,6 +762,7 @@ impl SessionConfig {
 impl Default for SessionConfig {
     fn default() -> Self {
         Self {
+            id_generator: Arc::new(Uuid::default()),
             // Set to a 6 hour default in Database Session stores unloading.
             lifespan: Duration::try_hours(6).unwrap_or_default(),
             cookie_and_header: CookieAndHeaderConfig::default(),
