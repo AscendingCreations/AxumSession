@@ -1,4 +1,4 @@
-use crate::{DatabasePool, SessionData, SessionError, SessionID, SessionStore};
+use crate::{DatabasePool, SessionData, SessionError, SessionStore};
 use axum::extract::FromRequestParts;
 
 #[cfg(feature = "key-store")]
@@ -21,7 +21,7 @@ where
     /// The SessionStore that holds all the Sessions.
     pub(crate) store: SessionStore<T>,
     /// The Sessions current ID for looking up its store.
-    pub(crate) id: SessionID,
+    pub(crate) id: String,
 }
 
 /// Adds `FromRequestParts<B>` for Session
@@ -49,11 +49,11 @@ where
     #[allow(clippy::needless_pass_by_ref_mut)]
     pub(crate) async fn new(
         store: SessionStore<S>,
-        value: Option<Uuid>,
+        value: Option<String>,
     ) -> Result<(Self, bool), SessionError> {
         let (id, is_new) = match value {
-            Some(v) => (SessionID(v), false),
-            None => (Self::generate_uuid(&store).await?, true),
+            Some(v) => (v, false),
+            None => (Self::generate_id(&store).await?, true),
         };
 
         #[cfg(feature = "key-store")]
@@ -73,12 +73,12 @@ where
     }
 
     #[cfg(feature = "key-store")]
-    pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> Result<SessionID, SessionError> {
+    pub(crate) async fn generate_id(store: &SessionStore<S>) -> Result<String, SessionError> {
         loop {
-            let token = Uuid::new_v4();
+            let token = store.config.id_generator.generate();
 
             if (!store.config.memory.use_bloom_filters || store.auto_handles_expiry())
-                && !store.inner.contains_key(&token.to_string())
+                && !store.inner.contains_key(&token)
             {
                 //This fixes an already used but in database issue.
                 if let Some(client) = &store.client {
@@ -88,27 +88,27 @@ where
                         .exists(&token.to_string(), &store.config.database.table_name)
                         .await?
                     {
-                        return Ok(SessionID(token));
+                        return Ok(token);
                     }
                 } else {
-                    return Ok(SessionID(token));
+                    return Ok(token);
                 }
             } else {
                 let filter = store.filter.read().await;
 
                 if !filter.contains(token.to_string().as_bytes()) {
-                    return Ok(SessionID(token));
+                    return Ok(token);
                 }
             }
         }
     }
 
     #[cfg(not(feature = "key-store"))]
-    pub(crate) async fn generate_uuid(store: &SessionStore<S>) -> Result<SessionID, SessionError> {
+    pub(crate) async fn generate_id(store: &SessionStore<S>) -> Result<String, SessionError> {
         loop {
-            let token = Uuid::new_v4();
+            let token = store.config.id_generator.generate();
 
-            if !store.inner.contains_key(&token.to_string()) {
+            if !store.inner.contains_key(&token) {
                 //This fixes an already used but in database issue.
                 if let Some(client) = &store.client {
                     // Unwrap should be safe to use as we would want it to crash if there was a major database error.
@@ -117,10 +117,10 @@ where
                         .exists(&token.to_string(), &store.config.database.table_name)
                         .await?
                     {
-                        return Ok(SessionID(token));
+                        return Ok(token);
                     }
                 } else {
-                    return Ok(SessionID(token));
+                    return Ok(token);
                 }
             }
         }
@@ -142,8 +142,8 @@ where
                 as the Session data is created already."
             );
         }
-        let session_data = SessionData::new(self.id.0, true, &self.store.config);
-        self.store.inner.insert(self.id.inner(), session_data);
+        let session_data = SessionData::new(self.id.clone(), true, &self.store.config);
+        self.store.inner.insert(self.id.clone(), session_data);
     }
 
     /// Checks if the SessionData was created or not.
@@ -157,7 +157,7 @@ where
     ///
     #[inline]
     pub fn data_exists(&self) -> bool {
-        self.store.inner.contains_key(&self.id.inner())
+        self.store.inner.contains_key(&self.id)
     }
 
     /// Sets the Session to renew its Session ID.
@@ -174,7 +174,7 @@ where
     ///
     #[inline]
     pub fn renew(&self) {
-        self.store.renew(self.id.inner());
+        self.store.renew(self.id.clone());
     }
 
     /// Sets the Session to force update the database.
@@ -188,7 +188,7 @@ where
     ///
     #[inline]
     pub fn update(&self) {
-        self.store.update(self.id.inner());
+        self.store.update(self.id.clone());
     }
 
     /// Sets the Current Session to be Destroyed.
@@ -201,7 +201,7 @@ where
     ///
     #[inline]
     pub fn destroy(&self) {
-        self.store.destroy(self.id.inner());
+        self.store.destroy(self.id.clone());
     }
 
     /// Sets the Current Session to a long term expiration. Useful for Remember Me setups.
@@ -214,7 +214,7 @@ where
     ///
     #[inline]
     pub fn set_longterm(&self, longterm: bool) {
-        self.store.set_longterm(self.id.inner(), longterm);
+        self.store.set_longterm(self.id.clone(), longterm);
     }
 
     /// Allows the Current Session to store.
@@ -231,7 +231,7 @@ where
     ///
     #[inline]
     pub fn set_store(&self, can_store: bool) {
-        self.store.set_store(self.id.inner(), can_store);
+        self.store.set_store(self.id.clone(), can_store);
     }
 
     /// Gets data from the Session's HashMap
@@ -248,7 +248,7 @@ where
     ///
     #[inline]
     pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
-        self.store.get(self.id.inner(), key)
+        self.store.get(self.id.clone(), key)
     }
 
     /// Removes a Key from the Current Session's HashMap returning it.
@@ -265,7 +265,7 @@ where
     ///
     #[inline]
     pub fn get_remove<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
-        self.store.get_remove(self.id.inner(), key)
+        self.store.get_remove(self.id.clone(), key)
     }
 
     /// Sets data to the Current Session's HashMap.
@@ -278,7 +278,7 @@ where
     ///
     #[inline]
     pub fn set(&self, key: &str, value: impl Serialize) {
-        self.store.set(self.id.inner(), key, value);
+        self.store.set(self.id.clone(), key, value);
     }
 
     /// Removes a Key from the Current Session's HashMap.
@@ -292,7 +292,7 @@ where
     ///
     #[inline]
     pub fn remove(&self, key: &str) {
-        self.store.remove(self.id.inner(), key);
+        self.store.remove(self.id.clone(), key);
     }
 
     /// Clears all data from the Current Session's HashMap instantly.
@@ -305,7 +305,7 @@ where
     ///
     #[inline]
     pub fn clear(&self) {
-        self.store.clear_session_data(self.id.inner());
+        self.store.clear_session_data(self.id.clone());
     }
 
     /// Returns a i64 count of how many Sessions exist.
@@ -333,8 +333,8 @@ where
     /// ```
     ///
     #[inline]
-    pub fn get_session_id(&self) -> SessionID {
-        self.id
+    pub fn get_session_id(&self) -> String {
+        self.id.clone()
     }
 
     /// Returns the store for this Session.
@@ -376,7 +376,7 @@ where
     ///
     #[inline]
     pub(crate) fn remove_request(&self) {
-        self.store.remove_session_request(self.id.inner());
+        self.store.remove_session_request(self.id.clone());
     }
 
     /// Removes a Request from the request counter
@@ -390,7 +390,7 @@ where
     ///
     #[inline]
     pub(crate) fn set_request(&self) {
-        self.store.set_session_request(self.id.inner());
+        self.store.set_session_request(self.id.clone());
     }
 
     /// checks if a session has more than one request.
@@ -402,7 +402,7 @@ where
     ///
     #[inline]
     pub(crate) fn is_parallel(&self) -> bool {
-        self.store.is_session_parallel(self.id.inner())
+        self.store.is_session_parallel(self.id.clone())
     }
 
     /// checks if a session exists and if it is outdated.
@@ -511,7 +511,7 @@ where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     pub(crate) store: SessionStore<T>,
-    pub(crate) id: SessionID,
+    pub(crate) id: String,
 }
 
 impl<T> From<Session<T>> for ReadOnlySession<T>
@@ -564,7 +564,7 @@ where
     ///
     #[inline]
     pub fn get<T: serde::de::DeserializeOwned>(&self, key: &str) -> Option<T> {
-        self.store.get(self.id.inner(), key)
+        self.store.get(self.id.clone(), key)
     }
 
     /// Returns a i64 count of how many Sessions exist.

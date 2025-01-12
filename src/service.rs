@@ -70,17 +70,17 @@ where
             let cookies = get_cookies(req.headers());
 
             #[cfg(not(feature = "rest_mode"))]
-            let (session_uuid, storable) =
+            let (session_id, storable) =
                 get_headers_and_key(&store, cookies, &ip_user_agent).await;
 
             #[cfg(feature = "rest_mode")]
             let headers = get_headers(&store, req.headers());
 
             #[cfg(feature = "rest_mode")]
-            let (session_uuid, storable) =
+            let (session_id, storable) =
                 get_headers_and_key(&store, headers, &ip_user_agent).await;
 
-            let (mut session, is_new) = match Session::new(store, session_uuid).await {
+            let (mut session, is_new) = match Session::new(store, session_id).await {
                 Ok(v) => v,
                 Err(err) => {
                     return trace_error(err, "failed to generate Session ID");
@@ -88,10 +88,10 @@ where
             };
 
             // Check if the session id exists if not lets check if it exists in the database or generate a new session.
-            // If manual mode is enabled then do not check for a Session unless the UUID is not new.
+            // If manual mode is enabled then do not check for a Session unless the ID is not new.
             let check_database: bool = if is_new && !session.store.config.session_mode.is_manual() {
-                let sess = SessionData::new(session.id.0, storable, &session.store.config);
-                session.store.inner.insert(session.id.inner(), sess);
+                let sess = SessionData::new(session.id.clone(), storable, &session.store.config);
+                session.store.inner.insert(session.id.clone(), sess);
                 false
             } else if !is_new || !session.store.config.session_mode.is_manual() {
                 !session.store.service_session_data(&session)
@@ -100,25 +100,25 @@ where
             };
 
             if check_database {
-                let mut sess = session
+                let mut fresh_session = session
                     .store
-                    .load_session(session.id.inner())
+                    .load_session(session.id.clone())
                     .await
                     .ok()
                     .flatten()
                     .unwrap_or_else(|| {
                         tracing::info!(
                             "Session {} did not exist in Database. So it was Recreated.",
-                            session.id
+                            session.id.clone()
                         );
-                        SessionData::new(session.id.0, storable, &session.store.config)
+                        SessionData::new(session.id.clone(), storable, &session.store.config)
                     });
 
-                sess.autoremove = Utc::now() + session.store.config.memory.memory_lifespan;
-                sess.store = storable;
-                sess.update = true;
-                sess.requests = 1;
-                session.store.inner.insert(session.id.inner(), sess);
+                fresh_session.autoremove = Utc::now() + session.store.config.memory.memory_lifespan;
+                fresh_session.store = storable;
+                fresh_session.update = true;
+                fresh_session.requests = 1;
+                session.store.inner.insert(session.id.clone(), fresh_session);
             }
 
             let (last_sweep, last_database_sweep) = {
@@ -134,7 +134,7 @@ where
 
             if last_sweep <= current_time && !session.store.config.memory.memory_lifespan.is_zero()
             {
-                tracing::info!("Session id {}: Session Memory Cleaning Started", session.id);
+                tracing::info!("Session id {}: Session Memory Cleaning Started", session.id.clone());
                 // Only unload these from filter if the Client is None as this means no database.
                 // Otherwise only unload from the filter if removed from the Database.
                 #[cfg(feature = "key-store")]
@@ -213,7 +213,7 @@ where
             let mut response = ready_inner.call(req).await?;
 
             let (renew, storable, destroy, loaded) =
-                if let Some(session_data) = session.store.inner.get(&session.id.inner()) {
+                if let Some(session_data) = session.store.inner.get(&session.id) {
                     (
                         session_data.renew,
                         session_data.store,
@@ -235,7 +235,7 @@ where
 
             if !destroy && (!session.store.config.session_mode.is_manual() || loaded) && renew {
                 // Lets change the Session ID and destory the old Session from the database.
-                let session_id = match Session::generate_uuid(&session.store).await {
+                let session_id = match Session::generate_id(&session.store).await {
                     Ok(v) => v,
                     Err(err) => {
                         return trace_error(err, "failed to Generate Session ID");
@@ -246,7 +246,7 @@ where
                 if session.store.is_persistent() {
                     if let Err(err) = session
                         .store
-                        .database_remove_session(session.id.inner())
+                        .database_remove_session(session.id.clone())
                         .await
                     {
                         return trace_error(err, "failed to remove session from database");
@@ -257,16 +257,16 @@ where
                 #[cfg(feature = "key-store")]
                 if session.store.config.memory.use_bloom_filters {
                     let mut filter = session.store.filter.write().await;
-                    filter.remove(session.id.inner().as_bytes());
+                    filter.remove(session.id.as_bytes());
                 }
 
                 // Lets remove update and reinsert.
-                if let Some((_, mut session_data)) = session.store.inner.remove(&session.id.inner())
+                if let Some((_, mut session_data)) = session.store.inner.remove(&session.id)
                 {
-                    session_data.id = session_id.0;
+                    session_data.id = session_id.clone();
                     session_data.renew = false;
-                    session.id = session_id;
-                    session.store.inner.insert(session.id.inner(), session_data);
+                    session.id = session_id.clone();
+                    session.store.inner.insert(session.id.clone(), session_data);
                 }
             }
 
@@ -276,7 +276,7 @@ where
                 && !destroy
             {
                 let clone_session = if let Some(mut sess) =
-                    session.store.inner.get_mut(&session.id.inner())
+                    session.store.inner.get_mut(&session.id.clone())
                 {
                     // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
                     if session.store.config.database.always_save || sess.update || !sess.validate()
@@ -316,15 +316,15 @@ where
                 #[cfg(feature = "key-store")]
                 if session.store.config.memory.use_bloom_filters {
                     let mut filter = session.store.filter.write().await;
-                    filter.remove(session.id.inner().as_bytes());
+                    filter.remove(session.id.as_bytes());
                 }
 
-                let _ = session.store.inner.remove(&session.id.inner());
+                let _ = session.store.inner.remove(&session.id);
 
                 if session.store.is_persistent() {
                     if let Err(err) = session
                         .store
-                        .database_remove_session(session.id.inner())
+                        .database_remove_session(session.id.clone())
                         .await
                     {
                         return trace_error(err, "failed to remove session from database");
@@ -338,10 +338,10 @@ where
                 #[cfg(feature = "key-store")]
                 if !session.store.is_persistent() && session.store.config.memory.use_bloom_filters {
                     let mut filter = session.store.filter.write().await;
-                    filter.remove(session.id.inner().as_bytes());
+                    filter.remove(session.id.as_bytes());
                 }
 
-                session.store.inner.remove(&session.id.inner());
+                session.store.inner.remove(&session.id);
             }
 
             set_headers(

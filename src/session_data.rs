@@ -22,7 +22,7 @@ use uuid::Uuid;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SessionData {
     #[serde(skip)]
-    pub(crate) id: Uuid,
+    pub(crate) id: String,
     pub(crate) data: HashMap<String, String>,
     #[serde(skip)]
     pub(crate) expires: DateTime<Utc>,
@@ -55,7 +55,7 @@ impl SessionData {
     /// ```
     ///
     #[inline]
-    pub(crate) fn new(id: Uuid, storable: bool, config: &SessionConfig) -> Self {
+    pub(crate) fn new(id: String, storable: bool, config: &SessionConfig) -> Self {
         Self {
             id,
             data: HashMap::new(),
@@ -331,69 +331,69 @@ impl SessionData {
 /// let id = SessionID::new(token);
 /// ```
 ///
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-pub struct SessionID(pub(crate) Uuid);
+// #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+// pub struct SessionID(pub(crate) Uuid);
 
-impl SessionID {
-    /// Constructs a new SessionID hold a UUID.
-    ///
-    /// # Examples
-    /// ```rust ignore
-    /// use axum_session::SessionID;
-    /// use uuid::Uuid;
-    ///
-    ///
-    /// let token = Uuid::new_v4();
-    /// let id = SessionID::new(token);
-    /// ```
-    ///
-    #[inline]
-    pub(crate) fn new(uuid: Uuid) -> SessionID {
-        SessionID(uuid)
-    }
+// impl SessionID {
+//     /// Constructs a new SessionID hold a UUID.
+//     ///
+//     /// # Examples
+//     /// ```rust ignore
+//     /// use axum_session::SessionID;
+//     /// use uuid::Uuid;
+//     ///
+//     ///
+//     /// let token = Uuid::new_v4();
+//     /// let id = SessionID::new(token);
+//     /// ```
+//     ///
+//     #[inline]
+//     pub(crate) fn new(uuid: Uuid) -> SessionID {
+//         SessionID(uuid)
+//     }
 
-    /// Returns the inner UUID as a string.
-    ///
-    /// # Examples
-    /// ```rust ignore
-    /// use axum_session::SessionID;
-    /// use uuid::Uuid;
-    ///
-    ///
-    /// let token = Uuid::new_v4();
-    /// let id = SessionID::new(token);
-    /// let str_id = id.inner();
-    /// ```
-    ///
-    #[inline]
-    pub fn inner(&self) -> String {
-        self.0.to_string()
-    }
+//     /// Returns the inner UUID as a string.
+//     ///
+//     /// # Examples
+//     /// ```rust ignore
+//     /// use axum_session::SessionID;
+//     /// use uuid::Uuid;
+//     ///
+//     ///
+//     /// let token = Uuid::new_v4();
+//     /// let id = SessionID::new(token);
+//     /// let str_id = id.inner();
+//     /// ```
+//     ///
+//     #[inline]
+//     pub fn inner(&self) -> String {
+//         self.0.to_string()
+//     }
 
-    /// Returns the inner UUID.
-    ///
-    /// # Examples
-    /// ```rust ignore
-    /// use axum_session::SessionID;
-    /// use uuid::Uuid;
-    ///
-    ///
-    /// let token = Uuid::new_v4();
-    /// let id = SessionID::new(token);
-    /// let uuid = id.uuid();
-    /// ```
-    ///
-    #[inline]
-    pub fn uuid(&self) -> Uuid {
-        self.0
-    }
-}
+//     /// Returns the inner UUID.
+//     ///
+//     /// # Examples
+//     /// ```rust ignore
+//     /// use axum_session::SessionID;
+//     /// use uuid::Uuid;
+//     ///
+//     ///
+//     /// let token = Uuid::new_v4();
+//     /// let id = SessionID::new(token);
+//     /// let uuid = id.uuid();
+//     /// ```
+//     ///
+//     #[inline]
+//     pub fn uuid(&self) -> Uuid {
+//         self.0
+//     }
+// }
 
-impl Display for SessionID {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0.to_string())
-    }
-}
+// impl Display for SessionID {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//         f.write_str(&self.0.to_string())
+//     }
+// }
 
 /// Internal Timers
 ///

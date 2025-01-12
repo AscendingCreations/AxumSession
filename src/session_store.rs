@@ -229,28 +229,26 @@ where
                 .load(&cookie_value, &self.config.database.table_name)
                 .await?;
 
-            if let Ok(uuid) = Uuid::parse_str(&cookie_value) {
-                if let Some(mut session) = result
-                    .map(|session| {
-                        if let Some(key) = self.config.database.database_key.as_ref() {
-                            serde_json::from_str::<SessionData>(
-                                &match encrypt::decrypt(&uuid.to_string(), &session, key) {
-                                    Ok(v) => v,
-                                    Err(err) => {
-                                        tracing::error!(err = %err, "Failed to decrypt Session data from database.");
-                                        String::new()
-                                    }
+            if let Some(mut session) = result
+                .map(|session| {
+                    if let Some(key) = self.config.database.database_key.as_ref() {
+                        serde_json::from_str::<SessionData>(
+                            &match encrypt::decrypt(&cookie_value, &session, key) {
+                                Ok(v) => v,
+                                Err(err) => {
+                                    tracing::error!(err = %err, "Failed to decrypt Session data from database.");
+                                    String::new()
                                 }
-                            )
-                        } else {
-                            serde_json::from_str::<SessionData>(&session)
-                        }
-                    })
-                    .transpose()?
-                {
-                    session.id = uuid;
-                    return Ok(Some(session));
-                }
+                            }
+                        )
+                    } else {
+                        serde_json::from_str::<SessionData>(&session)
+                    }
+                })
+                .transpose()?
+            {
+                session.id = cookie_value;
+                return Ok(Some(session));
             }
         }
 
@@ -369,7 +367,7 @@ where
     ///
     /// If no session is found returns false.
     pub(crate) fn service_session_data(&self, session: &Session<T>) -> bool {
-        if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
+        if let Some(mut inner) = self.inner.get_mut(&session.id) {
             inner.service_clear(
                 self.config.memory.memory_lifespan,
                 self.config.clear_check_on_load,

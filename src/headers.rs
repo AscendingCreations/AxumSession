@@ -19,7 +19,6 @@ use std::{
     fmt::Debug,
     net::{IpAddr, SocketAddr},
 };
-use uuid::Uuid;
 
 const X_REAL_IP: &str = "x-real-ip";
 const X_FORWARDED_FOR: &str = "x-forwarded-for";
@@ -57,7 +56,7 @@ pub async fn get_headers_and_key<T>(
     store: &SessionStore<T>,
     cookies: CookieJar,
     ip_user_agent: &str,
-) -> (Option<Uuid>, bool)
+) -> (Option<String>, bool)
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
@@ -70,7 +69,7 @@ where
             ip_user_agent.to_owned(),
             false,
         )
-        .and_then(|c| Uuid::parse_str(c.value()).ok());
+        .and_then(|c| Some(c.value().to_string()));
 
     let storable = cookies
         .get_cookie(
@@ -89,7 +88,7 @@ pub async fn get_headers_and_key<T>(
     store: &SessionStore<T>,
     headers: HashMap<String, String>,
     ip_user_agent: &str,
-) -> (Option<Uuid>, bool)
+) -> (Option<String>, bool)
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
@@ -105,8 +104,7 @@ where
             } else {
                 Some(c.to_owned())
             }
-        })
-        .and_then(|c| Uuid::parse_str(&c).ok());
+        });
 
     let name = store.config.cookie_and_header.store_name.to_string();
     let storable = headers
@@ -289,7 +287,7 @@ pub(crate) fn set_headers<T>(
         // Add SessionID
         if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
             cookies.add_cookie(
-                create_cookie(&session.store.config, session.id.inner(), NameType::Data),
+                create_cookie(&session.store.config, session.id.clone(), NameType::Data),
                 &session.store.config.cookie_and_header.key,
                 ip_user_agent.to_owned(),
                 false,

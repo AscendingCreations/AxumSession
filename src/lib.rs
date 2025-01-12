@@ -24,4 +24,4 @@ pub use session::{ReadOnlySession, Session};
 pub use session_store::SessionStore;
 
 pub(crate) use service::SessionService;
-pub(crate) use session_data::{SessionData, SessionID, SessionTimers};
+pub(crate) use session_data::{SessionData, SessionTimers};
