@@ -279,7 +279,7 @@ where
                     session.store.inner.get_mut(&session.id.clone())
                 {
                     // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
-                    if session.store.config.database.always_save || sess.update || !sess.validate()
+                    if session.store.config.database.always_save || sess.update || !sess.expired()
                     {
                         if sess.longterm {
                             sess.expires = Utc::now() + session.store.config.max_lifespan;

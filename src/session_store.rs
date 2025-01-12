@@ -12,7 +12,6 @@ use http::{request::Parts, StatusCode};
 use serde::Serialize;
 use std::{fmt::Debug, sync::Arc};
 use tokio::sync::RwLock;
-use uuid::Uuid;
 
 /// Contains the main Services storage for all session's and database access for persistent Sessions.
 ///
@@ -38,7 +37,7 @@ where
     /// Session Timers used for Clearing Memory and Database.
     pub(crate) timers: Arc<RwLock<SessionTimers>>,
     #[cfg(feature = "key-store")]
-    /// Filter used to keep track of what uuid's exist.
+    /// Filter used to keep track of what session IDs exist.
     pub(crate) filter: Arc<RwLock<CountingBloomFilter>>,
 }
 
@@ -199,7 +198,7 @@ where
         Ok(0)
     }
 
-    /// private internal function that loads a session's data from the database using a UUID string.
+    /// private internal function that loads a session's data from the database using an ID string.
     ///
     /// If client is None it will return Ok(None).
     ///
@@ -280,12 +279,11 @@ where
     ///
     pub(crate) async fn store_session(&self, session: &SessionData) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            let uuid = session.id.to_string();
             client
                 .store(
-                    &uuid,
+                    &session.id,
                     &if let Some(key) = self.config.database.database_key.as_ref() {
-                        encrypt::encrypt(&uuid, &serde_json::to_string(session)?, key).map_err(
+                        encrypt::encrypt(&session.id, &serde_json::to_string(session)?, key).map_err(
                             |e| {
                                 SessionError::GenericNotSupportedError(format!(
                                     "Error: {} Occurred when encrypting a Session.",
@@ -315,7 +313,6 @@ where
     /// # Examples
     /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
-    /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
@@ -340,7 +337,6 @@ where
     /// # Examples
     /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
-    /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();

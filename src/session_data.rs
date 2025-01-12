@@ -3,9 +3,8 @@ use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
-    fmt::{self, Debug, Display, Formatter},
+    fmt::Debug,
 };
-use uuid::Uuid;
 
 /// The Store and Configured Data for a Session.
 ///
@@ -16,7 +15,7 @@ use uuid::Uuid;
 ///
 /// let config = SessionConfig::default();
 /// let token = Uuid::new_v4();
-/// let session_data = SessionData::new(token, true, &config);
+/// let session_data = SessionData::new(token.to_string(), true, &config);
 /// ```
 ///
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -51,7 +50,7 @@ impl SessionData {
     ///
     /// let config = SessionConfig::default();
     /// let token = Uuid::new_v4();
-    /// let session_data = SessionData::new(token, true, &config);
+    /// let session_data = SessionData::new(token.to_string(), true, &config);
     /// ```
     ///
     #[inline]
@@ -70,7 +69,7 @@ impl SessionData {
         }
     }
 
-    /// Validates if the Session is to expire.
+    /// Determines whether the session has expired.
     ///
     /// # Examples
     /// ```rust ignore
@@ -79,13 +78,13 @@ impl SessionData {
     ///
     /// let config = SessionConfig::default();
     /// let token = Uuid::new_v4();
-    /// let session_data = SessionData::new(token, true, &config);
-    /// let expired = session_data.validate();
+    /// let session_data = SessionData::new(token.to_string(), true, &config);
+    /// let expired = session_data.expired();
     /// ```
     ///
     #[inline]
-    pub(crate) fn validate(&self) -> bool {
-        self.expires >= Utc::now()
+    pub(crate) fn expired(&self) -> bool {
+        self.expires < Utc::now()
     }
 
     /// Validates and checks if the Session is to be destroyed.
@@ -99,7 +98,7 @@ impl SessionData {
     ///
     /// let config = SessionConfig::default();
     /// let token = Uuid::new_v4();
-    /// let mut session_data = SessionData::new(token, true, &config);
+    /// let mut session_data = SessionData::new(token.to_string(), true, &config);
     /// let expired = session_data.service_clear(Duration::days(5));
     /// ```
     ///
@@ -108,7 +107,7 @@ impl SessionData {
         if clear_check && self.autoremove < Utc::now() {
             self.update = true;
 
-            if !self.validate() {
+            if self.expired() {
                 self.data.clear();
             }
         }
@@ -116,12 +115,11 @@ impl SessionData {
         self.autoremove = Utc::now() + memory_lifespan;
     }
 
-    /// Sets the Session to renew its Session ID.
-    /// This Deletes Session data from the database
-    /// associated with the old UUID. This helps to enhance
-    /// Security when logging into Secure area's across a website.
-    /// The current sessions data will be pushed to the database
-    /// with the new UUID.
+    /// Set session flags to renew/regenerate the ID.
+    /// This deletes data from the database keyed with the old ID.
+    /// This helps to enhance security when logging into secure
+    /// areas on a website. The current session's data will be
+    /// stored with the new ID.
     ///
     /// # Examples
     /// ```rust ignore
@@ -315,85 +313,6 @@ impl SessionData {
         self.requests >= 1
     }
 }
-
-/// Contains the UUID the Session.
-///
-/// This is used to store and find the Session.
-/// Used to pass the UUID between Cookies, the Database, and Session.
-///
-/// # Examples
-/// ```rust ignore
-/// use axum_session::SessionID;
-/// use uuid::Uuid;
-///
-///
-/// let token = Uuid::new_v4();
-/// let id = SessionID::new(token);
-/// ```
-///
-// #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
-// pub struct SessionID(pub(crate) Uuid);
-
-// impl SessionID {
-//     /// Constructs a new SessionID hold a UUID.
-//     ///
-//     /// # Examples
-//     /// ```rust ignore
-//     /// use axum_session::SessionID;
-//     /// use uuid::Uuid;
-//     ///
-//     ///
-//     /// let token = Uuid::new_v4();
-//     /// let id = SessionID::new(token);
-//     /// ```
-//     ///
-//     #[inline]
-//     pub(crate) fn new(uuid: Uuid) -> SessionID {
-//         SessionID(uuid)
-//     }
-
-//     /// Returns the inner UUID as a string.
-//     ///
-//     /// # Examples
-//     /// ```rust ignore
-//     /// use axum_session::SessionID;
-//     /// use uuid::Uuid;
-//     ///
-//     ///
-//     /// let token = Uuid::new_v4();
-//     /// let id = SessionID::new(token);
-//     /// let str_id = id.inner();
-//     /// ```
-//     ///
-//     #[inline]
-//     pub fn inner(&self) -> String {
-//         self.0.to_string()
-//     }
-
-//     /// Returns the inner UUID.
-//     ///
-//     /// # Examples
-//     /// ```rust ignore
-//     /// use axum_session::SessionID;
-//     /// use uuid::Uuid;
-//     ///
-//     ///
-//     /// let token = Uuid::new_v4();
-//     /// let id = SessionID::new(token);
-//     /// let uuid = id.uuid();
-//     /// ```
-//     ///
-//     #[inline]
-//     pub fn uuid(&self) -> Uuid {
-//         self.0
-//     }
-// }
-
-// impl Display for SessionID {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-//         f.write_str(&self.0.to_string())
-//     }
-// }
 
 /// Internal Timers
 ///
