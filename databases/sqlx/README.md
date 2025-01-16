@@ -25,9 +25,9 @@ to your cargo include for Axum Session Sqlx.
 ```toml
 # Cargo.toml
 [dependencies]
-axum_session = { version = "0.15.0" }
+axum_session = { version = "0.16.0" }
 # Postgres + rustls
-axum_session_sqlx = { version = "0.4.0", features = [ "postgres", "tls-rustls"] }
+axum_session_sqlx = { version = "0.5.0", features = [ "postgres", "tls-rustls"] }
 ```
 
 ## 📱 Cargo Feature Flags

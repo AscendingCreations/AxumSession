@@ -1,6 +1,6 @@
 [package]
 name = "axum_session_redis_bb8_pool"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Behzad Khalifeh <bkhalifeh@protonmail.com>"]
 description = "📝 RedisPool (BB8) Database layer for axum_session."
 edition = "2021"
