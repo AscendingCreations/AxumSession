@@ -459,7 +459,7 @@ dependencies = [
  "http-body-util",
  "hyper",
  "rand 0.8.5",
- "redis 0.28.1",
+ "redis",
  "redis_pool",
  "serde",
  "serde_json",
@@ -494,7 +494,7 @@ dependencies = [
  "async-trait",
  "axum_session",
  "bb8-redis",
- "redis 0.27.6",
+ "redis",
 ]
 
 [[package]]
@@ -503,7 +503,7 @@ version = "0.5.0"
 dependencies = [
  "async-trait",
  "axum_session",
- "redis 0.28.1",
+ "redis",
  "redis_pool",
 ]
 
@@ -587,12 +587,12 @@ dependencies = [
 
 [[package]]
 name = "bb8-redis"
-version = "0.18.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8416aa3639520757fd0ed659c8c12f7cd9f0ed638fa0cdd52a13d3b19946df2a"
+checksum = "3428672918816ef7533c206902630ccaceebf69ca8831a30c18eacf5cb619070"
 dependencies = [
  "bb8",
- "redis 0.27.6",
+ "redis",
 ]
 
 [[package]]
@@ -3605,30 +3605,6 @@ checksum = "ffead9d0a0b45f3e0bc063a244b1779fd53a09d2c2f7282c186a016b1f10a778"
 
 [[package]]
 name = "redis"
-version = "0.27.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09d8f99a4090c89cc489a94833c901ead69bfbf3877b4867d5482e321ee875bc"
-dependencies = [
- "arc-swap",
- "async-trait",
- "bytes",
- "combine",
- "futures-util",
- "itertools 0.13.0",
- "itoa",
- "num-bigint",
- "percent-encoding",
- "pin-project-lite",
- "ryu",
- "sha1_smol",
- "socket2",
- "tokio",
- "tokio-util",
- "url",
-]
-
-[[package]]
-name = "redis"
 version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f89727cba9cec05cc579942321ff6dd09fe57a8b3217f52f952301efa010da5"
@@ -3662,7 +3638,7 @@ dependencies = [
  "async-trait",
  "crossbeam-queue",
  "parking_lot",
- "redis 0.28.1",
+ "redis",
  "thiserror 2.0.11",
  "tokio",
  "tracing",
