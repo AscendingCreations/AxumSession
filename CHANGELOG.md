@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.16.0 (16. January, 2025)
+### Changed
+- (Breaking) Rename Changes to DatabaseError GenericAquire to GenericAcquire @soundslocke
+- Document Typo fixes @soundslocke
+
 ## 0.15.0 (1. January, 2025)
 ### Changed
 - (Breaking) Axum 0.8.1

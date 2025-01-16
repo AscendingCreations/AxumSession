@@ -11,7 +11,7 @@ members = [
 
 [package]
 name = "axum_session"
-version = "0.15.0"
+version = "0.16.0"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "📝 Session management layer for axum that supports HTTP and Rest."
 edition = "2021"
@@ -56,7 +56,7 @@ forwarded-header-value = "0.1.1"
 fastbloom-rs = { version = "0.5.9", optional = true }
 
 [workspace.dependencies]
-axum_session = { version = "0.15.0", path = "./" }
+axum_session = { version = "0.16.0", path = "./" }
 chrono = { version = "0.4.38", default-features = false, features = [
     "clock",
     "serde",
@@ -82,8 +82,8 @@ sqlx = { version = "0.8.2", features = [
 ] }
 surrealdb = { version = "2.0.4", features = ["kv-mem"] }
 hyper = "1.0.1"
-redis_pool = "0.6.0"
-redis = { version = "0.27.2" }
+redis_pool = "0.7.0"
+redis = { version = "0.28.0" }
 tower = "0.4.13"
 http-body-util = "0.1.0"
 axum_session_sqlx = { path = "./databases/sqlx", features = ["sqlite"] }

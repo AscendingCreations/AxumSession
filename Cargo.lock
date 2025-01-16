@@ -436,7 +436,7 @@ dependencies = [
 
 [[package]]
 name = "axum_session"
-version = "0.15.0"
+version = "0.16.0"
 dependencies = [
  "aes-gcm",
  "async-trait",
@@ -459,8 +459,8 @@ dependencies = [
  "http-body-util",
  "hyper",
  "rand 0.8.5",
- "redis 0.27.6",
- "redis_pool 0.6.0",
+ "redis 0.28.1",
+ "redis_pool",
  "serde",
  "serde_json",
  "sha2",
@@ -504,7 +504,7 @@ dependencies = [
  "async-trait",
  "axum_session",
  "redis 0.28.1",
- "redis_pool 0.7.0",
+ "redis_pool",
 ]
 
 [[package]]
@@ -3651,20 +3651,6 @@ dependencies = [
  "tokio",
  "tokio-util",
  "url",
-]
-
-[[package]]
-name = "redis_pool"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c68892c3833afeba239a029bedd72857549cc78c2bfc5f24d5e81486f2ce0e6"
-dependencies = [
- "async-trait",
- "crossbeam-queue",
- "redis 0.27.6",
- "thiserror 1.0.69",
- "tokio",
- "tracing",
 ]
 
 [[package]]
