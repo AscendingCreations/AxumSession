@@ -79,7 +79,7 @@ where
             ip_user_agent.to_owned(),
             true,
         )
-        .map_or(false, |c| c.value().parse().unwrap_or(false));
+        .is_some_and(|c| c.value().parse().unwrap_or(false));
 
     (value, storable)
 }

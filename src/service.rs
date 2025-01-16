@@ -90,8 +90,8 @@ where
             // Check if the session id exists if not lets check if it exists in the database or generate a new session.
             // If manual mode is enabled then do not check for a Session unless the UUID is not new.
             let check_database: bool = if is_new && !session.store.config.session_mode.is_manual() {
-                let session_data = SessionData::new(session.id.0, storable, &session.store.config);
-                session.store.inner.insert(session.id.inner(), session_data);
+                let sess = SessionData::new(session.id.0, storable, &session.store.config);
+                session.store.inner.insert(session.id.inner(), sess);
                 false
             } else if !is_new || !session.store.config.session_mode.is_manual() {
                 !session.store.service_session_data(&session)
@@ -234,7 +234,7 @@ where
             );
 
             if !destroy && (!session.store.config.session_mode.is_manual() || loaded) && renew {
-                // Lets change the Session ID and destroy the old Session from the database.
+                // Lets change the Session ID and destory the old Session from the database.
                 let session_id = match Session::generate_uuid(&session.store).await {
                     Ok(v) => v,
                     Err(err) => {
@@ -275,23 +275,21 @@ where
                 && session.store.is_persistent()
                 && !destroy
             {
-                let clone_session = if let Some(mut session_inner) =
+                let clone_session = if let Some(mut sess) =
                     session.store.inner.get_mut(&session.id.inner())
                 {
                     // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
-                    if session.store.config.database.always_save
-                        || session_inner.update
-                        || !session_inner.validate()
+                    if session.store.config.database.always_save || sess.update || !sess.validate()
                     {
-                        if session_inner.longterm {
-                            session_inner.expires = Utc::now() + session.store.config.max_lifespan;
+                        if sess.longterm {
+                            sess.expires = Utc::now() + session.store.config.max_lifespan;
                         } else {
-                            session_inner.expires = Utc::now() + session.store.config.lifespan;
+                            sess.expires = Utc::now() + session.store.config.lifespan;
                         };
 
-                        session_inner.update = false;
+                        sess.update = false;
 
-                        Some(session_inner.clone())
+                        Some(sess.clone())
                     } else {
                         None
                     }
@@ -299,8 +297,8 @@ where
                     None
                 };
 
-                if let Some(store_session) = clone_session {
-                    if let Err(err) = session.store.store_session(&store_session).await {
+                if let Some(sess) = clone_session {
+                    if let Err(err) = session.store.store_session(&sess).await {
                         return trace_error(err, "failed to save session to database");
                     } else {
                         tracing::info!("Session id {}: was saved to the database.", session.id);
