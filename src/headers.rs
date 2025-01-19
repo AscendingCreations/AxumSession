@@ -96,15 +96,13 @@ where
     let key = store.config.cookie_and_header.key.as_ref();
 
     let name = store.config.cookie_and_header.session_name.to_string();
-    let value = headers
-        .get(&name)
-        .and_then(|c| {
-            if let Some(key) = key {
-                verify_header(c, key, ip_user_agent).ok()
-            } else {
-                Some(c.to_owned())
-            }
-        });
+    let value = headers.get(&name).and_then(|c| {
+        if let Some(key) = key {
+            verify_header(c, key, ip_user_agent).ok()
+        } else {
+            Some(c.to_owned())
+        }
+    });
 
     let name = store.config.cookie_and_header.store_name.to_string();
     let storable = headers

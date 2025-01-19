@@ -70,15 +70,13 @@ where
             let cookies = get_cookies(req.headers());
 
             #[cfg(not(feature = "rest_mode"))]
-            let (session_id, storable) =
-                get_headers_and_key(&store, cookies, &ip_user_agent).await;
+            let (session_id, storable) = get_headers_and_key(&store, cookies, &ip_user_agent).await;
 
             #[cfg(feature = "rest_mode")]
             let headers = get_headers(&store, req.headers());
 
             #[cfg(feature = "rest_mode")]
-            let (session_id, storable) =
-                get_headers_and_key(&store, headers, &ip_user_agent).await;
+            let (session_id, storable) = get_headers_and_key(&store, headers, &ip_user_agent).await;
 
             let (mut session, is_new) = match Session::new(store, session_id).await {
                 Ok(v) => v,
@@ -118,7 +116,10 @@ where
                 fresh_session.store = storable;
                 fresh_session.update = true;
                 fresh_session.requests = 1;
-                session.store.inner.insert(session.id.clone(), fresh_session);
+                session
+                    .store
+                    .inner
+                    .insert(session.id.clone(), fresh_session);
             }
 
             let (last_sweep, last_database_sweep) = {
@@ -134,7 +135,10 @@ where
 
             if last_sweep <= current_time && !session.store.config.memory.memory_lifespan.is_zero()
             {
-                tracing::info!("Session id {}: Session Memory Cleaning Started", session.id.clone());
+                tracing::info!(
+                    "Session id {}: Session Memory Cleaning Started",
+                    session.id.clone()
+                );
                 // Only unload these from filter if the Client is None as this means no database.
                 // Otherwise only unload from the filter if removed from the Database.
                 #[cfg(feature = "key-store")]
@@ -261,8 +265,7 @@ where
                 }
 
                 // Lets remove update and reinsert.
-                if let Some((_, mut session_data)) = session.store.inner.remove(&session.id)
-                {
+                if let Some((_, mut session_data)) = session.store.inner.remove(&session.id) {
                     session_data.id = session_id.clone();
                     session_data.renew = false;
                     session.id = session_id.clone();
@@ -279,8 +282,7 @@ where
                     session.store.inner.get_mut(&session.id.clone())
                 {
                     // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
-                    if session.store.config.database.always_save || sess.update || !sess.expired()
-                    {
+                    if session.store.config.database.always_save || sess.update || !sess.expired() {
                         if sess.longterm {
                             sess.expires = Utc::now() + session.store.config.max_lifespan;
                         } else {

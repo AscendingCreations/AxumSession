@@ -283,14 +283,13 @@ where
                 .store(
                     &session.id,
                     &if let Some(key) = self.config.database.database_key.as_ref() {
-                        encrypt::encrypt(&session.id, &serde_json::to_string(session)?, key).map_err(
-                            |e| {
+                        encrypt::encrypt(&session.id, &serde_json::to_string(session)?, key)
+                            .map_err(|e| {
                                 SessionError::GenericNotSupportedError(format!(
                                     "Error: {} Occurred when encrypting a Session.",
                                     e
                                 ))
-                            },
-                        )?
+                            })?
                     } else {
                         serde_json::to_string(session)?
                     },

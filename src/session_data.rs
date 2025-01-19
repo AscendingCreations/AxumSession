@@ -1,10 +1,7 @@
 use crate::SessionConfig;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashMap,
-    fmt::Debug,
-};
+use std::{collections::HashMap, fmt::Debug};
 
 /// The Store and Configured Data for a Session.
 ///
