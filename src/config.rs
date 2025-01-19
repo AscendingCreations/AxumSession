@@ -270,6 +270,7 @@ impl SessionConfig {
     /// impl IdGenerator for CustomSessionId {
     ///     fn generate(&self) -> String {
     ///         // Return a custom Session ID...
+    ///         "something random".into()
     ///     }
     /// }
     ///
