@@ -15,7 +15,7 @@ mod session;
 mod session_data;
 mod session_store;
 
-pub use config::{Key, SameSite, SessionConfig, SessionMode};
+pub use config::{IdGenerator, Key, SameSite, SessionConfig, SessionMode};
 pub use databases::*;
 pub use errors::SessionError;
 pub use layer::SessionLayer;

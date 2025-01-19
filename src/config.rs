@@ -183,7 +183,7 @@ impl Debug for IpUserAgentConfig {
     }
 }
 
-pub trait IdGenerator: Debug + Send + Sync {
+pub trait IdGenerator: Debug + Send + Sync + 'static {
     fn generate(&self) -> String;
 }
 
@@ -247,6 +247,38 @@ impl SessionConfig {
     #[inline]
     pub fn new() -> Self {
         Default::default()
+    }
+
+    /// Set a custom session ID generator.
+    /// By default session IDs are UUIDs, but this allows for custom
+    /// session ID formats. For example, to generate an ID that matches
+    /// those from another web framework.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::{IdGenerator, SessionConfig};
+    ///
+    /// #[derive(Debug)]
+    /// struct CustomSessionId();
+    ///
+    /// impl CustomSessionId {
+    ///     pub fn new() -> Self {
+    ///         CustomSessionId()
+    ///     }
+    /// }
+    ///
+    /// impl IdGenerator for CustomSessionId {
+    ///     fn generate(&self) -> String {
+    ///         // Return a custom Session ID...
+    ///     }
+    /// }
+    ///
+    /// let config = SessionConfig::default().with_id_generator(CustomSessionId::new());
+    /// ```
+    #[must_use]
+    pub fn with_id_generator(mut self, id_generator: impl IdGenerator) -> Self {
+        self.id_generator = Arc::new(id_generator);
+        self
     }
 
     /// Set the session's store Cookie or Header name.
