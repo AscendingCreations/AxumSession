@@ -325,7 +325,7 @@ pub(crate) fn set_headers<T>(
         if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
             let name = NameType::Data.get_name(&session.store.config);
             let value = if let Some(key) = session.store.config.cookie_and_header.key.as_ref() {
-                match sign_header(&session.id.inner(), key, ip_user_agent) {
+                match sign_header(&session.id, key, ip_user_agent) {
                     Ok(v) => v,
                     Err(err) => {
                         tracing::error!(err = %err, "Failed to sign Session ID so blank will be used.");
@@ -333,7 +333,7 @@ pub(crate) fn set_headers<T>(
                     }
                 }
             } else {
-                session.id.inner()
+                session.id.clone()
             };
 
             if let Ok(name) = HeaderName::from_bytes(name.as_bytes()) {

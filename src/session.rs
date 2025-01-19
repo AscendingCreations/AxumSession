@@ -59,12 +59,12 @@ where
         if store.config.memory.use_bloom_filters {
             let contained = {
                 let filter = store.filter.read().await;
-                filter.contains(id.inner().as_bytes())
+                filter.contains(id.as_bytes())
             };
 
             if !contained {
                 let mut filter = store.filter.write().await;
-                filter.add(id.inner().as_bytes());
+                filter.add(id.as_bytes());
             }
         }
 
@@ -412,7 +412,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub fn verify(&self) -> Result<(), SessionError> {
-        self.store.verify(self.id.inner())
+        self.store.verify(self.id)
     }
 
     /// Updates the sessions stored database expire time.
@@ -432,7 +432,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub fn update_database_expires(&self) -> Result<(), SessionError> {
-        self.store.update_database_expires(self.id.inner())
+        self.store.update_database_expires(self.id)
     }
 
     /// Updates the Sessions In memory auto remove timer.
@@ -447,7 +447,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub fn update_memory_expires(&self) -> Result<(), SessionError> {
-        self.store.update_memory_expires(self.id.inner())
+        self.store.update_memory_expires(self.id)
     }
 
     /// forces a update to the databases stored data for the session.
@@ -463,7 +463,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub async fn force_database_update(&self) -> Result<(), SessionError> {
-        self.store.force_database_update(self.id.inner()).await
+        self.store.force_database_update(self.id).await
     }
 
     /// Removes the session from the memory store if it is not parallel.
@@ -481,7 +481,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub fn memory_remove_session(&self) -> Result<(), SessionError> {
-        self.store.memory_remove_session(self.id.inner())
+        self.store.memory_remove_session(self.id)
     }
 
     /// Removes the session from the Database store.
@@ -497,7 +497,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
     pub async fn database_remove_session(&self) -> Result<(), SessionError> {
-        self.store.database_remove_session(self.id.inner()).await
+        self.store.database_remove_session(self.id).await
     }
 }
 
