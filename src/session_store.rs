@@ -12,7 +12,6 @@ use http::{request::Parts, StatusCode};
 use serde::Serialize;
 use std::{fmt::Debug, sync::Arc};
 use tokio::sync::RwLock;
-use uuid::Uuid;
 
 /// Contains the main Services storage for all session's and database access for persistent Sessions.
 ///
@@ -38,7 +37,7 @@ where
     /// Session Timers used for Clearing Memory and Database.
     pub(crate) timers: Arc<RwLock<SessionTimers>>,
     #[cfg(feature = "key-store")]
-    /// Filter used to keep track of what uuid's exist.
+    /// Filter used to keep track of what session IDs exist.
     pub(crate) filter: Arc<RwLock<CountingBloomFilter>>,
 }
 
@@ -199,7 +198,7 @@ where
         Ok(0)
     }
 
-    /// private internal function that loads a session's data from the database using a UUID string.
+    /// private internal function that loads a session's data from the database using an ID string.
     ///
     /// If client is None it will return Ok(None).
     ///
@@ -229,28 +228,26 @@ where
                 .load(&cookie_value, &self.config.database.table_name)
                 .await?;
 
-            if let Ok(uuid) = Uuid::parse_str(&cookie_value) {
-                if let Some(mut session) = result
-                    .map(|session| {
-                        if let Some(key) = self.config.database.database_key.as_ref() {
-                            serde_json::from_str::<SessionData>(
-                                &match encrypt::decrypt(&uuid.to_string(), &session, key) {
-                                    Ok(v) => v,
-                                    Err(err) => {
-                                        tracing::error!(err = %err, "Failed to decrypt Session data from database.");
-                                        String::new()
-                                    }
+            if let Some(mut session) = result
+                .map(|session| {
+                    if let Some(key) = self.config.database.database_key.as_ref() {
+                        serde_json::from_str::<SessionData>(
+                            &match encrypt::decrypt(&cookie_value, &session, key) {
+                                Ok(v) => v,
+                                Err(err) => {
+                                    tracing::error!(err = %err, "Failed to decrypt Session data from database.");
+                                    String::new()
                                 }
-                            )
-                        } else {
-                            serde_json::from_str::<SessionData>(&session)
-                        }
-                    })
-                    .transpose()?
-                {
-                    session.id = uuid;
-                    return Ok(Some(session));
-                }
+                            }
+                        )
+                    } else {
+                        serde_json::from_str::<SessionData>(&session)
+                    }
+                })
+                .transpose()?
+            {
+                session.id = cookie_value;
+                return Ok(Some(session));
             }
         }
 
@@ -282,19 +279,17 @@ where
     ///
     pub(crate) async fn store_session(&self, session: &SessionData) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
-            let uuid = session.id.to_string();
             client
                 .store(
-                    &uuid,
+                    &session.id,
                     &if let Some(key) = self.config.database.database_key.as_ref() {
-                        encrypt::encrypt(&uuid, &serde_json::to_string(session)?, key).map_err(
-                            |e| {
+                        encrypt::encrypt(&session.id, &serde_json::to_string(session)?, key)
+                            .map_err(|e| {
                                 SessionError::GenericNotSupportedError(format!(
                                     "Error: {} Occurred when encrypting a Session.",
                                     e
                                 ))
-                            },
-                        )?
+                            })?
                     } else {
                         serde_json::to_string(session)?
                     },
@@ -317,7 +312,6 @@ where
     /// # Examples
     /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
-    /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
@@ -342,7 +336,6 @@ where
     /// # Examples
     /// ```rust ignore
     /// use axum_session::{SessionNullPool, SessionConfig, SessionStore};
-    /// use uuid::Uuid;
     ///
     /// let config = SessionConfig::default();
     /// let session_store = SessionStore::<SessionNullPool>::new(None, config.clone()).await.unwrap();
@@ -369,7 +362,7 @@ where
     ///
     /// If no session is found returns false.
     pub(crate) fn service_session_data(&self, session: &Session<T>) -> bool {
-        if let Some(mut inner) = self.inner.get_mut(&session.id.inner()) {
+        if let Some(mut inner) = self.inner.get_mut(&session.id) {
             inner.service_clear(
                 self.config.memory.memory_lifespan,
                 self.config.clear_check_on_load,
