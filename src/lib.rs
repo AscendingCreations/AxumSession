@@ -15,7 +15,7 @@ mod session;
 mod session_data;
 mod session_store;
 
-pub use config::{Key, SameSite, SessionConfig, SessionMode};
+pub use config::{IdGenerator, Key, SameSite, SessionConfig, SessionMode};
 pub use databases::*;
 pub use errors::SessionError;
 pub use layer::SessionLayer;
@@ -24,4 +24,4 @@ pub use session::{ReadOnlySession, Session};
 pub use session_store::SessionStore;
 
 pub(crate) use service::SessionService;
-pub(crate) use session_data::{SessionData, SessionID, SessionTimers};
+pub(crate) use session_data::{SessionData, SessionTimers};
