@@ -11,7 +11,7 @@ async fn main() {
     let redis_url = "redis://default@127.0.0.1:6379/0";
 
     let client =
-        redis::Client::open(redis_url).expect("Error while tryiong to open the redis connection");
+        redis::Client::open(redis_url).expect("Error while trying to open the redis connection");
 
     let pool = RedisPool::from(client);
     // No need here to specify a table name because redis does not support tables

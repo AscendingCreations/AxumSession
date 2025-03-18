@@ -15,9 +15,14 @@ redis-clusterdb = ["redis_pool/cluster", "redis/cluster-async"]
 
 [dependencies]
 async-trait.workspace = true
-redis_pool = { version = "0.7.0" }
-redis = { version = "0.28.0", features = [
+redis = { version = "0.29.0", features = [
     "aio",
     "tokio-comp",
 ] }
 axum_session.workspace = true
+
+[dependencies.redis_pool]
+#git = "https://github.com/AscendingCreations/RedisPool"
+#rev = "f2324c1"
+#path = "../redispool/"
+version = "0.8.0"
