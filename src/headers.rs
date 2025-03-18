@@ -69,7 +69,7 @@ where
             ip_user_agent.to_owned(),
             false,
         )
-        .and_then(|c| Some(c.value().to_string()));
+        .map(|c| c.value().to_string());
 
     let storable = cookies
         .get_cookie(
