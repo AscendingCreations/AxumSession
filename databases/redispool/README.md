@@ -22,7 +22,7 @@ If you need help with this library or have suggestions please go to our [Discord
 # Cargo.toml
 [dependencies]
 axum_session = { version = "0.16.0" }
-axum_session_redispool = { version = "0.5.0" }
+axum_session_redispool = { version = "0.6.0" }
 ```
 
 ## 📱 Cargo Feature Flags
