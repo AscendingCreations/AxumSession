@@ -2,6 +2,7 @@ use axum::{extract::State, routing::get, Router};
 use axum_session::{Session, SessionConfig, SessionLayer, SessionStore};
 use axum_session_redispool::SessionRedisPool;
 use redis_pool::{RedisPool, SingleRedisPool};
+use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
 #[tokio::main]
@@ -33,7 +34,12 @@ async fn main() {
 
     // run it with hyper on localhost:3000
     let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }
 
 async fn root() -> &'static str {

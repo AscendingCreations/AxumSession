@@ -2,6 +2,7 @@ use axum::{routing::get, Router};
 use axum_session::{SessionConfig, SessionLayer};
 use axum_session_sqlx::{SessionPgSession, SessionPgSessionStore};
 use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions};
+use std::net::SocketAddr;
 use tokio::net::TcpListener;
 
 #[tokio::main]
@@ -23,7 +24,12 @@ async fn main() {
         .layer(SessionLayer::new(session_store));
 
     let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap();
 }
 
 async fn greet(session: SessionPgSession) -> String {

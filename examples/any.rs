@@ -5,7 +5,7 @@ use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     sqlite::{SqliteConnectOptions, SqlitePoolOptions},
 };
-use std::str::FromStr;
+use std::{net::SocketAddr, str::FromStr};
 use tokio::net::TcpListener;
 
 #[tokio::main]
@@ -27,7 +27,12 @@ async fn main() {
         .layer(SessionLayer::new(session_store));
 
     let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap()
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await
+    .unwrap()
 }
 
 async fn greet(session: SessionAnySession) -> String {

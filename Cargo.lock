@@ -175,12 +175,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arbitrary"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dde20b3d026af13f561bdd0f15edf01fc734f0dafcedbaf42bba506a9517f223"
-
-[[package]]
 name = "arc-swap"
 version = "1.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1345,16 +1339,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "doc-comment"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
-
-[[package]]
 name = "dotenvy"
 version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
+
+[[package]]
+name = "double-ended-peekable"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0d05e1c0dbad51b52c38bda7adceef61b9efc2baf04acfe8726a8c4630a6f57"
 
 [[package]]
 name = "earcutr"
@@ -1405,7 +1399,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1e6a265c649f3f5979b601d26f1d05ada116434c87741c9493cb56218f76cbc"
 dependencies = [
- "heck 0.5.0",
+ "heck",
  "proc-macro2",
  "quote",
  "syn 2.0.100",
@@ -1750,7 +1744,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3bd1157f0f936bf0cd68dec91e8f7c311afe60295574d62b70d4861a1bfdf2d9"
 dependencies = [
  "approx 0.5.1",
- "arbitrary",
  "num-traits",
  "rstar",
  "serde",
@@ -1882,12 +1875,6 @@ dependencies = [
  "hash32",
  "stable_deref_trait",
 ]
-
-[[package]]
-name = "heck"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "heck"
@@ -2359,9 +2346,9 @@ dependencies = [
 
 [[package]]
 name = "itertools"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
 ]
@@ -3005,23 +2992,26 @@ dependencies = [
 
 [[package]]
 name = "object_store"
-version = "0.10.2"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6da452820c715ce78221e8202ccc599b4a52f3e1eb3eedb487b680c81a8e3f3"
+checksum = "7781f96d79ed0f961a7021424ab01840efbda64ae7a505aaea195efc91eaaec4"
 dependencies = [
  "async-trait",
  "bytes",
  "chrono",
  "futures",
+ "http",
  "humantime",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "parking_lot",
  "percent-encoding",
- "snafu",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
  "url",
  "walkdir",
+ "wasm-bindgen-futures",
+ "web-time",
 ]
 
 [[package]]
@@ -4464,28 +4454,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "snafu"
-version = "0.7.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4de37ad025c587a29e8f3f5605c00f70b98715ef90b9061a815b9e59e9042d6"
-dependencies = [
- "doc-comment",
- "snafu-derive",
-]
-
-[[package]]
-name = "snafu-derive"
-version = "0.7.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "990079665f075b699031e9c08fd3ab99be5029b96f3b78dc0709e8f77e4efebf"
-dependencies = [
- "heck 0.4.1",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "snap"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4611,7 +4579,7 @@ checksum = "4e9f90acc5ab146a99bf5061a7eb4976b573f560bc898ef3bf8435448dd5e7ad"
 dependencies = [
  "dotenvy",
  "either",
- "heck 0.5.0",
+ "heck",
  "hex",
  "once_cell",
  "proc-macro2",
@@ -4842,7 +4810,7 @@ version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c6bee85a5a24955dc440386795aa378cd9cf82acd5f764469152d2270e581be"
 dependencies = [
- "heck 0.5.0",
+ "heck",
  "proc-macro2",
  "quote",
  "rustversion",
@@ -4857,9 +4825,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "surrealdb"
-version = "2.2.1"
+version = "2.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa1aa87197bad9dd12c93350533a8da09bae064a411f445c97ca0e64faabc304"
+checksum = "ae751a9a5479b27b5bd5b5786dcfa740115f395db118bc17007315065befc23c"
 dependencies = [
  "arrayvec",
  "async-channel",
@@ -4868,6 +4836,7 @@ dependencies = [
  "dmp",
  "futures",
  "geo",
+ "getrandom 0.3.2",
  "indexmap 2.8.0",
  "path-clean",
  "pharos",
@@ -4898,9 +4867,9 @@ dependencies = [
 
 [[package]]
 name = "surrealdb-core"
-version = "2.2.1"
+version = "2.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ceb9f421e07af67b06c57ea7a8b08c3b4e4677de483435ca6d69bd00600a571"
+checksum = "daf5dd17aad816bc32a85d724ce35cefeea2d85f6e669fa2f2ee7c60c514e7db"
 dependencies = [
  "addr",
  "affinitypool",
@@ -4929,6 +4898,7 @@ dependencies = [
  "fuzzy-matcher",
  "geo",
  "geo-types",
+ "getrandom 0.3.2",
  "hex",
  "http",
  "ipnet",
@@ -4989,24 +4959,21 @@ dependencies = [
 
 [[package]]
 name = "surrealkv"
-version = "0.8.1"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e28eec56aca077c245bf5f9e08876fdcce58b5361e77a0b94a92fd47e1990ad4"
+checksum = "6d43d55edab1e65c7704486016f98e9eac61c97474921dbac094af2cd16e16c3"
 dependencies = [
  "ahash 0.8.11",
- "async-channel",
  "bytes",
  "chrono",
  "crc32fast",
- "futures",
+ "double-ended-peekable",
  "getrandom 0.2.15",
  "lru",
  "parking_lot",
  "quick_cache 0.6.12",
  "revision 0.10.0",
- "tokio",
  "vart 0.9.2",
- "wasm-bindgen-futures",
 ]
 
 [[package]]

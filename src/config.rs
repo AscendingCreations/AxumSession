@@ -546,9 +546,9 @@ impl SessionConfig {
         self
     }
 
-    /// Set's the session's cookie encyption key enabling private cookies.
+    /// Set's the session's cookie encyption key enabling Signed cookies.
     ///
-    /// When Set it will enforce Private cookies across all Sessions.
+    /// When Set it will enforce Signed cookies across all Sessions.
     /// If you use Key::generate() it will make a new key each server reboot.
     /// To prevent this make and save a key to a config file for long term usage.
     /// For Extra Security Regenerate the key every so many months to a year.

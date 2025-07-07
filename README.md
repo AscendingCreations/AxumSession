@@ -84,7 +84,7 @@ async fn main() {
     let poll = connect_to_database().await.unwrap();
 
     //This Defaults as normal Cookies.
-    //To enable Private cookies for integrity, and authenticity please check the next Example.
+    //To enable signed cookies for integrity, and authenticity please check the enable_signed_cookies_headers Example.
     let session_config = SessionConfig::default()
         .with_table_name("sessions_table");
 
