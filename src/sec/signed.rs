@@ -258,7 +258,7 @@ pub(crate) fn sign_header(value: &str, key: &Key, message: &str) -> Result<Strin
     // Compute HMAC-SHA256 of the cookie's value.
     let mut mac = Hmac::<Sha256>::new_from_slice(key.signing()).map_err(|_| "Key was invalid.")?;
     // Add the payload to the message first.
-    let message = format!("{}{}", value, message);
+    let message = format!("{value}{message}");
     mac.update(message.as_bytes());
 
     // Cookie's new value is [MAC | original-value].
@@ -286,7 +286,7 @@ pub(crate) fn verify_header(
     // Perform the verification.
     let mut mac = Hmac::<Sha256>::new_from_slice(key.signing()).map_err(|_| "Key was invalid.")?;
     // Add message here so we can check if it matches.
-    let message = format!("{}{}", value, message);
+    let message = format!("{value}{message}");
     mac.update(message.as_bytes());
     mac.verify_slice(&digest)
         .map(|_| value.to_string())

@@ -435,10 +435,7 @@ where
             "".to_owned()
         };
 
-        format!(
-            "{};{};{};{};{}",
-            ip, x_forward_for_ip, forwarded_ip, real_ip, user_agent
-        )
+        format!("{ip};{x_forward_for_ip};{forwarded_ip};{real_ip};{user_agent}",)
     } else {
         String::new()
     }

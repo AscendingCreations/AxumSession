@@ -286,8 +286,7 @@ where
                         encrypt::encrypt(&session.id, &serde_json::to_string(session)?, key)
                             .map_err(|e| {
                                 SessionError::GenericNotSupportedError(format!(
-                                    "Error: {} Occurred when encrypting a Session.",
-                                    e
+                                    "Error: {e} Occurred when encrypting a Session.",
                                 ))
                             })?
                     } else {

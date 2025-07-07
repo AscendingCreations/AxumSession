@@ -52,7 +52,7 @@ impl DatabasePool for SessionRedisPool {
             // Assuming we have a table name, we need to count all the keys that match the table name.
             // We can't use DBSIZE because that would count all the keys in the database.
             let keys =
-                match super::redis_tools::scan_keys(&mut con, &format!("{}:*", table_name)).await {
+                match super::redis_tools::scan_keys(&mut con, &format!("{table_name}:*")).await {
                     Ok(v) => v,
                     Err(err) => return Err(DatabaseError::GenericSelectError(err.to_string())),
                 };
@@ -72,7 +72,7 @@ impl DatabasePool for SessionRedisPool {
         let id = if table_name.is_empty() {
             id.to_string()
         } else {
-            format!("{}:{}", table_name, id)
+            format!("{table_name}:{id}")
         };
         let mut con = self
             .pool
@@ -100,7 +100,7 @@ impl DatabasePool for SessionRedisPool {
         let id = if table_name.is_empty() {
             id.to_string()
         } else {
-            format!("{}:{}", table_name, id)
+            format!("{table_name}:{id}")
         };
         let result: String = redis::cmd("GET")
             .arg(id)
@@ -119,7 +119,7 @@ impl DatabasePool for SessionRedisPool {
         let id = if table_name.is_empty() {
             id.to_string()
         } else {
-            format!("{}:{}", table_name, id)
+            format!("{table_name}:{id}")
         };
         redis::cmd("DEL")
             .arg(id)
@@ -138,7 +138,7 @@ impl DatabasePool for SessionRedisPool {
         let id = if table_name.is_empty() {
             id.to_string()
         } else {
-            format!("{}:{}", table_name, id)
+            format!("{table_name}:{id}")
         };
         let exists: bool = redis::cmd("EXISTS")
             .arg(id)
@@ -163,7 +163,7 @@ impl DatabasePool for SessionRedisPool {
         } else {
             // Assuming we have a table name, we need to delete all the keys that match the table name.
             // We can't use FLUSHDB because that would delete all the keys in the database.
-            let keys = super::redis_tools::scan_keys(&mut con, &format!("{}:*", table_name))
+            let keys = super::redis_tools::scan_keys(&mut con, &format!("{table_name}:*"))
                 .await
                 .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
@@ -188,11 +188,11 @@ impl DatabasePool for SessionRedisPool {
         let table_name = if table_name.is_empty() {
             "*".to_string()
         } else {
-            format!("{}:0", table_name)
+            format!("{table_name}:0")
         };
 
         let result: Vec<String> =
-            super::redis_tools::scan_keys(&mut con, &format!("{}:*", table_name))
+            super::redis_tools::scan_keys(&mut con, &format!("{table_name}:*"))
                 .await
                 .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
         Ok(result)
