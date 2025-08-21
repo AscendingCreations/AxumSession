@@ -81,7 +81,7 @@ use tokio::net::TcpListener;
 #[tokio::main]
 async fn main() {
 
-    let poll = connect_to_database().await.unwrap();
+    let pool = connect_to_database().await.unwrap();
 
     //This Defaults as normal Cookies.
     //To enable signed cookies for integrity, and authenticity please check the enable_signed_cookies_headers Example.
@@ -89,7 +89,7 @@ async fn main() {
         .with_table_name("sessions_table");
 
     // create SessionStore and initiate the database tables
-    let session_store = SessionStore::<SessionPgPool>::new(Some(poll.clone().into()), session_config).await.unwrap();
+    let session_store = SessionStore::<SessionPgPool>::new(Some(pool.clone().into()), session_config).await.unwrap();
 
     // build our application with some routes
     let app = Router::new()
