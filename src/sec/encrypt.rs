@@ -3,7 +3,7 @@ use aes_gcm::aead::{generic_array::GenericArray, Aead, AeadInPlace, KeyInit, Pay
 use aes_gcm::Aes256Gcm;
 use base64::{engine::general_purpose, Engine as _};
 use cookie::Key;
-use rand::RngCore;
+use rand::TryRngCore;
 
 pub(crate) const NONCE_LEN: usize = 12;
 pub(crate) const TAG_LEN: usize = 16;
@@ -18,7 +18,7 @@ pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> Result<String, &'st
     let (in_out, tag) = in_out.split_at_mut(val.len());
     in_out.copy_from_slice(val);
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     rng.try_fill_bytes(nonce)
         .map_err(|_| "couldn't random fill nonce")?;
 
