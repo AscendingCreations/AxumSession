@@ -500,7 +500,7 @@ dependencies = [
  "async-trait",
  "axum_session",
  "bb8-redis",
- "redis 0.29.1",
+ "redis 0.32.5",
 ]
 
 [[package]]
@@ -593,12 +593,12 @@ dependencies = [
 
 [[package]]
 name = "bb8-redis"
-version = "0.21.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a68215c76c457dccfed027a397ccd72482feabd64c2f93cbb2971a7c4121351"
+checksum = "5143936af5e1eea1a881e3e3d21b6777da6315e5e307bc3d0c2301c44fa37da9"
 dependencies = [
  "bb8",
- "redis 0.29.1",
+ "redis 0.32.5",
 ]
 
 [[package]]
