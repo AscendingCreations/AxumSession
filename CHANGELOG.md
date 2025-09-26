@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.17.1 (26. September, 2025)
+### Fixed
+- move occurs because self.id has type std::string::String in Advanced functions.
+
+## 0.17.0 (17. September, 2025)
+### Changed
+- (Breaking) updated many dependencies
+
 ## 0.16.0 (16. January, 2025)
 ### Changed
 - (Breaking) Rename Changes to DatabaseError GenericAquire to GenericAcquire @soundslocke
