@@ -61,32 +61,32 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     }
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
+        use serde::Deserialize;
+
+        #[derive(Deserialize)]
+        struct SessionRecord {
+            sessionid: String,
+        }
+
         let now = Utc::now().timestamp();
 
         let mut res = self
             .connection
             .query(
-                "SELECT sessionid FROM type::table($table_name)
-                WHERE sessionexpires = NONE OR type::number(sessionexpires) < $expires;",
-            )
-            .bind(("table_name", table_name.to_string()))
-            .bind(("expires", now))
-            .await
-            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
-
-        let ids: Vec<String> = res
-            .take("sessionid")
-            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
-
-        self.connection
-            .query(
                 "DELETE type::table($table_name)
-                WHERE sessionexpires = NONE OR type::number(sessionexpires) < $expires;",
+                WHERE sessionexpires = NONE OR type::number(sessionexpires) < $expires
+                RETURN BEFORE;",
             )
             .bind(("table_name", table_name.to_string()))
             .bind(("expires", now))
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
+
+        let records: Vec<SessionRecord> = res
+            .take(0)
+            .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
+
+        let ids: Vec<String> = records.into_iter().map(|r| r.sessionid).collect();
 
         Ok(ids)
     }
