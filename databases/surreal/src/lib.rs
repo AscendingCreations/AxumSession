@@ -62,7 +62,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
         let now = Utc::now().timestamp();
-        
+
         let mut res = self
             .connection
             .query(
