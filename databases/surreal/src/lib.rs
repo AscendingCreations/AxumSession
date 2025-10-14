@@ -61,13 +61,16 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     }
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
+        let now = Utc::now().timestamp();
+        
         let mut res = self
             .connection
             .query(
                 "SELECT sessionid FROM type::table($table_name)
-                WHERE sessionexpires = NONE OR sessionexpires < $expires;",
+                WHERE sessionexpires = NONE OR type::number(sessionexpires) < $expires;",
             )
             .bind(("table_name", table_name.to_string()))
+            .bind(("expires", now))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
@@ -76,9 +79,12 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
         self.connection
-            .query("DELETE type::table($table_name) WHERE sessionexpires < $expires;")
+            .query(
+                "DELETE type::table($table_name)
+                WHERE sessionexpires = NONE OR type::number(sessionexpires) < $expires;",
+            )
             .bind(("table_name", table_name.to_string()))
-            .bind(("expires", Utc::now().timestamp()))
+            .bind(("expires", now))
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
 
