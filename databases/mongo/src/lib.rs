@@ -74,13 +74,17 @@ impl DatabasePool for SessionMongoPool {
             let filter = doc! {"expires":
                 {"$lte": now}
             };
-            let result = db
+            let mut result = db
                 .collection::<MongoSessionData>(table_name)
                 .find(filter.clone())
                 .await
                 .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
-            while result.advance().await? {
+            while result
+                .advance()
+                .await
+                .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?
+            {
                 if let Ok(item) = result.deserialize_current() {
                     if !&item.id.is_empty() {
                         ids.push(item.id.clone());
@@ -205,13 +209,17 @@ impl DatabasePool for SessionMongoPool {
             let filter = doc! {"expires":
                 {"$gte": Utc::now().timestamp()}
             };
-            let result = db
+            let mut result = db
                 .collection::<MongoSessionData>(table_name)
                 .find(filter)
                 .await
                 .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?; // add filter for expiration
 
-            while result.advance().await? {
+            while result
+                .advance()
+                .await
+                .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?
+            {
                 if let Ok(item) = result.deserialize_current() {
                     if !&item.id.is_empty() {
                         ids.push(item.id.clone());
