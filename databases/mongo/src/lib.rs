@@ -80,10 +80,12 @@ impl DatabasePool for SessionMongoPool {
                 .await
                 .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
-            for item in result.deserialize_current().iter() {
-                if !&item.id.is_empty() {
-                    ids.push(item.id.clone());
-                };
+            while result.advance().await? {
+                if let Ok(item) = result.deserialize_current() {
+                    if !&item.id.is_empty() {
+                        ids.push(item.id.clone());
+                    };
+                }
             }
             db.collection::<MongoSessionData>(table_name)
                 .delete_many(filter)
@@ -209,10 +211,12 @@ impl DatabasePool for SessionMongoPool {
                 .await
                 .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?; // add filter for expiration
 
-            for item in result.deserialize_current().iter() {
-                if !&item.id.is_empty() {
-                    ids.push(item.id.clone());
-                };
+            while result.advance().await? {
+                if let Ok(item) = result.deserialize_current() {
+                    if !&item.id.is_empty() {
+                        ids.push(item.id.clone());
+                    };
+                }
             }
         }
 
