@@ -20,8 +20,8 @@ If you need help with this library or have suggestions please go to our [Discord
 ```toml
 # Cargo.toml
 [dependencies]
-axum_session = { version = "0.16.0" }
-axum_session_surreal = { version = "0.4.0" }
+axum_session = { version = "0.17.0" }
+axum_session_surreal = { version = "0.5.0" }
 ```
 
 ## 🔎 Examples
