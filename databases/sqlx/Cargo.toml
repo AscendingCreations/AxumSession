@@ -9,6 +9,7 @@ readme = "README.md"
 documentation = "https://docs.rs/axum_session_sqlx"
 keywords = ["Axum", "Tower", "SQLx", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSession"
+rust-version = "1.78"
 
 [features]
 default = ["postgres", "tls-rustls"]

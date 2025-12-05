@@ -9,13 +9,14 @@ readme = "README.md"
 documentation = "https://docs.rs/axum_session_redispool"
 keywords = ["Axum", "Tower", "Redis", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSession"
+rust-version = "1.78"
 
 [features]
 redis-clusterdb = ["redis_pool/cluster", "redis/cluster-async"]
 
 [dependencies]
 async-trait.workspace = true
-redis = { version = "0.32.5", features = [
+redis = { version = "1.0.0", features = [
     "aio",
     "tokio-comp",
 ] }
@@ -25,4 +26,4 @@ axum_session.workspace = true
 #git = "https://github.com/AscendingCreations/RedisPool"
 #rev = "f2324c1"
 #path = "../redispool/"
-version = "0.9.0"
+version = "0.10.0"

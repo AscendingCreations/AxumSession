@@ -9,6 +9,7 @@ readme = "README.md"
 documentation = "https://docs.rs/axum_session_surreal"
 keywords = ["Axum", "Tower", "Surreal", "Session"]
 repository = "https://github.com/AscendingCreations/AxumSession"
+rust-version = "1.78"
 
 [dependencies]
 axum_session.workspace = true
