@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.18.0 (2. February, 2026)
+
 ### Changed
 - (Breaking) Updated Signing and Verification to run on blocking thread to allow throughput increase for large websites.
 - Set minimal rust version to 1.78
