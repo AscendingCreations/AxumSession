@@ -69,6 +69,7 @@ where
             ip_user_agent.to_owned(),
             false,
         )
+        .await
         .map(|c| c.value().to_string());
 
     let storable = cookies
@@ -78,6 +79,7 @@ where
             ip_user_agent.to_owned(),
             true,
         )
+        .await
         .is_some_and(|c| c.value().parse().unwrap_or(false));
 
     (value, storable)
@@ -96,39 +98,43 @@ where
     let key = store.config.cookie_and_header.key.as_ref();
 
     let name = store.config.cookie_and_header.session_name.to_string();
-    let value = headers.get(&name).and_then(|c| {
-        if let Some(key) = key {
-            verify_header(c, key, ip_user_agent).ok()
-        } else {
-            Some(c.to_owned())
-        }
-    });
-
-    let name = store.config.cookie_and_header.store_name.to_string();
-    let storable = headers
-        .get(&name)
-        .and_then(|c| {
+    let value = match headers.get(&name) {
+        Some(c) => {
             if let Some(key) = key {
-                verify_header(c, key, ip_user_agent).ok()
+                verify_header(c, key, ip_user_agent).await.ok()
             } else {
                 Some(c.to_owned())
             }
-        })
-        .map(|c| c.parse().unwrap_or(false));
+        }
+        None => None,
+    };
+
+    let name = store.config.cookie_and_header.store_name.to_string();
+    let storable = match headers.get(&name) {
+        Some(c) => {
+            if let Some(key) = key {
+                verify_header(c, key, ip_user_agent).await.ok()
+            } else {
+                Some(c.to_owned())
+            }
+        }
+        None => None,
+    }
+    .map(|c| c.parse().unwrap_or(false));
 
     (value, storable.unwrap_or(false))
 }
 
 #[cfg(not(feature = "rest_mode"))]
 pub(crate) trait CookiesExt {
-    fn get_cookie(
+    async fn get_cookie(
         &self,
         name: &str,
         key: Option<&Key>,
         message: String,
         bypass: bool,
     ) -> Option<Cookie<'static>>;
-    fn add_cookie(
+    async fn add_cookie(
         &mut self,
         cookie: Cookie<'static>,
         key: &Option<Key>,
@@ -139,7 +145,7 @@ pub(crate) trait CookiesExt {
 
 #[cfg(not(feature = "rest_mode"))]
 impl CookiesExt for CookieJar {
-    fn get_cookie(
+    async fn get_cookie(
         &self,
         name: &str,
         key: Option<&Key>,
@@ -148,14 +154,14 @@ impl CookiesExt for CookieJar {
     ) -> Option<Cookie<'static>> {
         if !bypass {
             if let Some(key) = key {
-                return self.message_signed(key, message).get(name);
+                return self.message_signed(key, message).get(name).await;
             }
         }
 
         self.get(name).cloned()
     }
 
-    fn add_cookie(
+    async fn add_cookie(
         &mut self,
         cookie: Cookie<'static>,
         key: &Option<Key>,
@@ -164,7 +170,7 @@ impl CookiesExt for CookieJar {
     ) {
         if !bypass {
             if let Some(key) = key {
-                self.message_signed_mut(key, message).add(cookie);
+                self.message_signed_mut(key, message).add(cookie).await;
                 return;
             }
         }
@@ -268,7 +274,7 @@ fn set_cookies(jar: CookieJar, headers: &mut HeaderMap) {
 }
 
 /// Used to Set either the Header Values or the Cookie Values.
-pub(crate) fn set_headers<T>(
+pub(crate) async fn set_headers<T>(
     session: &Session<T>,
     headers: &mut HeaderMap,
     ip_user_agent: &str,
@@ -284,36 +290,44 @@ pub(crate) fn set_headers<T>(
 
         // Add SessionID
         if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
-            cookies.add_cookie(
-                create_cookie(&session.store.config, session.id.clone(), NameType::Data),
-                &session.store.config.cookie_and_header.key,
-                ip_user_agent.to_owned(),
-                false,
-            );
+            cookies
+                .add_cookie(
+                    create_cookie(&session.store.config, session.id.clone(), NameType::Data),
+                    &session.store.config.cookie_and_header.key,
+                    ip_user_agent.to_owned(),
+                    false,
+                )
+                .await;
         } else {
-            cookies.add_cookie(
-                remove_cookie(&session.store.config, NameType::Data),
-                &session.store.config.cookie_and_header.key,
-                ip_user_agent.to_owned(),
-                false,
-            );
+            cookies
+                .add_cookie(
+                    remove_cookie(&session.store.config, NameType::Data),
+                    &session.store.config.cookie_and_header.key,
+                    ip_user_agent.to_owned(),
+                    false,
+                )
+                .await;
         }
 
         // Add Session Store Boolean
         if session.store.config.session_mode.is_opt_in() && storable && !destroy {
-            cookies.add_cookie(
-                create_cookie(&session.store.config, storable.to_string(), NameType::Store),
-                &session.store.config.cookie_and_header.key,
-                ip_user_agent.to_owned(),
-                true,
-            );
+            cookies
+                .add_cookie(
+                    create_cookie(&session.store.config, storable.to_string(), NameType::Store),
+                    &session.store.config.cookie_and_header.key,
+                    ip_user_agent.to_owned(),
+                    true,
+                )
+                .await;
         } else {
-            cookies.add_cookie(
-                remove_cookie(&session.store.config, NameType::Store),
-                &session.store.config.cookie_and_header.key,
-                ip_user_agent.to_owned(),
-                true,
-            );
+            cookies
+                .add_cookie(
+                    remove_cookie(&session.store.config, NameType::Store),
+                    &session.store.config.cookie_and_header.key,
+                    ip_user_agent.to_owned(),
+                    true,
+                )
+                .await;
         }
 
         set_cookies(cookies, headers);
@@ -325,7 +339,7 @@ pub(crate) fn set_headers<T>(
         if (storable || !session.store.config.session_mode.is_opt_in()) && !destroy {
             let name = NameType::Data.get_name(&session.store.config);
             let value = if let Some(key) = session.store.config.cookie_and_header.key.as_ref() {
-                match sign_header(&session.id, key, ip_user_agent) {
+                match sign_header(&session.id, key, ip_user_agent).await {
                     Ok(v) => v,
                     Err(err) => {
                         tracing::error!(err = %err, "Failed to sign Session ID so blank will be used.");

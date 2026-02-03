@@ -1,6 +1,6 @@
 [package]
 name = "axum_session_redispool"
-version = "0.8.0"
+version = "0.9.0"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "📝 RedisPool Database layer for axum_session."
 edition = "2021"

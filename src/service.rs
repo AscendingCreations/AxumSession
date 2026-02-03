@@ -352,7 +352,8 @@ where
                 &ip_user_agent,
                 destroy,
                 storable,
-            );
+            )
+            .await;
 
             Ok(response)
         })

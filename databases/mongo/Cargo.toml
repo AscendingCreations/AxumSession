@@ -1,6 +1,6 @@
 [package]
 name = "axum_session_mongo"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "📝 Mongo Database layer for axum_session."
 edition = "2021"
@@ -17,4 +17,4 @@ serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
 async-trait.workspace = true
-mongodb = { version = "3.3.0"}
+mongodb = { version = "3.5.1"}

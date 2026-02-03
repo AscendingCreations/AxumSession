@@ -11,6 +11,7 @@ pub(crate) const BASE64_DIGEST_LEN: usize = 44;
 pub(crate) const KEY_LEN: usize = 32;
 
 use base64::{prelude::BASE64_STANDARD, DecodeError, Engine};
+use tokio::task;
 
 /// Encode `input` as the standard base64 with padding.
 pub(crate) fn encode<T: AsRef<[u8]>>(input: T) -> String {
@@ -63,46 +64,66 @@ impl<J> AdditionalSignedJar<J> {
     }
 
     /// Signs the cookie's value and message providing integrity and authenticity.
-    fn sign_cookie(&self, cookie: &mut Cookie) {
-        // Compute HMAC-SHA256 of the cookie's value.
-        let mut mac = match Hmac::<Sha256>::new_from_slice(&self.key) {
-            Ok(v) => v,
-            Err(err) => {
-                tracing::error!(err = %err,  "key is invalid." );
-                return;
-            }
-        };
+    async fn sign_cookie(&self, cookie: &mut Cookie<'_>) {
+        let key = self.key.to_owned();
+        let message = self.message.to_owned();
+        let value = cookie.value().to_owned();
 
-        // Add the payload to the message first.
-        let message = format!("{}{}", cookie.value(), &self.message);
-        mac.update(message.as_bytes());
+        let new_value = task::spawn_blocking(move || {
+            // Compute HMAC-SHA256 of the cookie's value.
+            let mut mac = match Hmac::<Sha256>::new_from_slice(&key) {
+                Ok(v) => v,
+                Err(err) => {
+                    tracing::error!(err = %err,  "key is invalid." );
+                    return None;
+                }
+            };
 
-        // Cookie's new value is [MAC | original-value].
-        let mut new_value = encode(mac.finalize().into_bytes());
-        new_value.push_str(cookie.value());
-        cookie.set_value(new_value);
+            // Add the payload to the message first.
+            let message = format!("{}{}", &value, &message);
+            mac.update(message.as_bytes());
+
+            // Cookie's new value is [MAC | original-value].
+            let mut new_value = encode(mac.finalize().into_bytes());
+            new_value.push_str(&value);
+            Some(new_value)
+        })
+        .await;
+
+        if let Ok(Some(value)) = new_value {
+            cookie.set_value(value);
+        }
     }
 
     /// Given a signed value `str` where the signature is prepended to `value`,
     /// verifies the signed value and returns it. If there's a problem, returns
     /// an `Err` with a string describing the issue.
-    fn _verify(&self, cookie_value: &str) -> Result<String, &'static str> {
+    async fn _verify(&self, cookie_value: &str) -> Result<String, &'static str> {
         if !cookie_value.is_char_boundary(BASE64_DIGEST_LEN) {
             return Err("missing or invalid digest");
         }
 
-        // Split [MAC | original-value] into its two parts.
-        let (digest_str, value) = cookie_value.split_at(BASE64_DIGEST_LEN);
-        let digest = decode(digest_str).map_err(|_| "bad base64 digest")?;
+        // we clone it so we can pass them to the blocking thread for encryption verification needs.
+        let key = self.key.to_owned();
+        let message = self.message.to_owned();
+        let cookie_value = cookie_value.to_owned();
 
-        // Perform the verification.
-        let mut mac = Hmac::<Sha256>::new_from_slice(&self.key).map_err(|_| "key is invalid.")?;
-        // Add message here so we can check if it matches.
-        let message = format!("{}{}", value, &self.message);
-        mac.update(message.as_bytes());
-        mac.verify_slice(&digest)
-            .map(|_| value.to_string())
-            .map_err(|_| "value did not verify")
+        task::spawn_blocking(move || {
+            // Split [MAC | original-value] into its two parts.
+            let (digest_str, value) = cookie_value.split_at(BASE64_DIGEST_LEN);
+            let digest = decode(digest_str).map_err(|_| "bad base64 digest")?;
+
+            // Perform the verification.
+            let mut mac = Hmac::<Sha256>::new_from_slice(&key).map_err(|_| "key is invalid.")?;
+            // Add message here so we can check if it matches.
+            let message = format!("{}{}", value, &message);
+            mac.update(message.as_bytes());
+            mac.verify_slice(&digest)
+                .map(|_| value.to_string())
+                .map_err(|_| "value did not verify")
+        })
+        .await
+        .map_err(|_| "thread join in _verify was unsuccessful")?
     }
 
     /// Verifies the authenticity and integrity of `cookie`, returning the
@@ -130,8 +151,8 @@ impl<J> AdditionalSignedJar<J> {
     /// let plain = Cookie::new("plaintext", "hello");
     /// assert!(jar.message_signed(&key, "".to_owned()).verify(plain).is_none());
     /// ```
-    pub fn verify(&self, mut cookie: Cookie<'static>) -> Option<Cookie<'static>> {
-        match self._verify(cookie.value()) {
+    pub async fn verify(&self, mut cookie: Cookie<'static>) -> Option<Cookie<'static>> {
+        match self._verify(cookie.value()).await {
             Ok(value) => {
                 cookie.set_value(value);
                 Some(cookie)
@@ -168,11 +189,11 @@ impl<J: Borrow<CookieJar>> AdditionalSignedJar<J> {
     /// signed_jar.add(Cookie::new("name", "value"));
     /// assert_eq!(signed_jar.get("name").unwrap().value(), "value");
     /// ```
-    pub fn get(&self, name: &str) -> Option<Cookie<'static>> {
-        self.parent
-            .borrow()
-            .get(name)
-            .and_then(|c| self.verify(c.clone()))
+    pub async fn get(&self, name: &str) -> Option<Cookie<'static>> {
+        match self.parent.borrow().get(name) {
+            Some(c) => self.verify(c.clone()).await,
+            None => None,
+        }
     }
 }
 
@@ -187,15 +208,15 @@ impl<J: BorrowMut<CookieJar>> AdditionalSignedJar<J> {
     ///
     /// let key = Key::generate();
     /// let mut jar = CookieJar::new();
-    /// jar.message_signed_mut(&key, "".to_owned()).add(("name", "value"));
+    /// jar.message_signed_mut(&key, "".to_owned()).add(("name", "value")).await;
     ///
     /// assert_ne!(jar.get("name").unwrap().value(), "value");
     /// assert!(jar.get("name").unwrap().value().contains("value"));
     /// assert_eq!(jar.message_signed(&key, "".to_owned()).get("name").unwrap().value(), "value");
     /// ```
-    pub fn add<C: Into<Cookie<'static>>>(&mut self, cookie: C) {
+    pub async fn add<C: Into<Cookie<'static>>>(&mut self, cookie: C) {
         let mut cookie = cookie.into();
-        self.sign_cookie(&mut cookie);
+        self.sign_cookie(&mut cookie).await;
         self.parent.borrow_mut().add(cookie);
     }
 
@@ -215,14 +236,14 @@ impl<J: BorrowMut<CookieJar>> AdditionalSignedJar<J> {
     ///
     /// let key = Key::generate();
     /// let mut jar = CookieJar::new();
-    /// jar.message_signed_mut(&key, "".to_owned()).add_original(("name", "value"));
+    /// jar.message_signed_mut(&key, "".to_owned()).add_original(("name", "value")).await;
     ///
     /// assert_eq!(jar.iter().count(), 1);
     /// assert_eq!(jar.delta().count(), 0);
     /// ```
-    pub fn add_original<C: Into<Cookie<'static>>>(&mut self, cookie: C) {
+    pub async fn add_original<C: Into<Cookie<'static>>>(&mut self, cookie: C) {
         let mut cookie = cookie.into();
-        self.sign_cookie(&mut cookie);
+        self.sign_cookie(&mut cookie).await;
         self.parent.borrow_mut().add_original(cookie);
     }
 
@@ -254,43 +275,65 @@ impl<J: BorrowMut<CookieJar>> AdditionalSignedJar<J> {
     }
 }
 
-pub(crate) fn sign_header(value: &str, key: &Key, message: &str) -> Result<String, &'static str> {
-    // Compute HMAC-SHA256 of the cookie's value.
-    let mut mac = Hmac::<Sha256>::new_from_slice(key.signing()).map_err(|_| "Key was invalid.")?;
-    // Add the payload to the message first.
-    let message = format!("{value}{message}");
-    mac.update(message.as_bytes());
+pub(crate) async fn sign_header(
+    value: &str,
+    key: &Key,
+    message: &str,
+) -> Result<String, &'static str> {
+    let value = value.to_owned();
+    let message = message.to_owned();
+    let key = key.to_owned();
 
-    // Cookie's new value is [MAC | original-value].
-    let mut new_value = encode(mac.finalize().into_bytes());
-    new_value.push_str(value);
-    Ok(new_value)
+    task::spawn_blocking(move || {
+        // Compute HMAC-SHA256 of the cookie's value.
+        let mut mac =
+            Hmac::<Sha256>::new_from_slice(key.signing()).map_err(|_| "Key was invalid.")?;
+        // Add the payload to the message first.
+        let message = format!("{value}{message}");
+        mac.update(message.as_bytes());
+
+        // Cookie's new value is [MAC | original-value].
+        let mut new_value = encode(mac.finalize().into_bytes());
+        new_value.push_str(&value);
+        Ok(new_value)
+    })
+    .await
+    .map_err(|_| "thread join in _verify was unsuccessful")?
 }
 
 /// Given a signed value `str` where the signature is prepended to `value`,
 /// verifies the signed value and returns it. If there's a problem, returns
 /// an `Err` with a string describing the issue.
-pub(crate) fn verify_header(
+pub(crate) async fn verify_header(
     header_value: &str,
     key: &Key,
     message: &str,
 ) -> Result<String, &'static str> {
-    if !header_value.is_char_boundary(BASE64_DIGEST_LEN) {
-        return Err("missing or invalid digest");
-    }
+    let header_value = header_value.to_owned();
+    let message = message.to_owned();
+    let key = key.to_owned();
 
-    // Split [MAC | original-value] into its two parts.
-    let (digest_str, value) = header_value.split_at(BASE64_DIGEST_LEN);
-    let digest = decode(digest_str).map_err(|_| "bad base64 digest")?;
+    task::spawn_blocking(move || {
+        if !header_value.is_char_boundary(BASE64_DIGEST_LEN) {
+            return Err("missing or invalid digest");
+        }
 
-    // Perform the verification.
-    let mut mac = Hmac::<Sha256>::new_from_slice(key.signing()).map_err(|_| "Key was invalid.")?;
-    // Add message here so we can check if it matches.
-    let message = format!("{value}{message}");
-    mac.update(message.as_bytes());
-    mac.verify_slice(&digest)
-        .map(|_| value.to_string())
-        .map_err(|_| "value did not verify")
+        // Split [MAC | original-value] into its two parts.
+        let (digest_str, value) = header_value.split_at(BASE64_DIGEST_LEN);
+        let digest = decode(digest_str).map_err(|_| "bad base64 digest")?;
+
+        // Perform the verification.
+        let mut mac =
+            Hmac::<Sha256>::new_from_slice(key.signing()).map_err(|_| "Key was invalid.")?;
+        // Add message here so we can check if it matches.
+        let message = format!("{value}{message}");
+        mac.update(message.as_bytes());
+        mac.verify_slice(&digest)
+            .map(|_| value.to_string())
+            .map_err(|_| "value did not verify")
+    })
+    .await
+    .map_err(|_| "thread join in _verify was unsuccessful")?
 }
 
 #[cfg(test)]
@@ -298,8 +341,8 @@ mod test {
     use crate::sec::signed::CookiesAdditionJar;
     use cookie::{Cookie, CookieJar, Key};
 
-    #[test]
-    fn roundtrip() {
+    #[tokio::test]
+    async fn roundtrip() {
         // Secret is SHA-256 hash of 'Super secret!' passed through HKDF-SHA256.
         let key = Key::from(&[
             89, 202, 200, 125, 230, 90, 197, 245, 166, 249, 34, 169, 135, 31, 20, 197, 94, 154,
@@ -320,11 +363,11 @@ mod test {
 
         let signed = jar.message_signed(&key, "".to_owned());
         assert_eq!(
-            signed.get("signed_with_ring014").unwrap().value(),
+            signed.get("signed_with_ring014").await.unwrap().value(),
             "Tamper-proof"
         );
         assert_eq!(
-            signed.get("signed_with_ring016").unwrap().value(),
+            signed.get("signed_with_ring016").await.unwrap().value(),
             "Tamper-proof"
         );
     }

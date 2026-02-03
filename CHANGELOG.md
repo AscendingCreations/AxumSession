@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
 ### Changed
+- (Breaking) Updated Signing and Verification to run on blocking thread to allow throughput increase for large websites.
 - Set minimal rust version to 1.78
 
 ## 0.17.1 (26. September, 2025)
