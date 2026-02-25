@@ -107,6 +107,11 @@ pub struct DatabaseConfig {
     pub(crate) purge_database_update: Duration,
     /// Ignore's the update checks and will always save the session to the database if set to true.
     pub(crate) always_save: bool,
+    /// Minimum time interval between database updates for the same session.
+    /// Sessions will only be updated in the database if this duration has elapsed
+    /// since the last database update. This helps reduce database write load
+    /// for frequently accessed sessions. Default is 10 seconds.
+    pub(crate) db_update_interval: Duration,
 }
 
 impl Debug for DatabaseConfig {
@@ -115,6 +120,7 @@ impl Debug for DatabaseConfig {
             .field("table_name", &self.table_name)
             .field("purge_database_update", &self.purge_database_update)
             .field("always_save", &self.always_save)
+            .field("db_update_interval", &self.db_update_interval)
             .field("database_key", &"key hidden")
             .finish()
     }
@@ -124,7 +130,7 @@ impl Debug for DatabaseConfig {
 pub struct MemoryConfig {
     /// This value represents the duration for how often session's data gets purged from memory per request.
     pub(crate) purge_update: Duration,
-    /// Session Memory lifespan, deturmines when to unload it from memory
+    /// Session Memory lifespan, determines when to unload it from memory
     /// this works fine since the data can stay in the database till its needed
     /// if not yet expired.
     pub(crate) memory_lifespan: Duration,
@@ -516,6 +522,26 @@ impl SessionConfig {
         self
     }
 
+    /// Set the database update interval for throttling session saves.
+    /// This controls how frequently a session's data is persisted to the database.
+    /// Only sessions that haven't been updated to the database within this interval
+    /// will have their data saved on the next request.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    /// use chrono::Duration;
+    ///
+    /// let config = SessionConfig::default()
+    ///     .with_db_update_interval(Duration::try_seconds(10).unwrap_or_default());
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_db_update_interval(mut self, interval: Duration) -> Self {
+        self.database.db_update_interval = interval;
+        self
+    }
+
     /// Set's the session's secure flag for if it gets sent over https.
     ///
     /// # Examples
@@ -815,7 +841,7 @@ impl Default for MemoryConfig {
         Self {
             // Unload memory after 60 minutes if it has not been accessed.
             memory_lifespan: Duration::try_minutes(60).unwrap_or_default(),
-            // Default to purge old sessions every 5 hours.
+            // Default to purge old sessions every 1 hours.
             purge_update: Duration::try_hours(1).unwrap_or_default(),
             // Simple is the Default mode for compatibilty with older versions of the crate.
             filter_expected_elements: 100_000,
@@ -838,6 +864,8 @@ impl Default for DatabaseConfig {
             always_save: false,
             // Database key is set to None it will panic if you attempt to use SecurityMode::PerSession.
             database_key: None,
+            // Default to 10 seconds between database updates for the same session.
+            db_update_interval: Duration::try_seconds(10).unwrap_or_default(),
         }
     }
 }

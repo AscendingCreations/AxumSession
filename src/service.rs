@@ -1,7 +1,7 @@
 use crate::{headers::*, DatabasePool, Session, SessionData, SessionError, SessionStore};
 use axum::{response::Response, BoxError};
 use bytes::Bytes;
-use chrono::Utc;
+use chrono::{Duration, Utc};
 #[cfg(feature = "key-store")]
 use fastbloom_rs::Deletable;
 use futures::future::BoxFuture;
@@ -281,16 +281,41 @@ where
                 let clone_session = if let Some(mut sess) =
                     session.store.inner.get_mut(&session.id.clone())
                 {
-                    // Check if Database needs to be updated or not. TODO: Make updatable based on a timer for in memory only.
-                    if session.store.config.database.always_save || sess.update || !sess.expired() {
-                        if sess.longterm {
-                            sess.expires = Utc::now() + session.store.config.max_lifespan;
-                        } else {
-                            sess.expires = Utc::now() + session.store.config.lifespan;
-                        };
+                    // Update session expiry in memory
+                    if sess.longterm {
+                        sess.expires = Utc::now() + session.store.config.max_lifespan;
+                    } else {
+                        sess.expires = Utc::now() + session.store.config.lifespan;
+                    };
 
+                    // Calculate intervals for DB update throttling; durations are clamped to zero.
+                    let now = Utc::now();
+
+                    let time_since_last_db_update =
+                        (now - sess.last_db_update).max(Duration::zero());
+                    let db_update_threshold = session.store.config.database.db_update_interval;
+
+                    // Time remaining until the next scheduled database cleanup.
+                    let time_remaining_next_database_sweep =
+                        (last_database_sweep - now).max(Duration::zero());
+
+                    // Time remaining within the current update threshold.
+                    let time_until_next_update =
+                        (db_update_threshold - time_since_last_db_update).max(Duration::zero());
+
+                    // The database is updated if any of the following conditions are met:
+                    // 1. 'always_save' is enabled in config.
+                    // 2. The session's manual update flag (sess.update) is set.
+                    // 3. The threshold interval has passed since the last update (and session is not expired).
+                    // 4. The next database sweep is approaching (within grace period).
+                    let should_update_db = session.store.config.database.always_save
+                        || sess.update
+                        || (!sess.expired() && time_since_last_db_update >= db_update_threshold)
+                        || time_remaining_next_database_sweep <= time_until_next_update;
+
+                    if should_update_db {
+                        sess.last_db_update = Utc::now();
                         sess.update = false;
-
                         Some(sess.clone())
                     } else {
                         None
