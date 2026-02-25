@@ -35,6 +35,8 @@ pub struct SessionData {
     pub(crate) update: bool,
     #[serde(skip)]
     pub(crate) requests: usize,
+    #[serde(skip)]
+    pub(crate) last_db_update: DateTime<Utc>,
 }
 
 impl SessionData {
@@ -63,6 +65,7 @@ impl SessionData {
             store: storable,
             update: true,
             requests: 1,
+            last_db_update: Utc::now(),
         }
     }
 
