@@ -281,13 +281,6 @@ where
                 let clone_session = if let Some(mut sess) =
                     session.store.inner.get_mut(&session.id.clone())
                 {
-                    // Update session expiry in memory
-                    if sess.longterm {
-                        sess.expires = Utc::now() + session.store.config.max_lifespan;
-                    } else {
-                        sess.expires = Utc::now() + session.store.config.lifespan;
-                    };
-
                     // Calculate intervals for DB update throttling; durations are clamped to zero.
                     let now = Utc::now();
 
@@ -299,24 +292,47 @@ where
                     let time_remaining_next_database_sweep =
                         (last_database_sweep - now).max(Duration::zero());
 
+                    // Time remaining until the next scheduled memory cleanup.
+                    let time_remaining_next_memory_sweep = (last_sweep - now).max(Duration::zero());
+
                     // Time remaining within the current update threshold.
                     let time_until_next_update =
                         (db_update_threshold - time_since_last_db_update).max(Duration::zero());
 
-                    // The database is updated if any of the following conditions are met:
-                    // 1. 'always_save' is enabled in config.
-                    // 2. The session's manual update flag (sess.update) is set.
-                    // 3. The threshold interval has passed since the last update (and session is not expired).
-                    // 4. The next database sweep is approaching (within grace period).
-                    let should_update_db = session.store.config.database.always_save
-                        || sess.update
-                        || (!sess.expired() && time_since_last_db_update >= db_update_threshold)
-                        || time_remaining_next_database_sweep <= time_until_next_update;
+                    // Check if session should be updated (memory and/or database)
+                    let should_update =
+                        session.store.config.database.always_save || sess.update || !sess.expired();
 
-                    if should_update_db {
-                        sess.last_db_update = Utc::now();
-                        sess.update = false;
-                        Some(sess.clone())
+                    if should_update {
+                        // Update session expiry in memory
+                        if sess.longterm {
+                            sess.expires = Utc::now() + session.store.config.max_lifespan;
+                        } else {
+                            sess.expires = Utc::now() + session.store.config.lifespan;
+                        };
+
+                        // The database is updated if any of the following conditions are met:
+                        // 1. 'always_save' is enabled in config.
+                        // 2. The session's manual update flag (sess.update) is set.
+                        // 3. The threshold interval has passed since the last update (and session is not expired).
+                        // 4. The next memory sweep is approaching (within grace period).
+                        // 5. The next database sweep is approaching (within grace period).
+                        let should_update_db = session.store.config.database.always_save
+                            || sess.update
+                            || (!sess.expired()
+                                && time_since_last_db_update >= db_update_threshold)
+                            || (!sess.expired()
+                                && time_remaining_next_memory_sweep <= time_until_next_update)
+                            || (!sess.expired()
+                                && time_remaining_next_database_sweep <= time_until_next_update);
+
+                        if should_update_db {
+                            sess.last_db_update = Utc::now();
+                            sess.update = false;
+                            Some(sess.clone())
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     }
