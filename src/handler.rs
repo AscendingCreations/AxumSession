@@ -5,10 +5,20 @@ use fastbloom_rs::Deletable;
 use std::fmt::Debug;
 use tokio::time::sleep;
 
-pub async fn runner<T>(session_store: SessionStore<T>) -> Result<(), SessionError>
+pub async fn runner<T>(
+    session_store: SessionStore<T>,
+    kill_as_duplicate: bool,
+) -> Result<(), SessionError>
 where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
+    if kill_as_duplicate {
+        tracing::trace!("Killed Session Manager Duplicate.");
+        return Ok(());
+    }
+
+    tracing::trace!("Session Manager is starting loop");
+
     loop {
         let (last_sweep, last_database_sweep) = {
             let timers = session_store.timers.read().await;
@@ -18,7 +28,7 @@ where
         let current_time = Utc::now();
 
         if last_sweep <= current_time && !session_store.config.memory.memory_lifespan.is_zero() {
-            tracing::info!("Session Memory Cleaning Started");
+            tracing::trace!("Session Memory Cleaning Started");
 
             // Only unload these from filter if the Client is None as this means no database.
             // Otherwise only unload from the filter if removed from the Database.
@@ -43,12 +53,12 @@ where
             session_store.timers.write().await.last_expiry_sweep =
                 Utc::now() + session_store.config.memory.purge_update;
 
-            tracing::info!("Session Memory Cleaning Finished");
+            tracing::trace!("Session Memory Cleaning Finished");
         }
 
         // Throttle by database lifespan - e.g. sweep every 6 hours
         if last_database_sweep <= current_time && session_store.is_persistent() {
-            tracing::info!("Session Database Cleaning Started");
+            tracing::trace!("Session Database Cleaning Started");
 
             //Remove any old keys that expired and Remove them from our loaded filter.
             #[cfg(feature = "key-store")]
@@ -79,9 +89,10 @@ where
                 .last_database_expiry_sweep =
                 Utc::now() + session_store.config.database.purge_database_update;
 
-            tracing::info!("Session Database Cleaning Finished");
+            tracing::trace!("Session Database Cleaning Finished");
         }
 
+        tracing::trace!("Session Manager is Sleeping");
         sleep(
             session_store
                 .config

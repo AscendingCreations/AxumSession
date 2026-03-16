@@ -3,7 +3,7 @@ use aes_gcm::aead::{generic_array::GenericArray, Aead, AeadInPlace, KeyInit, Pay
 use aes_gcm::Aes256Gcm;
 use base64::{engine::general_purpose, Engine as _};
 use cookie::Key;
-use rand::TryRngCore;
+use rand::TryRng;
 
 pub(crate) const NONCE_LEN: usize = 12;
 pub(crate) const TAG_LEN: usize = 16;

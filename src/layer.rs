@@ -1,7 +1,10 @@
 use std::{fmt, sync::Arc};
 
 use crate::{runner, DatabasePool, SessionService, SessionStore};
+use std::sync::atomic::{AtomicBool, Ordering};
 use tower_layer::Layer;
+
+static KILL_AS_DUP: AtomicBool = AtomicBool::new(false);
 
 /// Sessions Layer used with Axum to activate the Service.
 ///
@@ -52,10 +55,18 @@ where
     type Service = SessionService<S, T>;
 
     fn layer(&self, inner: S) -> Self::Service {
-        SessionService {
+        let kill_as_duplicate = KILL_AS_DUP.load(Ordering::Relaxed);
+
+        let service = SessionService {
             session_store: self.session_store.clone(),
-            handle: Arc::new(tokio::spawn(runner(self.session_store.clone()))),
+            handle: Arc::new(tokio::spawn(runner(
+                self.session_store.clone(),
+                kill_as_duplicate,
+            ))),
             inner,
-        }
+        };
+
+        KILL_AS_DUP.store(true, Ordering::Relaxed);
+        service
     }
 }

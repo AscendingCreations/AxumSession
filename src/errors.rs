@@ -27,4 +27,6 @@ pub enum SessionError {
     Session will get removed on next Session request purge update if no changes are done."
     )]
     OldSessionError,
+    #[error("Failed to remove expired session's from database")]
+    FailedRemoval(String),
 }

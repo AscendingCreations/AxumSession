@@ -108,7 +108,7 @@ where
                     .ok()
                     .flatten()
                     .unwrap_or_else(|| {
-                        tracing::info!(
+                        tracing::debug!(
                             "Session {} did not exist in Database. So it was Recreated.",
                             session.id.clone()
                         );
@@ -264,7 +264,7 @@ where
                     if let Err(err) = session.store.store_session(&sess).await {
                         return trace_error(err, "failed to save session to database");
                     } else {
-                        tracing::info!("Session id {}: was saved to the database.", session.id);
+                        tracing::debug!("Session id {}: was saved to the database.", session.id);
                     }
                 }
             }

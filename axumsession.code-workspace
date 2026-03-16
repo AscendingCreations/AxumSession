@@ -7,4 +7,8 @@
 	"settings": {
 		"rust-analyzer.showUnlinkedFileNotification": false
 	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": []
+	},
 }

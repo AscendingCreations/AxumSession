@@ -4,12 +4,23 @@ use axum_session_redispool::SessionRedisPool;
 use redis_pool::{RedisPool, SingleRedisPool};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
+use tracing::Level;
+use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
 async fn main() {
     // please consider using dotenvy to get this
     // please check the docker-compose file included for the redis image used here
     let redis_url = "redis://default@127.0.0.1:6379/0";
+
+    let subscriber = FmtSubscriber::builder()
+        // all spans/events with a level higher than TRACE (e.g, debug, info, warn, etc.)
+        // will be written to stdout.
+        .with_max_level(Level::TRACE)
+        // completes the builder.
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let client =
         redis::Client::open(redis_url).expect("Error while trying to open the redis connection");
