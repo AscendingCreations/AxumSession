@@ -38,8 +38,7 @@ where
                 && session_store.config.memory.use_bloom_filters
             {
                 let mut filter = session_store.filter.write().await;
-                session
-                    .store
+                session_store
                     .inner
                     .iter()
                     .filter(|r| r.autoremove < current_time)
