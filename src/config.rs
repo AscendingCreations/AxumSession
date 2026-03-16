@@ -230,6 +230,7 @@ pub struct SessionConfig {
     pub(crate) cookie_and_header: CookieAndHeaderConfig,
     /// tells how we should build the string for hashing to secure the cookie.
     pub(crate) ip_user_agent: IpUserAgentConfig,
+    pub(crate) thread_sleep_duration: Duration,
 }
 
 impl Debug for SessionConfig {
@@ -243,6 +244,7 @@ impl Debug for SessionConfig {
             .field("lifespan", &self.lifespan)
             .field("max_lifespan", &self.max_lifespan)
             .field("clear_check_on_load", &self.clear_check_on_load)
+            .field("thread_sleep_duration", &self.thread_sleep_duration)
             .finish()
     }
 }
@@ -760,7 +762,7 @@ impl SessionConfig {
     /// ```rust
     /// use axum_session::SessionConfig;
     ///
-    /// let config = SessionConfig::default().with_prefix_with_host(true);
+    /// let config = SessionConfig::default().with_hashed_xforward(true);
     /// ```
     ///
     #[must_use]
@@ -776,7 +778,7 @@ impl SessionConfig {
     /// ```rust
     /// use axum_session::SessionConfig;
     ///
-    /// let config = SessionConfig::default().with_prefix_with_host(true);
+    /// let config = SessionConfig::default().with_hashed_forward(true);
     /// ```
     ///
     #[must_use]
@@ -792,7 +794,7 @@ impl SessionConfig {
     /// ```rust
     /// use axum_session::SessionConfig;
     ///
-    /// let config = SessionConfig::default().with_prefix_with_host(true);
+    /// let config = SessionConfig::default().with_hashed_real_ip(true);
     /// ```
     ///
     #[must_use]
@@ -808,12 +810,27 @@ impl SessionConfig {
     /// ```rust
     /// use axum_session::SessionConfig;
     ///
-    /// let config = SessionConfig::default().with_prefix_with_host(true);
+    /// let config = SessionConfig::default().with_hashed_user_agent(true);
     /// ```
     ///
     #[must_use]
     pub fn with_hashed_user_agent(mut self, enable: bool) -> Self {
         self.ip_user_agent.use_user_agent = enable;
+        self
+    }
+
+    /// Set's the session's thread Sleep Timer to reduce CPU cycle times.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    ///
+    /// let config = SessionConfig::default().with_thread_sleep_duration(Duration::try_minutes(5).unwrap_or_default());
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_thread_sleep_duration(mut self, duration: Duration) -> Self {
+        self.thread_sleep_duration = duration;
         self
     }
 }
@@ -832,6 +849,7 @@ impl Default for SessionConfig {
             session_mode: SessionMode::Persistent,
             clear_check_on_load: true,
             ip_user_agent: IpUserAgentConfig::default(),
+            thread_sleep_duration: Duration::try_minutes(5).unwrap_or_default(),
         }
     }
 }

@@ -1,6 +1,6 @@
-use std::fmt;
+use std::{fmt, sync::Arc};
 
-use crate::{DatabasePool, SessionService, SessionStore};
+use crate::{runner, DatabasePool, SessionService, SessionStore};
 use tower_layer::Layer;
 
 /// Sessions Layer used with Axum to activate the Service.
@@ -54,6 +54,7 @@ where
     fn layer(&self, inner: S) -> Self::Service {
         SessionService {
             session_store: self.session_store.clone(),
+            handle: Arc::new(tokio::spawn(runner(self.session_store.clone()))),
             inner,
         }
     }

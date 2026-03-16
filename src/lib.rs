@@ -7,6 +7,7 @@
 mod config;
 pub mod databases;
 mod errors;
+mod handler;
 pub(crate) mod headers;
 mod layer;
 mod sec;
@@ -23,5 +24,6 @@ pub use sec::*;
 pub use session::{ReadOnlySession, Session};
 pub use session_store::SessionStore;
 
+pub(crate) use handler::*;
 pub(crate) use service::SessionService;
 pub(crate) use session_data::{SessionData, SessionTimers};

@@ -10,8 +10,10 @@ use http_body::Body as HttpBody;
 use std::{
     convert::Infallible,
     fmt::{self, Debug, Formatter},
+    sync::Arc,
     task::{Context, Poll},
 };
+use tokio::task::JoinHandle;
 use tower_service::Service;
 
 #[derive(Clone)]
@@ -20,6 +22,7 @@ where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     pub(crate) session_store: SessionStore<T>,
+    pub(crate) handle: Arc<JoinHandle<Result<(), SessionError>>>,
     pub(crate) inner: S,
 }
 
@@ -122,99 +125,16 @@ where
                     .insert(session.id.clone(), fresh_session);
             }
 
-            let (last_sweep, last_database_sweep) = {
-                let timers = session.store.timers.read().await;
-                (timers.last_expiry_sweep, timers.last_database_expiry_sweep)
-            };
-
-            // This branch runs less often, and we already have write access,
-            // let's check if any sessions expired. We don't want to hog memory
-            // forever by abandoned sessions (e.g. when a client lost their cookie)
-            // throttle by memory lifespan - e.g. sweep every hour
-            let current_time = Utc::now();
-
-            if last_sweep <= current_time && !session.store.config.memory.memory_lifespan.is_zero()
-            {
-                tracing::info!(
-                    "Session id {}: Session Memory Cleaning Started",
-                    session.id.clone()
-                );
-                // Only unload these from filter if the Client is None as this means no database.
-                // Otherwise only unload from the filter if removed from the Database.
-                #[cfg(feature = "key-store")]
-                if session.store.is_persistent()
-                    && session.store.auto_handles_expiry()
-                    && session.store.config.memory.use_bloom_filters
-                {
-                    let mut filter = session.store.filter.write().await;
-                    session
-                        .store
-                        .inner
-                        .iter()
-                        .filter(|r| r.autoremove < current_time)
-                        .for_each(|r| filter.remove(r.key().as_bytes()));
-                }
-
-                session
-                    .store
-                    .inner
-                    .retain(|_k, v| v.autoremove > current_time);
-
-                session.store.timers.write().await.last_expiry_sweep =
-                    Utc::now() + session.store.config.memory.purge_update;
-                tracing::info!(
-                    "Session id {}: Session Memory Cleaning Finished",
-                    session.id
-                );
-            }
-
-            // Throttle by database lifespan - e.g. sweep every 6 hours
-            if last_database_sweep <= current_time && session.store.is_persistent() {
-                tracing::info!(
-                    "Session id {}: Session Database Cleaning Started",
-                    session.id
-                );
-                //Remove any old keys that expired and Remove them from our loaded filter.
-                #[cfg(feature = "key-store")]
-                let expired = match session.store.cleanup().await {
-                    Ok(v) => v,
-                    Err(err) => {
-                        return trace_error(
-                            err,
-                            "failed to remove expired session's from database",
-                        );
-                    }
-                };
-
-                #[cfg(not(feature = "key-store"))]
-                if let Err(err) = session.store.cleanup().await {
-                    return trace_error(err, "failed to remove expired session's from database");
-                }
-
-                #[cfg(feature = "key-store")]
-                if !session.store.auto_handles_expiry() {
-                    let mut filter = session.store.filter.write().await;
-                    expired.iter().for_each(|id| filter.remove(id.as_bytes()));
-                }
-
-                session
-                    .store
-                    .timers
-                    .write()
-                    .await
-                    .last_database_expiry_sweep =
-                    Utc::now() + session.store.config.database.purge_database_update;
-                tracing::info!(
-                    "Session id {}: Session Database Cleaning Finished",
-                    session.id
-                );
-            }
-
             // Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage
             //req.extensions_mut().insert(store.clone());
             req.extensions_mut().insert(session.clone());
 
             let mut response = ready_inner.call(req).await?;
+
+            let (last_sweep, last_database_sweep) = {
+                let timers = session.store.timers.read().await;
+                (timers.last_expiry_sweep, timers.last_database_expiry_sweep)
+            };
 
             let (renew, storable, destroy, loaded) =
                 if let Some(session_data) = session.store.inner.get(&session.id) {

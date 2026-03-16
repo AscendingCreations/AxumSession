@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Changed
+- (Breaking) Migrate Database and Memory Cleanup to be Active instead of Passive. Added in a config to control the threads Sleep timer.
+
 ## 0.18.0 (2. February, 2026)
 
 ### Changed
