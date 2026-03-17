@@ -13,11 +13,14 @@ where
     T: DatabasePool + Clone + Debug + Sync + Send + 'static,
 {
     if kill_as_duplicate {
-        tracing::trace!("Killed Session Manager Duplicate.");
+        tracing::trace!(
+            "Killed Session Manager Duplicate on thread ID: {:?}.",
+            std::thread::current().id()
+        );
         return Ok(());
+    } else {
+        tracing::trace!("Session Manager is starting loop");
     }
-
-    tracing::trace!("Session Manager is starting loop");
 
     loop {
         let (last_sweep, last_database_sweep) = {
@@ -45,6 +48,31 @@ where
                     .for_each(|r| filter.remove(r.key().as_bytes()));
             }
 
+            // We do this to ensure that if Types that never got updated due to the newer timers that on memory unload
+            // we ensure they get synced before unloading them from memory but only if the database/cookie has not expired.
+            if session_store.is_persistent() {
+                for session in session_store
+                    .inner
+                    .iter()
+                    .filter(|r| r.autoremove < current_time)
+                {
+                    if !session.expired() {
+                        if let Err(err) = session_store.store_session(&session).await {
+                            tracing::debug!(
+                                "Session Failed to save to Database with error: {}",
+                                err
+                            );
+                            continue;
+                        } else {
+                            tracing::debug!(
+                                "Session id {}: was saved to the database.",
+                                session.id
+                            );
+                        }
+                    }
+                }
+            }
+
             session_store
                 .inner
                 .retain(|_k, v| v.autoremove > current_time);
@@ -70,8 +98,8 @@ where
             };
 
             #[cfg(not(feature = "key-store"))]
-            if session_store.cleanup().await.is_err() {
-                tracing::error!("Session Database Cleaning Failed",);
+            if let Err(err) = session_store.cleanup().await {
+                tracing::error!("Session Database Cleaning Failed with error: {}", err);
                 continue;
             }
 
