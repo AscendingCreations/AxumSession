@@ -204,6 +204,7 @@ fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: NameTyp
 fn remove_cookie<'a>(config: &SessionConfig, cookie_type: NameType) -> Cookie<'a> {
     let mut cookie_builder = Cookie::build((cookie_type.get_name(config), ""))
         .path(config.cookie_and_header.cookie_path.clone())
+        .secure(false)
         .http_only(config.cookie_and_header.cookie_http_only)
         .same_site(cookie::SameSite::None);
 
