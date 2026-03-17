@@ -90,17 +90,12 @@ where
 
             // Check if the session id exists if not lets check if it exists in the database or generate a new session.
             // If manual mode is enabled then do not check for a Session unless the ID is not new.
-            let check_database: bool = if is_new && !session.store.config.session_mode.is_manual() {
+            if is_new && !session.store.config.session_mode.is_manual() {
                 let sess = SessionData::new(session.id.clone(), storable, &session.store.config);
                 session.store.inner.insert(session.id.clone(), sess);
-                false
-            } else if !is_new || !session.store.config.session_mode.is_manual() {
-                !session.store.service_session_data(&session)
-            } else {
-                false
-            };
-
-            if check_database {
+            } else if (!is_new || !session.store.config.session_mode.is_manual())
+                && !session.store.service_session_data(&session)
+            {
                 let mut fresh_session = session
                     .store
                     .load_session(session.id.clone())
@@ -123,7 +118,7 @@ where
                     .store
                     .inner
                     .insert(session.id.clone(), fresh_session);
-            }
+            };
 
             // Sets a clone of the Store in the Extensions for Direct usage and sets the Session for Direct usage
             //req.extensions_mut().insert(store.clone());
@@ -131,6 +126,7 @@ where
 
             let mut response = ready_inner.call(req).await?;
 
+            // Lets get the last sweep times so we can use them to deturmine if its time to just save sessions.
             let (last_sweep, last_database_sweep) = {
                 let timers = session.store.timers.read().await;
                 (timers.last_expiry_sweep, timers.last_database_expiry_sweep)
