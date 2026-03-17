@@ -6,7 +6,9 @@
 use async_trait::async_trait;
 use axum_session::{DatabaseError, DatabasePool, Session, SessionStore};
 use chrono::Utc;
+use serde::Serialize;
 use surrealdb::{Connection, Surreal};
+use surrealdb_types::{SurrealValue, Table};
 
 ///Surreal's Session Helper type for the DatabasePool.
 pub type SessionSurrealSession<C> = crate::Session<SessionSurrealPool<C>>;
@@ -61,32 +63,23 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     }
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
-        use serde::Deserialize;
-
-        #[derive(Deserialize)]
-        struct SessionRecord {
-            sessionid: String,
-        }
-
         let now = Utc::now().timestamp();
 
         let mut res = self
             .connection
             .query(
-                "DELETE type::table($table_name)
+                "DELETE $table_name
                 WHERE sessionexpires = NONE OR type::number(sessionexpires) < $expires
                 RETURN BEFORE;",
             )
-            .bind(("table_name", table_name.to_string()))
+            .bind(("table_name", Table::from(table_name)))
             .bind(("expires", now))
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
 
-        let records: Vec<SessionRecord> = res
-            .take(0)
+        let ids: Vec<String> = res
+            .take("sessionid")
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
-
-        let ids: Vec<String> = records.into_iter().map(|r| r.sessionid).collect();
 
         Ok(ids)
     }
@@ -94,8 +87,8 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     async fn count(&self, table_name: &str) -> Result<i64, DatabaseError> {
         let mut res = self
             .connection
-            .query("SELECT count() AS amount FROM type::table($table_name) GROUP BY amount;")
-            .bind(("table_name", table_name.to_string()))
+            .query("SELECT count() AS amount FROM $table_name GROUP BY amount;")
+            .bind(("table_name", Table::from(table_name)))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
@@ -116,11 +109,11 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         expires: i64,
         table_name: &str,
     ) -> Result<(), DatabaseError> {
-        self.connection
-        .query(
-            "UPSERT type::thing($table_name, $session_id) SET sessionstore = $store, sessionexpires = $expire, sessionid = $session_id;",
+        self
+            .connection.query(
+            "UPSERT ONLY type::record($table_name, $session_id) SET sessionstore = $store, sessionexpires = $expire, sessionid = $session_id;",
         )
-        .bind(("table_name", table_name.to_string()))
+        .bind(("table_name", Table::from(table_name)))
         .bind(("session_id", id.to_string()))
         .bind(("expire", expires.to_string()))
         .bind(("store", session.to_string()))
@@ -133,10 +126,10 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         let mut res = self
             .connection
             .query(
-                "SELECT sessionstore FROM type::thing($table_name, $session_id)
+                "SELECT sessionstore FROM type::record($table_name, $session_id)
                 WHERE sessionexpires = NONE OR sessionexpires > $expires;",
             )
-            .bind(("table_name", table_name.to_string()))
+            .bind(("table_name", Table::from(table_name)))
             .bind(("session_id", id.to_string()))
             .bind(("expires", Utc::now().timestamp()))
             .await
@@ -150,8 +143,8 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
 
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), DatabaseError> {
         self.connection
-            .query("DELETE type::table($table_name) WHERE sessionid < $session_id;")
-            .bind(("table_name", table_name.to_string()))
+            .query("DELETE type::record($table_name, $session_id);")
+            .bind(("table_name", Table::from(table_name)))
             .bind(("session_id", id.to_string()))
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
@@ -163,10 +156,10 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         let mut res = self
             .connection
             .query(
-                "SELECT count() AS amount FROM type::thing($table_name, $session_id)
+                "SELECT count() AS amount FROM type::record($table_name, $session_id)
                 WHERE sessionexpires = NONE OR sessionexpires > $expires GROUP BY amount;",
             )
-            .bind(("table_name", table_name.to_string()))
+            .bind(("table_name", Table::from(table_name)))
             .bind(("session_id", id.to_string()))
             .bind(("expires", Utc::now().timestamp()))
             .await
@@ -180,8 +173,8 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
 
     async fn delete_all(&self, table_name: &str) -> Result<(), DatabaseError> {
         self.connection
-            .query("DELETE type::table($table_name);")
-            .bind(("table_name", table_name.to_string()))
+            .query("DELETE $table_name;")
+            .bind(("table_name", Table::from(table_name)))
             .await
             .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
 
@@ -192,10 +185,10 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
         let mut res = self
             .connection
             .query(
-                "SELECT sessionid FROM type::table($table_name)
+                "SELECT sessionid FROM $table_name
                 WHERE sessionexpires = NONE OR sessionexpires > $expires;",
             )
-            .bind(("table_name", table_name.to_string()))
+            .bind(("table_name", Table::from(table_name)))
             .bind(("expires", Utc::now().timestamp()))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;

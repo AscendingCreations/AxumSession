@@ -1,3 +1,4 @@
+use axum::response::IntoResponse;
 use axum::{routing::get, Router};
 use axum_session::{SessionConfig, SessionLayer, SessionStore};
 use axum_session_surreal::{SessionSurrealPool, SessionSurrealSession};
@@ -13,8 +14,8 @@ async fn main() {
 
     // sign in as our account.
     db.signin(Root {
-        username: "root",
-        password: "root",
+        username: "root".to_owned(),
+        password: "root".to_owned(),
     })
     .await
     .unwrap();
@@ -39,7 +40,7 @@ async fn main() {
         .layer(SessionLayer::new(session_store)); // adding the crate plugin ( layer ) to the project
 
     // run it with hyper on localhost:3000
-    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = TcpListener::bind("0.0.0.0:7000").await.unwrap();
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
@@ -52,7 +53,7 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn counter(session: SessionSurrealSession<Any>) -> String {
+async fn counter(session: SessionSurrealSession<Any>) -> impl IntoResponse {
     let mut count: usize = session.get("count").unwrap_or(0);
     count += 1;
     session.set("count", count);

@@ -451,6 +451,7 @@ dependencies = [
  "chrono",
  "serde",
  "surrealdb",
+ "surrealdb-types",
 ]
 
 [[package]]

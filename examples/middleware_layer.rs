@@ -17,8 +17,8 @@ async fn main() {
 
     // sign in as our account.
     db.signin(Root {
-        username: "root",
-        password: "root",
+        username: "root".to_owned(),
+        password: "root".to_owned(),
     })
     .await
     .unwrap();

@@ -17,3 +17,4 @@ chrono.workspace = true
 async-trait.workspace = true
 serde.workspace = true
 surrealdb = { version = "3.0.4" }
+surrealdb-types = "3.0.4"
