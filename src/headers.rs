@@ -212,10 +212,6 @@ fn remove_cookie<'a>(config: &SessionConfig, cookie_type: NameType) -> Cookie<'a
         cookie_builder = cookie_builder.domain(domain.clone());
     }
 
-    if let Some(domain) = &config.cookie_and_header.cookie_domain {
-        cookie_builder = cookie_builder.domain(domain.clone());
-    }
-
     let mut cookie = cookie_builder.build();
     cookie.make_removal();
     cookie
