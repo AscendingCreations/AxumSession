@@ -206,7 +206,7 @@ fn remove_cookie<'a>(config: &SessionConfig, cookie_type: NameType) -> Cookie<'a
         .path(config.cookie_and_header.cookie_path.clone())
         .secure(false)
         .http_only(config.cookie_and_header.cookie_http_only)
-        .same_site(cookie::SameSite::None);
+        .same_site(config.cookie_and_header.cookie_same_site);
 
     if let Some(domain) = &config.cookie_and_header.cookie_domain {
         cookie_builder = cookie_builder.domain(domain.clone());
