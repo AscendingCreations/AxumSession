@@ -1,6 +1,6 @@
 [package]
 name = "axum_session_sqlx"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "📝 Sqlx Persistent Database layer for axum_session"
 edition = "2021"
