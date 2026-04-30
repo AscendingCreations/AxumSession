@@ -64,7 +64,7 @@ where
                             );
                             session_store.timers.write().await.last_expiry_sweep =
                                 Utc::now() + session_store.config.memory.purge_update;
-                            continue;
+                            break;
                         } else {
                             tracing::debug!(
                                 "Session id {}: was saved to the database.",
@@ -101,7 +101,7 @@ where
                         .await
                         .last_database_expiry_sweep =
                         Utc::now() + session_store.config.database.purge_database_update;
-                    continue;
+                    break;
                 }
             };
 
@@ -114,7 +114,7 @@ where
                     .await
                     .last_database_expiry_sweep =
                     Utc::now() + session_store.config.database.purge_database_update;
-                continue;
+                break;
             }
 
             #[cfg(feature = "key-store")]
@@ -143,4 +143,6 @@ where
         )
         .await;
     }
+
+    Ok(())
 }
