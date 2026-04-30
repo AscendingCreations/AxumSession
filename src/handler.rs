@@ -62,6 +62,8 @@ where
                                 "Session Failed to save to Database with error: {}",
                                 err
                             );
+                            session_store.timers.write().await.last_expiry_sweep =
+                                Utc::now() + session_store.config.memory.purge_update;
                             continue;
                         } else {
                             tracing::debug!(
@@ -92,7 +94,13 @@ where
             let expired = match session_store.cleanup().await {
                 Ok(v) => v,
                 Err(err) => {
-                    tracing::error!("Session Database Cleaning Failed",);
+                    tracing::error!("Session Database Cleaning Failed with error: {}", err);
+                    session_store
+                        .timers
+                        .write()
+                        .await
+                        .last_database_expiry_sweep =
+                        Utc::now() + session_store.config.database.purge_database_update;
                     continue;
                 }
             };
@@ -100,6 +108,12 @@ where
             #[cfg(not(feature = "key-store"))]
             if let Err(err) = session_store.cleanup().await {
                 tracing::error!("Session Database Cleaning Failed with error: {}", err);
+                session_store
+                    .timers
+                    .write()
+                    .await
+                    .last_database_expiry_sweep =
+                    Utc::now() + session_store.config.database.purge_database_update;
                 continue;
             }
 
