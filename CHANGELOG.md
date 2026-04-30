@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.20.0()
+### Fixed
+- issue where persistent logs would occur quickly filling log files.
+
+### Changed
+- (Breaking) hmac updated to 0.13.0
+
 ## 0.19.0 (17. March, 2026)
 ### Changed
 - (Breaking) Migrate Database and Memory Cleanup to be Active instead of Passive. Added in a config to control the threads Sleep timer.

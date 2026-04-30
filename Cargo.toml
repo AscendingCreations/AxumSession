@@ -11,7 +11,7 @@ members = [
 
 [package]
 name = "axum_session"
-version = "0.19.0"
+version = "0.20.0"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "📝 Session management layer for axum that supports HTTP and Rest."
 edition = "2021"
@@ -28,19 +28,19 @@ rest_mode = []
 advanced = []
 
 [dependencies]
-axum = { version = "0.8.8" }
+axum = { version = "0.8.9" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 chrono = { version = "0.4.44", default-features = false, features = [
     "clock",
     "serde",
 ] }
-tokio = { version = "1.50.0", features = ["full"] }
+tokio = { version = "1.52.1", features = ["full"] }
 async-trait = "0.1.89"
 tracing = "0.1.44"
 thiserror = "2.0.18"
 http-body = "1.0.1"
-uuid = { version = "1.22.0", features = ["serde", "v4"] }
+uuid = { version = "1.23.1", features = ["serde", "v4"] }
 http = "1.4.0"
 tower-layer = "0.3.3"
 tower-service = "0.3.3"
@@ -50,9 +50,9 @@ bytes = "1.11.1"
 dashmap = "6.1.0"
 aes-gcm = "0.10.3"
 base64 = "0.22.1"
-rand = "0.10.0"
-hmac = "0.12.1"
-sha2 = "0.10.9"
+rand = "0.10.1"
+hmac = "0.13.0"
+sha2 = "0.11.0"
 forwarded-header-value = "0.1.1"
 fastbloom-rs = { version = "0.5.10", optional = true }
 
@@ -81,9 +81,9 @@ sqlx = { version = "0.8.6", features = [
     "tls-rustls",
     "runtime-tokio",
 ] }
-surrealdb = { version = "3.0.4", features = ["kv-mem"] }
-hyper = "1.8.1"
-redis = { version = "1.0.5" }
+surrealdb = { version = "3.0.5", features = ["kv-mem"] }
+hyper = "1.9.0"
+redis = { version = "1.2.0" }
 tower = "0.5.3"
 http-body-util = "0.1.3"
 axum_session_sqlx = { path = "./databases/sqlx", features = ["sqlite"] }
