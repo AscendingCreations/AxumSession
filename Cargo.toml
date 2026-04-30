@@ -57,7 +57,7 @@ forwarded-header-value = "0.1.1"
 fastbloom-rs = { version = "0.5.10", optional = true }
 
 [workspace.dependencies]
-axum_session = { version = "0.19.0", path = "./" }
+axum_session = { version = "0.20.0", path = "./" }
 chrono = { version = "0.4.42", default-features = false, features = [
     "clock",
     "serde",
