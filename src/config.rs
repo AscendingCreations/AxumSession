@@ -824,6 +824,7 @@ impl SessionConfig {
     /// # Examples
     /// ```rust
     /// use axum_session::SessionConfig;
+    /// use chrono::Duration;
     ///
     /// let config = SessionConfig::default().with_thread_sleep_duration(Duration::try_minutes(5).unwrap_or_default());
     /// ```
