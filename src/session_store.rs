@@ -602,10 +602,8 @@ where
         }
     }
 
-    #[cfg(feature = "advanced")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
-    pub async fn database_remove_session(&self, id: String) -> Result<(), SessionError> {
+    pub(crate) async fn database_remove_session(&self, id: String) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             client
                 .delete_one_by_id(&id, &self.config.database.table_name)
@@ -613,5 +611,15 @@ where
         }
 
         Ok(())
+    }
+
+    #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
+    #[inline]
+    pub async fn remove_stored_database_session(
+        &self,
+        id: String,
+    ) -> Result<(), SessionError> {
+        self.database_remove_session(id).await
     }
 }
