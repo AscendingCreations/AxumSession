@@ -518,7 +518,7 @@ where
     #[cfg(feature = "advanced")]
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
-    pub(crate) fn verify(&self, id: String) -> Result<(), SessionError> {
+    pub fn verify(&self, id: String) -> Result<(), SessionError> {
         if let Some(instance) = self.inner.get(&id) {
             if instance.expires < Utc::now() {
                 Err(SessionError::OldSessionError)
@@ -533,7 +533,7 @@ where
     #[cfg(feature = "advanced")]
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
-    pub(crate) fn update_database_expires(&self, id: String) -> Result<(), SessionError> {
+    pub fn update_database_expires(&self, id: String) -> Result<(), SessionError> {
         if let Some(mut instance) = self.inner.get_mut(&id) {
             if instance.longterm {
                 instance.expires = Utc::now() + self.config.max_lifespan;
@@ -550,7 +550,7 @@ where
     #[cfg(feature = "advanced")]
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
-    pub(crate) fn update_memory_expires(&self, id: String) -> Result<(), SessionError> {
+    pub fn update_memory_expires(&self, id: String) -> Result<(), SessionError> {
         if let Some(mut instance) = self.inner.get_mut(&id) {
             instance.autoremove = Utc::now() + self.config.memory.memory_lifespan;
 
@@ -563,7 +563,7 @@ where
     #[cfg(feature = "advanced")]
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
-    pub(crate) async fn force_database_update(&self, id: String) -> Result<(), SessionError> {
+    pub async fn force_database_update(&self, id: String) -> Result<(), SessionError> {
         let session = if let Some(instance) = self.inner.get(&id) {
             instance.clone()
         } else {
@@ -576,7 +576,7 @@ where
     #[cfg(feature = "advanced")]
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
-    pub(crate) fn memory_remove_session(&self, id: String) -> Result<(), SessionError> {
+    pub fn memory_remove_session(&self, id: String) -> Result<(), SessionError> {
         let is_parallel = if let Some(mut instance) = self.inner.get_mut(&id) {
             instance.remove_request();
             instance.is_parallel()
@@ -591,8 +591,21 @@ where
         Ok(())
     }
 
+    #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
-    pub(crate) async fn database_remove_session(&self, id: String) -> Result<(), SessionError> {
+    pub fn force_memory_remove_session(&self, id: String) -> Result<(), SessionError> {
+        if self.inner.remove(&id).is_some() {
+            Ok(())
+        } else {
+            Err(SessionError::NoSessionError)
+        }
+    }
+
+    #[cfg(feature = "advanced")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
+    #[inline]
+    pub async fn database_remove_session(&self, id: String) -> Result<(), SessionError> {
         if let Some(client) = &self.client {
             client
                 .delete_one_by_id(&id, &self.config.database.table_name)
