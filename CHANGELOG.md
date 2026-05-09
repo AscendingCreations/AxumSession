@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
-## 0.20.0()
+## 0.20.1 (9. May, 2026)
+### Fixed
+- Issue where the Advanced Features were behind pub(crate). @Freshcobar
+
+### Added
+- (Advanced) remove_stored_database_session to remove known sessions manually from the database. @Freshcobar
+
+## 0.20.0 (30. April, 2026)
 ### Fixed
 - issue where persistent logs would occur quickly filling log files.
 
