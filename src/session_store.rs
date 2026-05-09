@@ -616,10 +616,7 @@ where
     #[cfg(feature = "advanced")]
     #[cfg_attr(docsrs, doc(cfg(feature = "advanced")))]
     #[inline]
-    pub async fn remove_stored_database_session(
-        &self,
-        id: String,
-    ) -> Result<(), SessionError> {
+    pub async fn remove_stored_database_session(&self, id: String) -> Result<(), SessionError> {
         self.database_remove_session(id).await
     }
 }
