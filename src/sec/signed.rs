@@ -80,7 +80,7 @@ impl<J> AdditionalSignedJar<J> {
             };
 
             // Add the payload to the message first.
-            let message = format!("{}{}", &value, &message);
+            let message = format!("{}{}", value, message);
             mac.update(message.as_bytes());
 
             // Cookie's new value is [MAC | original-value].
@@ -116,7 +116,7 @@ impl<J> AdditionalSignedJar<J> {
             // Perform the verification.
             let mut mac = Hmac::<Sha256>::new_from_slice(&key).map_err(|_| "key is invalid.")?;
             // Add message here so we can check if it matches.
-            let message = format!("{}{}", value, &message);
+            let message = format!("{}{}", value, message);
             mac.update(message.as_bytes());
             mac.verify_slice(&digest)
                 .map(|_| value.to_string())

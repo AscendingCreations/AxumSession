@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use axum_session::{DatabaseError, DatabasePool, Session, SessionStore};
 use chrono::Utc;
-use sqlx::{pool::Pool, PgPool, Postgres};
+use sqlx::{pool::Pool, AssertSqlSafe, PgPool, Postgres};
 
 ///Postgres's Session Helper type for the DatabasePool.
 pub type SessionPgSession = Session<SessionPgPool>;
@@ -20,11 +20,14 @@ impl From<Pool<Postgres>> for SessionPgPool {
     }
 }
 
+// All AssertSqlSafe should be safe as they are on the Owner implementing
+// table name for the Session and not the End users browsing a website.
+
 #[async_trait]
 impl DatabasePool for SessionPgPool {
     async fn initiate(&self, table_name: &str) -> Result<(), DatabaseError> {
-        sqlx::query(
-            &r#"
+        sqlx::query(AssertSqlSafe(
+            r#"
             CREATE TABLE IF NOT EXISTS %%TABLE_NAME%% (
                 "id" VARCHAR(128) NOT NULL PRIMARY KEY,
                 "expires" BIGINT NULL,
@@ -32,30 +35,30 @@ impl DatabasePool for SessionPgPool {
             )
         "#
             .replace("%%TABLE_NAME%%", table_name),
-        )
+        ))
         .execute(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericCreateError(err.to_string()))?;
 
-        let (t,): (bool,) = sqlx::query_as(
-            &r#"
+        let (t,): (bool,) = sqlx::query_as(AssertSqlSafe(
+            r#"
             SELECT data_type = 'integer'
             FROM information_schema.columns
             WHERE table_name = '%%TABLE_NAME%%' and column_name = 'expires';
             "#
             .replace("%%TABLE_NAME%%", table_name),
-        )
+        ))
         .fetch_one(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericCreateError(err.to_string()))?;
 
         if t {
-            sqlx::query(
-                &r#"
+            sqlx::query(AssertSqlSafe(
+                r#"
                 ALTER TABLE %%TABLE_NAME%% ALTER COLUMN expires TYPE BIGINT;
                 "#
                 .replace("%%TABLE_NAME%%", table_name),
-            )
+            ))
             .execute(&self.pool)
             .await
             .map_err(|err| DatabaseError::GenericCreateError(err.to_string()))?;
@@ -65,13 +68,13 @@ impl DatabasePool for SessionPgPool {
     }
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
-        let result: Vec<(String,)> = sqlx::query_as(
-            &r#"
+        let result: Vec<(String,)> = sqlx::query_as(AssertSqlSafe(
+            r#"
             SELECT id FROM %%TABLE_NAME%%
             WHERE (expires IS NULL OR expires < $1)
         "#
             .replace("%%TABLE_NAME%%", table_name),
-        )
+        ))
         .bind(Utc::now().timestamp())
         .fetch_all(&self.pool)
         .await
@@ -79,10 +82,10 @@ impl DatabasePool for SessionPgPool {
 
         let result: Vec<String> = result.into_iter().map(|(s,)| s).collect();
 
-        sqlx::query(
-            &r#"DELETE FROM %%TABLE_NAME%% WHERE expires < $1"#
+        sqlx::query(AssertSqlSafe(
+            r#"DELETE FROM %%TABLE_NAME%% WHERE expires < $1"#
                 .replace("%%TABLE_NAME%%", table_name),
-        )
+        ))
         .bind(Utc::now().timestamp())
         .execute(&self.pool)
         .await
@@ -91,9 +94,9 @@ impl DatabasePool for SessionPgPool {
     }
 
     async fn count(&self, table_name: &str) -> Result<i64, DatabaseError> {
-        let (count,) = sqlx::query_as(
-            &r#"SELECT COUNT(*) FROM %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
-        )
+        let (count,) = sqlx::query_as(AssertSqlSafe(
+            r#"SELECT COUNT(*) FROM %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
+        ))
         .fetch_one(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
@@ -108,8 +111,8 @@ impl DatabasePool for SessionPgPool {
         expires: i64,
         table_name: &str,
     ) -> Result<(), DatabaseError> {
-        sqlx::query(
-            &r#"
+        sqlx::query(AssertSqlSafe(
+            r#"
         INSERT INTO %%TABLE_NAME%%
             (id, session, expires) SELECT $1, $2, $3
         ON CONFLICT(id) DO UPDATE SET
@@ -117,7 +120,7 @@ impl DatabasePool for SessionPgPool {
             session = EXCLUDED.session
     "#
             .replace("%%TABLE_NAME%%", table_name),
-        )
+        ))
         .bind(id)
         .bind(session)
         .bind(expires)
@@ -128,13 +131,13 @@ impl DatabasePool for SessionPgPool {
     }
 
     async fn load(&self, id: &str, table_name: &str) -> Result<Option<String>, DatabaseError> {
-        let result: Option<(String,)> = sqlx::query_as(
-            &r#"
+        let result: Option<(String,)> = sqlx::query_as(AssertSqlSafe(
+            r#"
             SELECT session FROM %%TABLE_NAME%%
             WHERE id = $1 AND (expires IS NULL OR expires > $2)
         "#
             .replace("%%TABLE_NAME%%", table_name),
-        )
+        ))
         .bind(id)
         .bind(Utc::now().timestamp())
         .fetch_optional(&self.pool)
@@ -145,9 +148,9 @@ impl DatabasePool for SessionPgPool {
     }
 
     async fn delete_one_by_id(&self, id: &str, table_name: &str) -> Result<(), DatabaseError> {
-        sqlx::query(
-            &r#"DELETE FROM %%TABLE_NAME%% WHERE id = $1"#.replace("%%TABLE_NAME%%", table_name),
-        )
+        sqlx::query(AssertSqlSafe(
+            r#"DELETE FROM %%TABLE_NAME%% WHERE id = $1"#.replace("%%TABLE_NAME%%", table_name),
+        ))
         .bind(id)
         .execute(&self.pool)
         .await
@@ -156,13 +159,13 @@ impl DatabasePool for SessionPgPool {
     }
 
     async fn exists(&self, id: &str, table_name: &str) -> Result<bool, DatabaseError> {
-        let result: Option<(i64,)> = sqlx::query_as(
-            &r#"
+        let result: Option<(i64,)> = sqlx::query_as(AssertSqlSafe(
+            r#"
             SELECT COUNT(*) FROM %%TABLE_NAME%%
             WHERE id = $1 AND (expires IS NULL OR expires > $2)
         "#
             .replace("%%TABLE_NAME%%", table_name),
-        )
+        ))
         .bind(id)
         .bind(Utc::now().timestamp())
         .fetch_optional(&self.pool)
@@ -173,21 +176,23 @@ impl DatabasePool for SessionPgPool {
     }
 
     async fn delete_all(&self, table_name: &str) -> Result<(), DatabaseError> {
-        sqlx::query(&r#"TRUNCATE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name))
-            .execute(&self.pool)
-            .await
-            .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
+        sqlx::query(AssertSqlSafe(
+            r#"TRUNCATE %%TABLE_NAME%%"#.replace("%%TABLE_NAME%%", table_name),
+        ))
+        .execute(&self.pool)
+        .await
+        .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
         Ok(())
     }
 
     async fn get_ids(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
-        let result: Vec<(String,)> = sqlx::query_as(
-            &r#"
+        let result: Vec<(String,)> = sqlx::query_as(AssertSqlSafe(
+            r#"
             SELECT id FROM %%TABLE_NAME%%
             WHERE (expires IS NULL OR expires > $1)
         "#
             .replace("%%TABLE_NAME%%", table_name),
-        )
+        ))
         .bind(Utc::now().timestamp())
         .fetch_all(&self.pool)
         .await
