@@ -21,6 +21,6 @@ If you need help with this library or have suggestions please go to our [Discord
 ```toml
 # Cargo.toml
 [dependencies]
-axum_session = { version = "0.19.0" }
-axum_session_redis_bb8_pool = { version = "0.7.0" }
+axum_session = { version = "0.21.0" }
+axum_session_redis_bb8_pool = { version = "0.9.0" }
 ```

@@ -448,7 +448,7 @@ dependencies = [
 
 [[package]]
 name = "axum_session_mongo"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "axum_session",
@@ -460,7 +460,7 @@ dependencies = [
 
 [[package]]
 name = "axum_session_redis_bb8_pool"
-version = "0.8.1"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "axum_session",

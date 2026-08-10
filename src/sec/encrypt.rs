@@ -1,5 +1,6 @@
 use crate::SessionError;
-use aes_gcm::aead::{generic_array::GenericArray, Aead, AeadInPlace, KeyInit, Payload};
+use aes_gcm::aead::common::array::Array;
+use aes_gcm::aead::{Aead, AeadInPlace, KeyInit, Payload};
 use aes_gcm::Aes256Gcm;
 use base64::{engine::general_purpose, Engine as _};
 use cookie::Key;
@@ -22,11 +23,12 @@ pub(crate) fn encrypt(name: &str, value: &str, key: &Key) -> Result<String, &'st
     rng.try_fill_bytes(nonce)
         .map_err(|_| "couldn't random fill nonce")?;
 
-    let nonce = GenericArray::clone_from_slice(nonce);
+    let nonce = Array::clone_from_slice(nonce);
 
     // Use the UUID to preform actual cookie Sealing.
     let aad = name.as_bytes();
-    let aead = Aes256Gcm::new(GenericArray::from_slice(key.encryption()));
+    let aead =
+        Aes256Gcm::new(&Array::try_from(key.encryption()).map_err(|_| "encryption failure!")?);
     let aad_tag = aead
         .encrypt_in_place_detached(&nonce, aad, in_out)
         .map_err(|_| "encryption failure!")?;
@@ -51,9 +53,9 @@ pub(crate) fn decrypt(name: &str, value: &str, key: &Key) -> Result<String, Sess
         aad: name.as_bytes(),
     };
 
-    let aead = Aes256Gcm::new(GenericArray::from_slice(key.encryption()));
+    let aead = Aes256Gcm::new(Array::from_slice(key.encryption()));
     Ok(String::from_utf8(
-        aead.decrypt(GenericArray::from_slice(nonce), payload)
+        aead.decrypt(Array::from_slice(nonce), payload)
             .map_err(|_| {
                 SessionError::GenericNotSupportedError(
                     "invalid key/nonce/value: bad seal".to_owned(),

@@ -5,9 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
-## 0.20.2 (10. August, 2026)
-### Fixed
+## 0.21.0 (10. August, 2026)
+### Changed
 - Updated Dependencies
+- (breaking) Updated aes-gcm 0.11 with basic updated support. 
 
 ## 0.20.1 (9. May, 2026)
 ### Fixed
