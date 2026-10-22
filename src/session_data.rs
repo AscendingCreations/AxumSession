@@ -1,7 +1,7 @@
 use crate::SessionConfig;
-use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fmt::Debug};
+use time::{Duration, OffsetDateTime};
 
 /// The Store and Configured Data for a Session.
 ///
@@ -21,9 +21,11 @@ pub struct SessionData {
     pub(crate) id: String,
     pub(crate) data: HashMap<String, String>,
     #[serde(skip)]
-    pub(crate) expires: DateTime<Utc>,
+    #[serde(default = "OffsetDateTime::now_utc")]
+    pub(crate) expires: OffsetDateTime,
     #[serde(skip)]
-    pub(crate) autoremove: DateTime<Utc>,
+    #[serde(default = "OffsetDateTime::now_utc")]
+    pub(crate) autoremove: OffsetDateTime,
     #[serde(skip)]
     pub(crate) destroy: bool,
     #[serde(skip)]
@@ -36,7 +38,8 @@ pub struct SessionData {
     #[serde(skip)]
     pub(crate) requests: usize,
     #[serde(skip)]
-    pub(crate) last_db_update: DateTime<Utc>,
+    #[serde(default = "OffsetDateTime::now_utc")]
+    pub(crate) last_db_update: OffsetDateTime,
 }
 
 impl SessionData {
@@ -57,15 +60,15 @@ impl SessionData {
         Self {
             id,
             data: HashMap::new(),
-            expires: Utc::now() + config.lifespan,
+            expires: OffsetDateTime::now_utc() + config.lifespan,
             destroy: false,
             renew: false,
-            autoremove: Utc::now() + config.memory.memory_lifespan,
+            autoremove: OffsetDateTime::now_utc() + config.memory.memory_lifespan,
             longterm: false,
             store: storable,
             update: true,
             requests: 1,
-            last_db_update: Utc::now(),
+            last_db_update: OffsetDateTime::now_utc(),
         }
     }
 
@@ -84,7 +87,7 @@ impl SessionData {
     ///
     #[inline]
     pub(crate) fn expired(&self) -> bool {
-        self.expires < Utc::now()
+        self.expires < OffsetDateTime::now_utc()
     }
 
     /// Validates and checks if the Session is to be destroyed.
@@ -104,7 +107,7 @@ impl SessionData {
     ///
     #[inline]
     pub(crate) fn service_clear(&mut self, memory_lifespan: Duration, clear_check: bool) {
-        if clear_check && self.autoremove < Utc::now() {
+        if clear_check && self.autoremove < OffsetDateTime::now_utc() {
             self.update = true;
 
             if self.expired() {
@@ -112,7 +115,7 @@ impl SessionData {
             }
         }
 
-        self.autoremove = Utc::now() + memory_lifespan;
+        self.autoremove = OffsetDateTime::now_utc() + memory_lifespan;
     }
 
     /// Set session flags to renew/regenerate the ID.
@@ -320,6 +323,6 @@ impl SessionData {
 ///
 #[derive(Debug)]
 pub(crate) struct SessionTimers {
-    pub(crate) last_expiry_sweep: DateTime<Utc>,
-    pub(crate) last_database_expiry_sweep: DateTime<Utc>,
+    pub(crate) last_expiry_sweep: OffsetDateTime,
+    pub(crate) last_database_expiry_sweep: OffsetDateTime,
 }

@@ -5,9 +5,9 @@
 
 use async_trait::async_trait;
 use axum_session::{DatabaseError, DatabasePool, Session, SessionStore};
-use chrono::Utc;
 use surrealdb::{Connection, Surreal};
 use surrealdb_types::Table;
+use time::OffsetDateTime;
 
 ///Surreal's Session Helper type for the DatabasePool.
 pub type SessionSurrealSession<C> = crate::Session<SessionSurrealPool<C>>;
@@ -62,7 +62,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
     }
 
     async fn delete_by_expiry(&self, table_name: &str) -> Result<Vec<String>, DatabaseError> {
-        let now = Utc::now().timestamp();
+        let now = OffsetDateTime::now_utc().unix_timestamp();
 
         let mut res = self
             .connection
@@ -130,7 +130,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             )
             .bind(("table_name", Table::from(table_name)))
             .bind(("session_id", id.to_string()))
-            .bind(("expires", Utc::now().timestamp()))
+            .bind(("expires", OffsetDateTime::now_utc().unix_timestamp()))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
@@ -160,7 +160,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
             )
             .bind(("table_name", Table::from(table_name)))
             .bind(("session_id", id.to_string()))
-            .bind(("expires", Utc::now().timestamp()))
+            .bind(("expires", OffsetDateTime::now_utc().unix_timestamp()))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 
@@ -188,7 +188,7 @@ impl<C: Connection> DatabasePool for SessionSurrealPool<C> {
                 WHERE sessionexpires = NONE OR sessionexpires > $expires;",
             )
             .bind(("table_name", Table::from(table_name)))
-            .bind(("expires", Utc::now().timestamp()))
+            .bind(("expires", OffsetDateTime::now_utc().unix_timestamp()))
             .await
             .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
 

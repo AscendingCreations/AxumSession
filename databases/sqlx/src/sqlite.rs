@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use axum_session::{DatabaseError, DatabasePool, Session, SessionStore};
-use chrono::Utc;
 use sqlx::{pool::Pool, AssertSqlSafe, Sqlite};
+use time::OffsetDateTime;
 
 ///Sqlite's Session Helper type for the DatabasePool.
 pub type SessionSqliteSession = Session<SessionSqlitePool>;
@@ -51,7 +51,7 @@ impl DatabasePool for SessionSqlitePool {
         "#
             .replace("%%TABLE_NAME%%", table_name),
         ))
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .fetch_all(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
@@ -62,7 +62,7 @@ impl DatabasePool for SessionSqlitePool {
             r#"DELETE FROM %%TABLE_NAME%% WHERE expires < $1"#
                 .replace("%%TABLE_NAME%%", table_name),
         ))
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .execute(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
@@ -115,7 +115,7 @@ impl DatabasePool for SessionSqlitePool {
             .replace("%%TABLE_NAME%%", table_name),
         ))
         .bind(id)
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .fetch_optional(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
@@ -143,7 +143,7 @@ impl DatabasePool for SessionSqlitePool {
             .replace("%%TABLE_NAME%%", table_name),
         ))
         .bind(id)
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .fetch_optional(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
@@ -169,7 +169,7 @@ impl DatabasePool for SessionSqlitePool {
         "#
             .replace("%%TABLE_NAME%%", table_name),
         ))
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .fetch_all(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;

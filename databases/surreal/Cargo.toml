@@ -13,8 +13,8 @@ rust-version = "1.78"
 
 [dependencies]
 axum_session.workspace = true
-chrono.workspace = true
+time.workspace = true
 async-trait.workspace = true
 serde.workspace = true
-surrealdb = { version = "3.2.4" }
-surrealdb-types = "3.2.4"
+surrealdb = { version = "3.3.4" }
+surrealdb-types = "3.3.4"

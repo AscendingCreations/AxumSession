@@ -29,44 +29,41 @@ advanced = []
 
 [dependencies]
 axum = { version = "0.8.9" }
+aead = "0.6.1"
 serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.151"
-chrono = { version = "0.4.45", default-features = false, features = [
-    "clock",
-    "serde",
-] }
-tokio = { version = "1.53.1", features = ["full"] }
+serde_json = "1.0.154"
+tokio = { version = "1.54.1", features = ["full"] }
 async-trait = "0.1.92"
 tracing = "0.1.44"
-thiserror = "2.0.20"
+thiserror = "2.0.21"
 http-body = "1.1.0"
-uuid = { version = "1.24.0", features = ["serde", "v4"] }
+uuid = { version = "1.28.0", features = ["serde", "v4"] }
 http = "1.5.0"
 tower-layer = "0.3.3"
 tower-service = "0.3.3"
 cookie = { version = "0.18.2", features = ["percent-encode", "private"] }
-futures = "0.3.33"
+futures = "0.3.34"
 bytes = "1.12.1"
 dashmap = "6.2.1"
-aes-gcm = "0.11.0"
+aes-gcm = "0.11.1"
 base64 = "0.23.1"
-rand = "0.10.2"
+rand = "0.10.3"
 hmac = "0.13.0"
-sha2 = "0.11.0"
+sha2 = "0.11.1"
 forwarded-header-value = "0.1.1"
 fastbloom-rs = { version = "0.5.10", optional = true }
+time = { version = "0.3.55", features = ["serde"] } 
+
 
 [workspace.dependencies]
 axum_session = { version = "0.21.0", path = "./" }
-chrono = { version = "0.4.42", default-features = false, features = [
-    "clock",
-    "serde",
-] }
+time = { version = "0.3.55", features = ["serde"] } 
 async-trait = "0.1.89"
 tokio = { version = "1.49.0", features = ["full", "tracing"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 axum = "0.8.8"
+
 
 [package.metadata.docs.rs]
 features = ["key-store", "advanced"]
@@ -81,16 +78,16 @@ sqlx = { version = "0.9.0", features = [
     "tls-rustls",
     "runtime-tokio",
 ] }
-surrealdb = { version = "3.2.4", features = ["kv-mem"] }
+surrealdb = { version = "3.3.4", features = ["kv-mem"] }
 hyper = "1.11.0"
-redis = { version = "1.5.0" }
+redis = { version = "1.7.1" }
 tower = "0.5.3"
 http-body-util = "0.1.4"
 axum_session_sqlx = { path = "./databases/sqlx", features = ["sqlite"] }
 axum_session_surreal = { path = "./databases/surreal" }
 axum_session_redispool = { path = "./databases/redispool" }
 axum_session.workspace = true
-chrono.workspace = true
+time.workspace = true
 async-trait.workspace = true
 tracing = "0.1.44"
 tracing-subscriber = "0.3.0"

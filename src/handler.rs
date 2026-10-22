@@ -1,8 +1,8 @@
 use crate::{DatabasePool, SessionError, SessionStore};
-use chrono::Utc;
 #[cfg(feature = "key-store")]
 use fastbloom_rs::Deletable;
 use std::fmt::Debug;
+use time::OffsetDateTime;
 use tokio::time::sleep;
 
 pub async fn runner<T>(
@@ -28,7 +28,7 @@ where
             (timers.last_expiry_sweep, timers.last_database_expiry_sweep)
         };
 
-        let current_time = Utc::now();
+        let current_time = OffsetDateTime::now_utc();
 
         if last_sweep <= current_time && !session_store.config.memory.memory_lifespan.is_zero() {
             tracing::trace!("Session Memory Cleaning Started");
@@ -78,7 +78,7 @@ where
                 .retain(|_k, v| v.autoremove > current_time);
 
             session_store.timers.write().await.last_expiry_sweep =
-                Utc::now() + session_store.config.memory.purge_update;
+                OffsetDateTime::now_utc() + session_store.config.memory.purge_update;
 
             tracing::trace!("Session Memory Cleaning Finished");
         }
@@ -114,20 +114,13 @@ where
                 .write()
                 .await
                 .last_database_expiry_sweep =
-                Utc::now() + session_store.config.database.purge_database_update;
+                OffsetDateTime::now_utc() + session_store.config.database.purge_database_update;
 
             tracing::trace!("Session Database Cleaning Finished");
         }
 
         tracing::trace!("Session Manager is Sleeping");
-        sleep(
-            session_store
-                .config
-                .thread_sleep_duration
-                .to_std()
-                .unwrap_or_default(),
-        )
-        .await;
+        sleep(session_store.config.thread_sleep_duration.unsigned_abs()).await;
     }
 
     Ok(())

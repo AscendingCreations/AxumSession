@@ -13,6 +13,6 @@ rust-version = "1.78"
 
 [dependencies]
 async-trait.workspace = true
-redis = { version = "1.5.0", features = ["aio", "tokio-comp"] }
+redis = { version = "1.7.1", features = ["aio", "tokio-comp"] }
 bb8-redis = "0.26.0"
 axum_session.workspace = true

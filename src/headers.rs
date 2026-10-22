@@ -192,9 +192,7 @@ fn create_cookie<'a>(config: &SessionConfig, value: String, cookie_type: NameTyp
     }
 
     if let Some(max_age) = config.cookie_and_header.cookie_max_age {
-        let time_duration = max_age.to_std().expect("Max Age out of bounds");
-        cookie_builder =
-            cookie_builder.expires(Some((std::time::SystemTime::now() + time_duration).into()));
+        cookie_builder = cookie_builder.expires(Some(time::OffsetDateTime::now_utc() + max_age));
     }
 
     cookie_builder.build()

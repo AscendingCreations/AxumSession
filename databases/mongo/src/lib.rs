@@ -5,12 +5,12 @@
 
 use async_trait::async_trait;
 use axum_session::{DatabaseError, DatabasePool, Session, SessionStore};
-use chrono::Utc;
 use mongodb::{
     bson::{doc, Document},
     Client,
 };
 use serde::{Deserialize, Serialize};
+use time::OffsetDateTime;
 
 pub type SessionMongoSession = Session<SessionMongoPool>;
 pub type SessionMongoSessionStore = SessionStore<SessionMongoPool>;
@@ -70,7 +70,7 @@ impl DatabasePool for SessionMongoPool {
         let mut ids: Vec<String> = Vec::new();
 
         if let Some(db) = &self.client.default_database() {
-            let now = Utc::now().timestamp();
+            let now = OffsetDateTime::now_utc().unix_timestamp();
             let filter = doc! {"expires":
                 {"$lte": now}
             };
@@ -145,7 +145,7 @@ impl DatabasePool for SessionMongoPool {
                 let filter = doc! {
                     "id": id,
                     "expires":
-                        {"$gte": Utc::now().timestamp()}
+                        {"$gte": OffsetDateTime::now_utc().unix_timestamp()}
                 };
                 match db
                     .collection::<MongoSessionData>(table_name)
@@ -207,7 +207,7 @@ impl DatabasePool for SessionMongoPool {
         let mut ids: Vec<String> = Vec::new();
         if let Some(db) = &self.client.default_database() {
             let filter = doc! {"expires":
-                {"$gte": Utc::now().timestamp()}
+                {"$gte": OffsetDateTime::now_utc().unix_timestamp()}
             };
             let mut result = db
                 .collection::<MongoSessionData>(table_name)

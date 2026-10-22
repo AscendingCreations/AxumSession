@@ -2,7 +2,6 @@ use crate::{
     sec::encrypt, DatabasePool, Session, SessionConfig, SessionData, SessionError, SessionTimers,
 };
 use axum::extract::FromRequestParts;
-use chrono::{Duration, Utc};
 use dashmap::DashMap;
 #[cfg(feature = "key-store")]
 use fastbloom_rs::Deletable;
@@ -11,6 +10,7 @@ use fastbloom_rs::{CountingBloomFilter, FilterBuilder, Membership};
 use http::{request::Parts, StatusCode};
 use serde::Serialize;
 use std::{fmt::Debug, sync::Arc};
+use time::{Duration, OffsetDateTime};
 use tokio::sync::RwLock;
 
 /// Contains the main Services storage for all session's and database access for persistent Sessions.
@@ -90,9 +90,9 @@ where
             config,
             timers: Arc::new(RwLock::new(SessionTimers {
                 // the first expiry sweep is scheduled one lifetime from start-up
-                last_expiry_sweep: Utc::now() + Duration::try_hours(1).unwrap_or_default(),
+                last_expiry_sweep: OffsetDateTime::now_utc() + Duration::hours(1),
                 // the first expiry sweep is scheduled one lifetime from start-up
-                last_database_expiry_sweep: Utc::now() + Duration::try_hours(6).unwrap_or_default(),
+                last_database_expiry_sweep: OffsetDateTime::now_utc() + Duration::hours(6),
             })),
             #[cfg(feature = "key-store")]
             filter: Arc::new(RwLock::new(filter)),
@@ -292,7 +292,7 @@ where
                     } else {
                         serde_json::to_string(session)?
                     },
-                    session.expires.timestamp(),
+                    session.expires.unix_timestamp(),
                     &self.config.database.table_name,
                 )
                 .await?;

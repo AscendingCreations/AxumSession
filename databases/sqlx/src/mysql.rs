@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use axum_session::{DatabaseError, DatabasePool, Session, SessionStore};
-use chrono::Utc;
 use sqlx::{pool::Pool, AssertSqlSafe, MySql, MySqlPool};
+use time::OffsetDateTime;
 
 ///Mysql's Session Helper type for the DatabasePool.
 pub type SessionMySqlSession = Session<SessionMySqlPool>;
@@ -75,7 +75,7 @@ impl DatabasePool for SessionMySqlPool {
         "#
             .replace("%%TABLE_NAME%%", table_name),
         ))
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .fetch_all(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
@@ -85,7 +85,7 @@ impl DatabasePool for SessionMySqlPool {
         sqlx::query(AssertSqlSafe(
             r#"DELETE FROM %%TABLE_NAME%% WHERE expires < ?"#.replace("%%TABLE_NAME%%", table_name),
         ))
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .execute(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericDeleteError(err.to_string()))?;
@@ -139,7 +139,7 @@ impl DatabasePool for SessionMySqlPool {
             .replace("%%TABLE_NAME%%", table_name),
         ))
         .bind(id)
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .fetch_optional(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
@@ -167,7 +167,7 @@ impl DatabasePool for SessionMySqlPool {
             .replace("%%TABLE_NAME%%", table_name),
         ))
         .bind(id)
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .fetch_optional(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;
@@ -193,7 +193,7 @@ impl DatabasePool for SessionMySqlPool {
         "#
             .replace("%%TABLE_NAME%%", table_name),
         ))
-        .bind(Utc::now().timestamp())
+        .bind(OffsetDateTime::now_utc().unix_timestamp())
         .fetch_all(&self.pool)
         .await
         .map_err(|err| DatabaseError::GenericSelectError(err.to_string()))?;

@@ -1,7 +1,6 @@
 use crate::{headers::*, DatabasePool, Session, SessionData, SessionError, SessionStore};
 use axum::{response::Response, BoxError};
 use bytes::Bytes;
-use chrono::{Duration, Utc};
 #[cfg(feature = "key-store")]
 use fastbloom_rs::Deletable;
 use futures::future::BoxFuture;
@@ -13,6 +12,7 @@ use std::{
     sync::Arc,
     task::{Context, Poll},
 };
+use time::{Duration, OffsetDateTime};
 use tokio::task::JoinHandle;
 use tower_service::Service;
 
@@ -110,7 +110,8 @@ where
                         SessionData::new(session.id.clone(), storable, &session.store.config)
                     });
 
-                fresh_session.autoremove = Utc::now() + session.store.config.memory.memory_lifespan;
+                fresh_session.autoremove =
+                    OffsetDateTime::now_utc() + session.store.config.memory.memory_lifespan;
                 fresh_session.store = storable;
                 fresh_session.update = true;
                 fresh_session.requests = 1;
@@ -198,22 +199,21 @@ where
                     session.store.inner.get_mut(&session.id.clone())
                 {
                     // Calculate intervals for DB update throttling; durations are clamped to zero.
-                    let now = Utc::now();
+                    let now = OffsetDateTime::now_utc();
 
-                    let time_since_last_db_update =
-                        (now - sess.last_db_update).max(Duration::zero());
+                    let time_since_last_db_update = (now - sess.last_db_update).max(Duration::ZERO);
                     let db_update_threshold = session.store.config.database.db_update_interval;
 
                     // Time remaining until the next scheduled database cleanup.
                     let time_remaining_next_database_sweep =
-                        (last_database_sweep - now).max(Duration::zero());
+                        (last_database_sweep - now).max(Duration::ZERO);
 
                     // Time remaining until the next scheduled memory cleanup.
-                    let time_remaining_next_memory_sweep = (last_sweep - now).max(Duration::zero());
+                    let time_remaining_next_memory_sweep = (last_sweep - now).max(Duration::ZERO);
 
                     // Time remaining within the current update threshold.
                     let time_until_next_update =
-                        (db_update_threshold - time_since_last_db_update).max(Duration::zero());
+                        (db_update_threshold - time_since_last_db_update).max(Duration::ZERO);
 
                     // Check if session should be updated (memory and/or database)
                     let should_update =
@@ -222,9 +222,11 @@ where
                     if should_update {
                         // Update session expiry in memory
                         if sess.longterm {
-                            sess.expires = Utc::now() + session.store.config.max_lifespan;
+                            sess.expires =
+                                OffsetDateTime::now_utc() + session.store.config.max_lifespan;
                         } else {
-                            sess.expires = Utc::now() + session.store.config.lifespan;
+                            sess.expires =
+                                OffsetDateTime::now_utc() + session.store.config.lifespan;
                         };
 
                         // The database is updated if any of the following conditions are met:
@@ -243,7 +245,7 @@ where
                                 && time_remaining_next_database_sweep <= time_until_next_update);
 
                         if should_update_db {
-                            sess.last_db_update = Utc::now();
+                            sess.last_db_update = OffsetDateTime::now_utc();
                             sess.update = false;
                             Some(sess.clone())
                         } else {
