@@ -520,7 +520,7 @@ where
     #[inline]
     pub fn verify(&self, id: String) -> Result<(), SessionError> {
         if let Some(instance) = self.inner.get(&id) {
-            if instance.expires < Utc::now() {
+            if instance.expires < OffsetDateTime::now_utc() {
                 Err(SessionError::OldSessionError)
             } else {
                 Ok(())
@@ -536,9 +536,9 @@ where
     pub fn update_database_expires(&self, id: String) -> Result<(), SessionError> {
         if let Some(mut instance) = self.inner.get_mut(&id) {
             if instance.longterm {
-                instance.expires = Utc::now() + self.config.max_lifespan;
+                instance.expires = OffsetDateTime::now_utc() + self.config.max_lifespan;
             } else {
-                instance.expires = Utc::now() + self.config.lifespan;
+                instance.expires = OffsetDateTime::now_utc() + self.config.lifespan;
             }
 
             Ok(())
@@ -552,7 +552,7 @@ where
     #[inline]
     pub fn update_memory_expires(&self, id: String) -> Result<(), SessionError> {
         if let Some(mut instance) = self.inner.get_mut(&id) {
-            instance.autoremove = Utc::now() + self.config.memory.memory_lifespan;
+            instance.autoremove = OffsetDateTime::now_utc() + self.config.memory.memory_lifespan;
 
             Ok(())
         } else {
