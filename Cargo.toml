@@ -11,7 +11,7 @@ members = [
 
 [package]
 name = "axum_session"
-version = "0.22.0"
+version = "0.22.1"
 authors = ["Andrew Wheeler <genusistimelord@gmail.com>"]
 description = "📝 Session management layer for axum that supports HTTP and Rest."
 edition = "2021"
@@ -23,7 +23,6 @@ repository = "https://github.com/AscendingCreations/AxumSession"
 rust-version = "1.78"
 
 [features]
-default = ["advanced"]
 key-store = ["fastbloom-rs"]
 rest_mode = []
 advanced = []

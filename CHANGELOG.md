@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.22.1 (29. October, 2026)
+### Changed
+- Updated Dependencies
+
+### Fixed
+- Lockup occuring in DashMap shard lock due to awaiting over session Expiry" @sfried
+
 ## 0.22.0 (22. October, 2026)
 ### Changed
 - Updated Dependencies
