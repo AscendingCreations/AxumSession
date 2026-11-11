@@ -19,7 +19,8 @@ async fn main() {
         // We dont need Private cookies since we do not Send any sensitive data to store inside the cookie.
         .with_key(Key::generate())
         // This is how we would Set a Database Key to encrypt as store our per session data.
-        .with_database_key(Key::generate());
+        .with_database_key(Key::generate())
+        .with_database_initiation(true);
 
     // create SessionStore and initiate the database tables
     let session_store = SessionPgSessionStore::new(Some(poll.clone().into()), session_config)

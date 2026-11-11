@@ -11,7 +11,9 @@ async fn main() {
 
     //This Defaults as normal Cookies.
     //To enable Private cookies for integrity, and authenticity please check the next Example.
-    let session_config = SessionConfig::default().with_table_name("sessions_table");
+    let session_config = SessionConfig::default()
+        .with_database_initiation(true)
+        .with_table_name("sessions_table");
 
     // create SessionStore and initiate the database tables
     let session_store = SessionPgSessionStore::new(Some(poll.clone().into()), session_config)

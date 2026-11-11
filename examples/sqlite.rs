@@ -19,6 +19,7 @@ async fn main() {
     //To enable Private cookies for integrity, and authenticity please check the next Example.
     let session_config = SessionConfig::default()
         .with_table_name("sessions_table")
+        .with_database_initiation(true)
         .with_key(axum_session::Key::from(&key));
 
     // create SessionStore and initiate the database tables
