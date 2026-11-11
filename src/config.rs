@@ -112,6 +112,10 @@ pub struct DatabaseConfig {
     /// since the last database update. This helps reduce database write load
     /// for frequently accessed sessions. Default is 10 seconds.
     pub(crate) db_update_interval: Duration,
+    /// Used to Call the Initiation Phase for a database. For Security Purposes its best to use this to Create it once
+    /// and then Disable. If using SQL once disabled you should also remove the Create Privalage to increase Security.
+    /// This will be Disabled by default.
+    pub(crate) initiate: bool,
 }
 
 impl Debug for DatabaseConfig {
@@ -122,6 +126,7 @@ impl Debug for DatabaseConfig {
             .field("always_save", &self.always_save)
             .field("db_update_interval", &self.db_update_interval)
             .field("database_key", &"key hidden")
+            .field("initiate", &self.initiate)
             .finish()
     }
 }
@@ -834,6 +839,22 @@ impl SessionConfig {
         self.thread_sleep_duration = duration;
         self
     }
+
+    /// Set's the session's thread Sleep Timer to reduce CPU cycle times.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use axum_session::SessionConfig;
+    /// use chrono::Duration;
+    ///
+    /// let config = SessionConfig::default().with_thread_sleep_duration(Duration::try_minutes(5).unwrap_or_default());
+    /// ```
+    ///
+    #[must_use]
+    pub fn with_database_initiation(mut self, initiate: bool) -> Self {
+        self.database.initiate = initiate;
+        self
+    }
 }
 
 impl Default for SessionConfig {
@@ -885,6 +906,9 @@ impl Default for DatabaseConfig {
             database_key: None,
             // Default to 10 seconds between database updates for the same session.
             db_update_interval: Duration::seconds(10),
+            // Set as false to avoid the need to require Create.
+            // Will cause the app to not work if any required intiation was not done previously.
+            initiate: false,
         }
     }
 }

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.23.0 (11. November, 2026)
+### Changed
+- (Breaking) Added a Security patch to remove the requirement of Create for database permissions. Initiate will be Disabled by Default. Thank you @TERRORWOLF for noticing this.
+
 ## 0.22.1 (29. October, 2026)
 ### Changed
 - Updated Dependencies
@@ -15,12 +19,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## 0.22.0 (22. October, 2026)
 ### Changed
 - Updated Dependencies
-- (breaking) Replaced Chrono with Time. Would of used jiff but its missing support for mysql. 
+- (Breaking) Replaced Chrono with Time. Would of used jiff but its missing support for mysql. 
 
 ## 0.21.0 (10. August, 2026)
 ### Changed
 - Updated Dependencies
-- (breaking) Updated aes-gcm 0.11 with basic updated support. 
+- (Breaking) Updated aes-gcm 0.11 with basic updated support. 
 
 ## 0.20.1 (9. May, 2026)
 ### Fixed

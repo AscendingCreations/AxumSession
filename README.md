@@ -86,6 +86,9 @@ async fn main() {
     //This Defaults as normal Cookies.
     //To enable signed cookies for integrity, and authenticity please check the enable_signed_cookies_headers Example.
     let session_config = SessionConfig::default()
+    //Only use with_database_initiation on your first run to build the Table needed for SQL Databases supported. After which you should Remove or set to false 
+    //and then disable the Create Permissions for the SQL User to increase Security.
+        .with_database_initiation(true)
         .with_table_name("sessions_table");
 
     // create SessionStore and initiate the database tables
@@ -118,6 +121,39 @@ async fn connect_to_database() -> anyhow::Result<sqlx::Pool<sqlx::Postgres>> {
     unimplemented!()
 }
 ```
+
+
+## 🗄️ Database Initiate for supported SQL types.
+
+These are the manually setup and ran SQL scripts that generate the Tables.
+IF you do not want to config control Table creation and to use another SQL Account to do all Creation. 
+If you do want to use the Config to Create a Table just Save a Config of your own for your App where you can Change the Configs Phase to Disable Initiations. 
+This will allow you to drop the Create Permission for the SQL Account or if you don’t want to Add it 
+at all then Keep it disabled and run these with the account that Has the proper Create Permission. 
+
+*Please Replace sessions with the name you want it to be or leave it as is if you are just using defaults.*
+
+*///MySQL///*
+CREATE TABLE IF NOT EXISTS sessions (
+    id VARCHAR(128) NOT NULL PRIMARY KEY,
+    expires BIGINT NULL,
+    session TEXT NOT NULL
+)
+
+*///Postgresql///*
+CREATE TABLE IF NOT EXISTS sessions (
+    "id" VARCHAR(128) NOT NULL PRIMARY KEY,
+    "expires" BIGINT NULL,
+    "session" TEXT NOT NULL
+)
+
+*///Sqlite///*
+CREATE TABLE IF NOT EXISTS sessions (
+    "id" VARCHAR(128) NOT NULL PRIMARY KEY,
+    "expires" BIGINT NULL,
+    "session" TEXT NOT NULL
+)
+
 
 ## 🔑 Key Store Details
 

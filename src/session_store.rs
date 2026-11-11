@@ -76,7 +76,9 @@ where
     #[inline]
     pub async fn new(client: Option<T>, config: SessionConfig) -> Result<Self, SessionError> {
         if let Some(client) = &client {
-            client.initiate(&config.database.table_name).await?
+            if config.database.initiate {
+                client.initiate(&config.database.table_name).await?
+            }
         }
 
         // If we have a database client then lets also get any SessionId's that Exist within the database
